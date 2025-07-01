@@ -1,0 +1,14 @@
+{
+  "name": "my-mssql-to-mariadb-app",
+  "version": "1.0.0",
+  "description": "MSSQL 쿼리 결과를 MariaDB에 저장하는 자동화 앱",
+  "main": "app.js",
+  "scripts": {
+    "start": "node app.js"
+  },
+  "dependencies": {
+    "mssql": "^9.0.1",
+    "mysql2": "^3.4.0",
+    "csv-parser": "^3.0.0"
+  }
+} 
