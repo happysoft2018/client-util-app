@@ -7,8 +7,9 @@
     "start": "node app.js"
   },
   "dependencies": {
+    "csv-parser": "^3.0.0",
     "mssql": "^9.0.1",
     "mysql2": "^3.4.0",
-    "csv-parser": "^3.0.0"
+    "telnet-client": "^2.2.5"
   }
-} 
+}
