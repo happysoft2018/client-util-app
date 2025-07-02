@@ -44,14 +44,18 @@ function getLocalIp() {
 }
 
 async function checkMssqlConnection({ ip, port, dbname }) {
+
   const config = {
     user: DB_USER,
     password: DB_PASSWORD,
     server: ip,
     port: parseInt(port, 10),
     database: dbname,
-    options: { encrypt: true, trustServerCertificate: true }
+    options: { encrypt: true, trustServerCertificate: true },
+    connectionTimeout: 5000, // 5초 연결 타임아웃
+    requestTimeout: 5000     // 5초 쿼리 타임아웃
   };
+  
   const start = Date.now();
   try {
     const pool = await mssql.connect(config);
@@ -78,27 +82,29 @@ async function main() {
       rows.push(row);
     })
     .on('end', async () => {
+
       for (const row of rows) {
-        console.log(row);
+
         const server_ip = row.server_ip
         const port = row.port
         const dbname = row.dbname
         const result = await checkMssqlConnection({ ip: server_ip, port: port, dbname: dbname });
+        console.log(`[${row.server_ip},${row.port}][${row.dbname}] `, result);
+
         const body = {
           server_ip,
           port,
           dbname,
           pc_ip: pcIp,
-          result_count: result.success ? 1 : 0,
-          result_code: result.success ? '성공' : '실패',
+          result_code: result.success,
           result_msg: result.success ? '' : result.error,
           collapsed_time: result.elapsed
         };
+
         try {
-          const res = await axios.post(API_URL, body);
-          console.log(`[${row.server_ip},${row.port}][${row.dbname}] 전송 성공:`, res.data);
+          const res = await axios.post(API_URL, body, { timeout: 5000 }); // 5초 타임아웃
         } catch (err) {
-          console.error(`[${row.server_ip},${row.port}][${row.dbname}] API 전송 실패:`, err.response?.data || err.message);
+          console.error(`체크결과 기록 API (${API_URL}) 전송 실패`);
         }
       }
       console.log('모든 DB 체크 및 결과 전송 완료');
