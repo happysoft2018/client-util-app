@@ -65,12 +65,13 @@ async function checkMssqlConnection({ ip, port, dbname }) {
 }
 
 async function main() {
+
   const pcIp = getLocalIp();
   const rows = [];
 
   // CSV 파싱
   fs.createReadStream(CSV_PATH)
-    .pipe(csv(['ip', 'port', 'dbname']))
+    .pipe(csv(['server_ip', 'port', 'dbname']))
     .on('data', (row) => {
       // 공백 제거
       Object.keys(row).forEach(k => row[k] = row[k].trim());
@@ -78,12 +79,15 @@ async function main() {
     })
     .on('end', async () => {
       for (const row of rows) {
-        const sql_name = 'mssql_connect_test';
-        const sql_content = JSON.stringify(row);
-        const result = await checkMssqlConnection(row);
+        console.log(row);
+        const server_ip = row.server_ip
+        const port = row.port
+        const dbname = row.dbname
+        const result = await checkMssqlConnection({ ip: server_ip, port: port, dbname: dbname });
         const body = {
-          sql_name,
-          sql_content,
+          server_ip,
+          port,
+          dbname,
           pc_ip: pcIp,
           result_count: result.success ? 1 : 0,
           result_code: result.success ? '성공' : '실패',
@@ -92,9 +96,9 @@ async function main() {
         };
         try {
           const res = await axios.post(API_URL, body);
-          console.log(`[${row.ip}] 전송 성공:`, res.data);
+          console.log(`[${row.server_ip},${row.port}][${row.dbname}] 전송 성공:`, res.data);
         } catch (err) {
-          console.error(`[${row.ip}] API 전송 실패:`, err.response?.data || err.message);
+          console.error(`[${row.server_ip},${row.port}][${row.dbname}] API 전송 실패:`, err.response?.data || err.message);
         }
       }
       console.log('모든 DB 체크 및 결과 전송 완료');
