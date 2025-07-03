@@ -1,7 +1,7 @@
 {
-  "name": "my-mssql-to-mariadb-app",
+  "name": "my-node-client-util-app",
   "version": "1.0.0",
-  "description": "MSSQL 쿼리 결과를 MariaDB에 저장하는 자동화 앱",
+  "description": "로컬환경에서 사용하는 각종 유틸리티 모음",
   "main": "app.js",
   "scripts": {
     "start": "node app.js"
