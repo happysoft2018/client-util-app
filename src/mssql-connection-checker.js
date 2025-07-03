@@ -4,6 +4,7 @@ const mssql = require('mssql');
 const axios = require('axios');
 const os = require('os');
 const path = require('path');
+require('dotenv').config();
 
 // 인자 파싱 (간단 버전)
 function parseArgs() {
@@ -21,13 +22,13 @@ function parseArgs() {
 }
 
 const args = parseArgs();
-const CSV_PATH = args.csv || path.join(__dirname, '../sample/DB목록샘플.csv');
+const CSV_PATH = args.csv;
 const DB_USER = args.user;
 const DB_PASSWORD = args.password;
-const API_URL = args['api-url'] || process.env.API_URL || 'http://localhost:4000/api/check-server-log';
+const API_URL = process.env.API_URL;
 
 if (!CSV_PATH || !DB_USER || !DB_PASSWORD) {
-  console.error('사용법: node src/mssql-connection-checker.js --csv <csv경로> --user <db계정> --password <db패스워드> [--api-url <API주소>]');
+  console.error('사용법: node src/mssql-connection-checker.js --csv {csv파일경로} --user <DB계정ID> --password <패스워드>');
   process.exit(1);
 }
 
