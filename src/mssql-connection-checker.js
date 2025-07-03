@@ -89,6 +89,9 @@ async function main() {
 
   const pcIp = getLocalIp();
   const rows = [];
+  const check_unit_id = Date.now();
+  check_method = 'DB_CONN';
+
 
   // CSV 파싱
   fs.createReadStream(CSV_PATH)
@@ -112,6 +115,8 @@ async function main() {
         console.log(`[${row.server_ip},${row.port}][${row.dbname}][${title}] -----> `, resultDB);
 
         const body = {
+          check_unit_id, 
+          check_method,
           server_ip,
           port,
           dbname,
