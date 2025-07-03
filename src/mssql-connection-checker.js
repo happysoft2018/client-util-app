@@ -76,7 +76,7 @@ async function main() {
 
   // CSV 파싱
   fs.createReadStream(CSV_PATH)
-    .pipe(csv(['server_ip', 'port', 'dbname']))
+    .pipe(csv(['dbname', 'server_ip', 'port']))
     .on('data', (row) => {
       // 공백 제거
       Object.keys(row).forEach(k => row[k] = row[k].trim());
@@ -86,10 +86,10 @@ async function main() {
 
       for (const row of rows) {
 
+        const dbname = row.dbname
         const server_ip = row.server_ip
         const port = row.port
-        const dbname = row.dbname
-        const result = await checkMssqlConnection({ ip: server_ip, port: port, dbname: dbname });
+        const result = await checkMssqlConnection({ dbname: dbname, ip: server_ip, port: port });
         console.log(`[${row.server_ip},${row.port}][${row.dbname}] `, result);
 
         const body = {
