@@ -25,8 +25,14 @@ const args = parseArgs();
 const CSV_PATH = args.c;
 const DB_USER = args.u;
 const DB_PASSWORD = args.p;
-const TIMEOUT_SEC = args.t * 1000 || 5000;
+const TIMEOUT_SEC = parseInt(args.t) ? parseInt(args.t) * 1000 : 5000;
 const API_URL = process.env.API_URL;
+const CHECK_UNIT_ID = Date.now();
+const CHECK_METHOD = 'DB_CONN';
+const LOCAL_PC_IP = getLocalIp();
+const REGEX_IP_PATTERN = /^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/
+const REGEX_PORT_PATTERN = /^[0-9]{4}$/
+
 
 if (!CSV_PATH || !DB_USER || !DB_PASSWORD) {
 
@@ -85,13 +91,48 @@ async function checkMssqlConnection({ ip, port, dbname }) {
   }
 }
 
+async function unitWorkByServer(row) {
+
+  const dbname = row.dbname
+  const server_ip = row.server_ip
+  const port = row.port
+  const title = row.corp +'_'+ row.proc
+  
+  const resultServer = await checkMssqlConnection({ ip: server_ip, port: port});
+  console.log(`[${row.server_ip},${row.port}] -----> `, resultServer);
+
+  const resultDB = await checkMssqlConnection({ dbname: dbname, ip: server_ip, port: port});
+  console.log(`[${row.server_ip},${row.port}][${row.dbname}][${title}] -----> `, resultDB);
+
+  const body = {
+    CHECK_UNIT_ID, 
+    CHECK_METHOD,
+    server_ip,
+    port,
+    dbname,
+    pc_ip: LOCAL_PC_IP,
+    result_code: resultServer.success,
+    error_code: resultServer.success ? '' : resultServer.error_code,
+    error_msg: resultServer.success ? '' : resultServer.error_msg,
+    result_code_db: resultDB.success,
+    error_code_db: resultDB.success ? '' : resultDB.error_code,
+    error_msg_db: resultDB.success ? '' : resultDB.error_msg,
+    collapsed_time: resultServer.elapsed,
+    collapsed_time_db: resultDB.elapsed
+  };
+
+  try {
+    const res = await axios.post(API_URL, body, { timeout: 3000 }); // 3초 타임아웃
+  } catch (err) {
+    console.error(`체크결과 기록 API (${API_URL}) 전송 실패`);
+  }
+
+}
+
+
 async function main() {
 
-  const pcIp = getLocalIp();
   const rows = [];
-  const check_unit_id = Date.now();
-  check_method = 'DB_CONN';
-
 
   // CSV 파싱
   fs.createReadStream(CSV_PATH)
@@ -105,37 +146,16 @@ async function main() {
 
       for (const row of rows) {
 
-        const dbname = row.dbname
-        const server_ip = row.server_ip
-        const port = row.port
-        const title = row.corp +'_'+ row.proc
-        const resultServer = await checkMssqlConnection({ ip: server_ip, port: port});
-        console.log(`[${row.server_ip},${row.port}] -----> `, resultServer);
-        const resultDB = await checkMssqlConnection({ dbname: dbname, ip: server_ip, port: port});
-        console.log(`[${row.server_ip},${row.port}][${row.dbname}][${title}] -----> `, resultDB);
-
-        const body = {
-          check_unit_id, 
-          check_method,
-          server_ip,
-          port,
-          dbname,
-          pc_ip: pcIp,
-          result_code: resultServer.success,
-          error_code: resultServer.success ? '' : resultServer.error_code,
-          error_msg: resultServer.success ? '' : resultServer.error_msg,
-          result_code_db: resultDB.success,
-          error_code_db: resultDB.success ? '' : resultDB.error_code,
-          error_msg_db: resultDB.success ? '' : resultDB.error_msg,
-          collapsed_time: resultServer.elapsed,
-          collapsed_time_db: resultDB.elapsed
-        };
-
-        try {
-          const res = await axios.post(API_URL, body, { timeout: 3000 }); // 3초 타임아웃
-        } catch (err) {
-          console.error(`체크결과 기록 API (${API_URL}) 전송 실패`);
+        if(!REGEX_IP_PATTERN.test(row.server_ip)) {
+          console.log(`[${row.server_ip}] is not valid ip format`);
         }
+        else if(!REGEX_PORT_PATTERN.test(row.port)) {
+          console.log(`[${row.port}] is not valid port format`);
+        }
+        else {
+          await unitWorkByServer(row);
+        }
+        
       }
       console.log('모든 DB 체크 및 결과 전송 완료');
     });
