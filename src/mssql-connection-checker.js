@@ -103,21 +103,26 @@ async function main() {
         const server_ip = row.server_ip
         const port = row.port
         const title = row.corp +'_'+ row.proc
-        const result = await checkMssqlConnection({ dbname: dbname, ip: server_ip, port: port});
-        console.log(`[${row.server_ip},${row.port}][${row.dbname}][${title}] -----> `, result);
+        const resultServer = await checkMssqlConnection({ ip: server_ip, port: port});
+        console.log(`[${row.server_ip},${row.port}] -----> `, resultServer);
+        const resultDB = await checkMssqlConnection({ dbname: dbname, ip: server_ip, port: port});
+        console.log(`[${row.server_ip},${row.port}][${row.dbname}][${title}] -----> `, resultDB);
 
         const body = {
           server_ip,
           port,
           dbname,
           pc_ip: pcIp,
-          result_code: result.success,
-          result_msg: result.success ? '' : result.error,
-          collapsed_time: result.elapsed
+          result_code: resultServer.success,
+          result_msg: resultServer.success ? '' : resultServer.error,
+          result_code_db: resultDB.success,
+          result_msg_db: resultDB.success ? '' : resultDB.error,
+          collapsed_time: resultServer.elapsed,
+          collapsed_time_db: resultDB.elapsed
         };
 
         try {
-          const res = await axios.post(API_URL, body, { timeout: 5000 }); // 5초 타임아웃
+          const res = await axios.post(API_URL, body, { timeout: 3000 }); // 3초 타임아웃
         } catch (err) {
           console.error(`체크결과 기록 API (${API_URL}) 전송 실패`);
         }
