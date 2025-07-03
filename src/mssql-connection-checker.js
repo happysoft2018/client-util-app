@@ -11,8 +11,8 @@ function parseArgs() {
   const args = process.argv.slice(2);
   const result = {};
   for (let i = 0; i < args.length; i++) {
-    if (args[i].startsWith('--')) {
-      const key = args[i].replace(/^--/, '');
+    if (args[i].startsWith('-')) {
+      const key = args[i].replace(/^-/, '');
       const value = args[i + 1];
       result[key] = value;
       i++;
@@ -22,13 +22,26 @@ function parseArgs() {
 }
 
 const args = parseArgs();
-const CSV_PATH = args.csv;
-const DB_USER = args.user;
-const DB_PASSWORD = args.password;
+const CSV_PATH = args.c;
+const DB_USER = args.u;
+const DB_PASSWORD = args.p;
+const TIMEOUT_SEC = args.t * 1000 || 5000;
 const API_URL = process.env.API_URL;
 
 if (!CSV_PATH || !DB_USER || !DB_PASSWORD) {
-  console.error('사용법: node src/mssql-connection-checker.js --csv {csv파일경로} --user <DB계정ID> --password <패스워드>');
+
+  console.error();
+  console.error('==================================== 파라미터를 정상적으로 지정해 주세요! ========================================');
+  console.error('파라미터: -c  [필수] csv파일경로');
+  console.error('          -u  [필수] DB계정ID');
+  console.error('          -p  [필수] 패스워드');
+  console.error('          -t  [선택] 타임아웃(초) (기본값: 5) ');
+  console.error();
+  console.error('사용법: node src/mssql-connection-checker.js -csv {csv파일경로} -u {DB계정ID} -p {패스워드} [ -t {타입아웃(초)}]');
+  console.error()
+  console.error('   ex)  node src/mssql-connection-checker.js -csv c:\\temp\DB목록.csv -u guest -p 1111');
+  console.error('        node src/mssql-connection-checker.js -csv c:\\temp\DB목록.csv -u guest -p 1111 -t 7 ');
+  console.error('==================================================================================================================');
   process.exit(1);
 }
 
@@ -53,8 +66,8 @@ async function checkMssqlConnection({ ip, port, dbname }) {
     port: parseInt(port, 10),
     database: dbname,
     options: { encrypt: true, trustServerCertificate: true },
-    connectionTimeout: 5000, // 5초 연결 타임아웃
-    requestTimeout: 5000     // 5초 쿼리 타임아웃
+    connectionTimeout: TIMEOUT_SEC, // 타임아웃
+    requestTimeout: TIMEOUT_SEC     // 타임아웃
   };
   
   const start = Date.now();
