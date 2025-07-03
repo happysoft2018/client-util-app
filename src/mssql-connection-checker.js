@@ -71,14 +71,17 @@ async function checkMssqlConnection({ ip, port, dbname }) {
   };
   
   const start = Date.now();
+
   try {
+
     const pool = await mssql.connect(config);
     await pool.close();
     const elapsed = ((Date.now() - start) / 1000).toFixed(2);
     return { success: true, elapsed };
+
   } catch (err) {
     const elapsed = ((Date.now() - start) / 1000).toFixed(2);
-    return { success: false, error: err.message, elapsed };
+    return { success: false, error_code: err.code, error_msg: err.message, elapsed };
   }
 }
 
@@ -114,9 +117,11 @@ async function main() {
           dbname,
           pc_ip: pcIp,
           result_code: resultServer.success,
-          result_msg: resultServer.success ? '' : resultServer.error,
+          error_code: resultServer.success ? '' : resultServer.error_code,
+          error_msg: resultServer.success ? '' : resultServer.error_msg,
           result_code_db: resultDB.success,
-          result_msg_db: resultDB.success ? '' : resultDB.error,
+          error_code_db: resultDB.success ? '' : resultDB.error_code,
+          error_msg_db: resultDB.success ? '' : resultDB.error_msg,
           collapsed_time: resultServer.elapsed,
           collapsed_time_db: resultDB.elapsed
         };
