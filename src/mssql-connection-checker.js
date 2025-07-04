@@ -97,13 +97,9 @@ async function unitWorkByServer(row) {
   const port = row.port
   const title = row.corp +'_'+ row.proc
 
-  const resultServer = await checkMssqlConnection({ ip: server_ip, port: port});
-  const err_message_server = resultServer.success ? '' : `[${resultServer.error_code}] ${resultServer.error_msg}`
-  console.log(`[${row.server_ip}:${row.port}][${title}][default] \t\t→ [${resultServer.success ? '✅ 성공' : '❌ 실패'}] ${err_message_server}`);
-
-  const resultDB = await checkMssqlConnection({ dbname: dbname, ip: server_ip, port: port});
-  const err_message_db = resultDB.success ? '' : `[${resultDB.error_code}] ${resultDB.error_msg}`
-  console.log(`[${row.server_ip}:${row.port}][${title}][${row.dbname}] \t→ [${resultDB.success ? '✅ 성공' : '❌ 실패'}] ${err_message_db}`);
+  const result = await checkMssqlConnection({ dbname: dbname, ip: server_ip, port: port});
+  const err_message = result.success ? '' : `[${result.error_code}] ${result.error_msg}`
+  console.log(`[${row.server_ip}:${row.port}][${row.env_type}DB][${title}][${row.dbname}] \t→ [${result.success ? '✅ 성공' : '❌ 실패'}] ${err_message}`);
 
   const body = {
     check_unit_id: CHECK_UNIT_ID, 
@@ -111,14 +107,10 @@ async function unitWorkByServer(row) {
     port,
     dbname,
     pc_ip: LOCAL_PC_IP,
-    result_code: resultServer.success,
-    error_code: resultServer.success ? '' : resultServer.error_code,
-    error_msg: resultServer.success ? '' : resultServer.error_msg,
-    result_code_db: resultDB.success,
-    error_code_db: resultDB.success ? '' : resultDB.error_code,
-    error_msg_db: resultDB.success ? '' : resultDB.error_msg,
-    collapsed_time: resultServer.elapsed,
-    collapsed_time_db: resultDB.elapsed
+    result_code: result.success,
+    error_code: result.success ? '' : result.error_code,
+    error_msg: result.success ? '' : result.error_msg,
+    collapsed_time: result.elapsed
   };
 
   try {
@@ -136,7 +128,7 @@ async function main() {
 
   // CSV 파싱
   fs.createReadStream(CSV_PATH)
-    .pipe(csv(['dbname', 'server_ip', 'port', 'corp', 'proc']))
+    .pipe(csv(['dbname', 'server_ip', 'port', 'corp', 'proc', 'env_type']))
     .on('data', (row) => {
       // 공백 제거
       Object.keys(row).forEach(k => row[k] = row[k].trim());
