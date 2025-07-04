@@ -21,7 +21,7 @@ function parseArgs() {
 }
 
 const args = parseArgs();
-const CSV_PATH = args.c;
+const CSV_PATH = args.csv;
 const TIMEOUT_SEC = parseInt(args.t) ? parseInt(args.t) * 1000 : 3000;
 const API_URL = process.env.API_URL;
 const CHECK_UNIT_ID = Date.now();
@@ -35,7 +35,7 @@ if (!CSV_PATH ) {
 
   console.error();
   console.error('==================================== 파라미터를 정상적으로 지정해 주세요! ========================================');
-  console.error('파라미터: -c  [필수] csv파일경로');
+  console.error('파라미터: -csv  [필수] csv파일경로');
   console.error('          -t  [선택] 타임아웃(초) (기본값: 3) ');
   console.error();
   console.error('사용법: node src/server-telnet-checker.js -csv {csv파일경로} [ -t {타입아웃(초)}]');
@@ -67,7 +67,7 @@ async function checkPort(ip, port) {
     let error_msg = '';
     const start = Date.now();
 
-    socket.setTimeout(timeout);
+    socket.setTimeout(TIMEOUT_SEC);
 
     socket.on('connect', () => {
       const elapsed = ((Date.now() - start) / 1000).toFixed(2);
@@ -120,7 +120,6 @@ async function unitWorkByServer(row) {
 
   const body = {
     CHECK_UNIT_ID, 
-    CHECK_METHOD,
     server_ip,
     port,
     pc_ip: LOCAL_PC_IP,
@@ -131,7 +130,7 @@ async function unitWorkByServer(row) {
   };
 
   try {
-    const res = await axios.post(API_URL, body, { timeout: 3000 }); // 3초 타임아웃
+    const res = await axios.post(API_URL+'/telnet', body, { timeout: 3000 }); // 3초 타임아웃
   } catch (err) {
     console.error(`체크결과 기록 API (${API_URL}) 전송 실패`);
   }

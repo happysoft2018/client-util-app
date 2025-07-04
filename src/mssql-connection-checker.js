@@ -22,13 +22,12 @@ function parseArgs() {
 }
 
 const args = parseArgs();
-const CSV_PATH = args.c;
+const CSV_PATH = args.csv;
 const DB_USER = args.u;
 const DB_PASSWORD = args.p;
 const TIMEOUT_SEC = parseInt(args.t) ? parseInt(args.t) * 1000 : 5000;
 const API_URL = process.env.API_URL;
 const CHECK_UNIT_ID = Date.now();
-const CHECK_METHOD = 'DB_CONN';
 const LOCAL_PC_IP = getLocalIp();
 const REGEX_IP_PATTERN = /^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/
 const REGEX_PORT_PATTERN = /^[0-9]{4}$/
@@ -38,7 +37,7 @@ if (!CSV_PATH || !DB_USER || !DB_PASSWORD) {
 
   console.error();
   console.error('==================================== 파라미터를 정상적으로 지정해 주세요! ========================================');
-  console.error('파라미터: -c  [필수] csv파일경로');
+  console.error('파라미터: -csv  [필수] csv파일경로');
   console.error('          -u  [필수] DB계정ID');
   console.error('          -p  [필수] 패스워드');
   console.error('          -t  [선택] 타임아웃(초) (기본값: 5) ');
@@ -106,7 +105,6 @@ async function unitWorkByServer(row) {
 
   const body = {
     CHECK_UNIT_ID, 
-    CHECK_METHOD,
     server_ip,
     port,
     dbname,
@@ -122,7 +120,7 @@ async function unitWorkByServer(row) {
   };
 
   try {
-    const res = await axios.post(API_URL, body, { timeout: 3000 }); // 3초 타임아웃
+    const res = await axios.post(API_URL+'/db', body, { timeout: 3000 }); // 3초 타임아웃
   } catch (err) {
     console.error(`체크결과 기록 API (${API_URL}) 전송 실패`);
   }
