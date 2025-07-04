@@ -112,10 +112,10 @@ async function unitWorkByServer(row) {
 
   const server_ip = row.server_ip
   const port = row.port
-  const title = row.corp +'_'+ row.proc
   
   const result = await checkPort(server_ip, port);
-  console.log(`🔎 ${server_ip}:${port} ${title} → ${result.isConnected ? '✅ 연결됨' : '❌ 실패'}`);
+  const err_message = result.isConnected ? '' : `[${result.error_code}] ${result.error_msg}`
+  console.log(`[${server_ip}:${port}][${row.corp}] ---> [${result.isConnected ? '✅ 연결됨' : '❌ 실패'}] ${err_message}`);
 
   const body = {
     check_unit_id: CHECK_UNIT_ID, 

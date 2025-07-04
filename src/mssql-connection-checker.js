@@ -96,12 +96,14 @@ async function unitWorkByServer(row) {
   const server_ip = row.server_ip
   const port = row.port
   const title = row.corp +'_'+ row.proc
-  
+
   const resultServer = await checkMssqlConnection({ ip: server_ip, port: port});
-  console.log(`[${row.server_ip},${row.port}] -----> `, resultServer);
+  const err_message_server = resultServer.success ? '' : `[${resultServer.error_code}] ${resultServer.error_msg}`
+  console.log(`[${row.server_ip}:${row.port}][${title}][default] ---> [${resultServer.success ? '✅ 연결됨' : '❌ 실패'}] ${err_message_server}`);
 
   const resultDB = await checkMssqlConnection({ dbname: dbname, ip: server_ip, port: port});
-  console.log(`[${row.server_ip},${row.port}][${row.dbname}][${title}] -----> `, resultDB);
+  const err_message_db = resultDB.success ? '' : `[${resultDB.error_code}] ${resultDB.error_msg}`
+  console.log(`[${row.server_ip}:${row.port}][${title}][${row.dbname}] ---> [${resultDB.success ? '✅ 연결됨' : '❌ 실패'}] ${err_message_db}`);
 
   const body = {
     check_unit_id: CHECK_UNIT_ID, 
