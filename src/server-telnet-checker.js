@@ -21,7 +21,7 @@ function parseArgs() {
 }
 
 const args = parseArgs();
-const CSV_PATH = args.csv;
+const CSV_PATH = args.f;
 const TIMEOUT_SEC = parseInt(args.t) ? parseInt(args.t) * 1000 : 3000;
 const API_URL = process.env.API_URL;
 const CHECK_UNIT_ID = Date.now();
@@ -34,13 +34,13 @@ if (!CSV_PATH ) {
 
   console.error();
   console.error('==================================== 파라미터를 정상적으로 지정해 주세요! ========================================');
-  console.error('파라미터: -csv  [필수] csv파일경로');
+  console.error('파라미터: -f  [필수] csv파일경로');
   console.error('          -t  [선택] 타임아웃(초) (기본값: 3) ');
   console.error();
-  console.error('사용법: node src/server-telnet-checker.js -csv {csv파일경로} [ -t {타입아웃(초)}]');
+  console.error('사용법: node src/server-telnet-checker.js -f {csv파일경로} [ -t {타임아웃(초)}]');
   console.error()
-  console.error('   ex)  node src/server-telnet-checker.js -csv c:\\temp\서버목록.csv');
-  console.error('        node src/server-telnet-checker.js -csv c:\\temp\서버목록.csv -t 5 ');
+  console.error('   ex)  node src/server-telnet-checker.js -f c:\\temp\서버목록.csv');
+  console.error('        node src/server-telnet-checker.js -f c:\\temp\서버목록.csv -t 5 ');
   console.error('==================================================================================================================');
   process.exit(1);
 }
@@ -115,7 +115,7 @@ async function unitWorkByServer(row) {
   
   const result = await checkPort(server_ip, port);
   const err_message = result.isConnected ? '' : `[${result.error_code}] ${result.error_msg}`
-  console.log(`[${server_ip}:${port}][${row.corp}] ---> [${result.isConnected ? '✅ 연결됨' : '❌ 실패'}] ${err_message}`);
+  console.log(`[${server_ip}:${port}][${row.corp}] \t→ [${result.isConnected ? '✅ 연결됨' : '❌ 실패'}] ${err_message}`);
 
   const body = {
     check_unit_id: CHECK_UNIT_ID, 

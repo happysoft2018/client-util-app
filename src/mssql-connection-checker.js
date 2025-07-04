@@ -22,7 +22,7 @@ function parseArgs() {
 }
 
 const args = parseArgs();
-const CSV_PATH = args.csv;
+const CSV_PATH = args.f;
 const DB_USER = args.u;
 const DB_PASSWORD = args.p;
 const TIMEOUT_SEC = parseInt(args.t) ? parseInt(args.t) * 1000 : 5000;
@@ -37,15 +37,15 @@ if (!CSV_PATH || !DB_USER || !DB_PASSWORD) {
 
   console.error();
   console.error('==================================== 파라미터를 정상적으로 지정해 주세요! ========================================');
-  console.error('파라미터: -csv  [필수] csv파일경로');
+  console.error('파라미터: -f  [필수] csv파일경로');
   console.error('          -u  [필수] DB계정ID');
   console.error('          -p  [필수] 패스워드');
   console.error('          -t  [선택] 타임아웃(초) (기본값: 5) ');
   console.error();
-  console.error('사용법: node src/mssql-connection-checker.js -csv {csv파일경로} -u {DB계정ID} -p {패스워드} [ -t {타입아웃(초)}]');
+  console.error('사용법: node src/mssql-connection-checker.js -f {csv파일경로} -u {DB계정ID} -p {패스워드} [ -t {타입아웃(초)}]');
   console.error()
-  console.error('   ex)  node src/mssql-connection-checker.js -csv c:\\temp\DB목록.csv -u guest -p 1111');
-  console.error('        node src/mssql-connection-checker.js -csv c:\\temp\DB목록.csv -u guest -p 1111 -t 7 ');
+  console.error('   ex)  node src/mssql-connection-checker.js -f c:\\temp\DB목록.csv -u guest -p 1111');
+  console.error('        node src/mssql-connection-checker.js -f c:\\temp\DB목록.csv -u guest -p 1111 -t 7 ');
   console.error('==================================================================================================================');
   process.exit(1);
 }
@@ -99,11 +99,11 @@ async function unitWorkByServer(row) {
 
   const resultServer = await checkMssqlConnection({ ip: server_ip, port: port});
   const err_message_server = resultServer.success ? '' : `[${resultServer.error_code}] ${resultServer.error_msg}`
-  console.log(`[${row.server_ip}:${row.port}][${title}][default] ---> [${resultServer.success ? '✅ 연결됨' : '❌ 실패'}] ${err_message_server}`);
+  console.log(`[${row.server_ip}:${row.port}][${title}][default] \t\t→ [${resultServer.success ? '✅ 성공' : '❌ 실패'}] ${err_message_server}`);
 
   const resultDB = await checkMssqlConnection({ dbname: dbname, ip: server_ip, port: port});
   const err_message_db = resultDB.success ? '' : `[${resultDB.error_code}] ${resultDB.error_msg}`
-  console.log(`[${row.server_ip}:${row.port}][${title}][${row.dbname}] ---> [${resultDB.success ? '✅ 연결됨' : '❌ 실패'}] ${err_message_db}`);
+  console.log(`[${row.server_ip}:${row.port}][${title}][${row.dbname}] \t→ [${resultDB.success ? '✅ 성공' : '❌ 실패'}] ${err_message_db}`);
 
   const body = {
     check_unit_id: CHECK_UNIT_ID, 
