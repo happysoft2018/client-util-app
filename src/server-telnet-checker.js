@@ -115,7 +115,7 @@ async function unitWorkByServer(row) {
   
   const result = await checkPort(server_ip, port);
   const err_message = result.isConnected ? '' : `[${result.error_code}] ${result.error_msg}`
-  console.log(`[${server_ip}:${port}][${row.corp}_${row.proc}] \t→ [${result.isConnected ? '✅ 연결됨' : '❌ 실패'}] ${err_message}`);
+  console.log(`[${server_ip}:${port}][${row.env_type}][${row.corp}_${row.proc}] \t→ [${result.isConnected ? '✅ 연결됨' : '❌ 실패'}] ${err_message}`);
 
   const body = {
     check_unit_id: CHECK_UNIT_ID, 
@@ -143,7 +143,7 @@ async function main() {
 
   // CSV 파싱
   fs.createReadStream(CSV_PATH)
-    .pipe(csv(['server_ip', 'port', 'hostname', 'usage_type', 'env_type', 'corp', 'proc']))
+    .pipe(csv(['server_ip', 'port', 'hostname', 'usage_type', 'env_type', 'corp', 'proc', 'role_type']))
     .on('data', (row) => {
       // 공백 제거
       Object.keys(row).forEach(k => row[k] = row[k].trim());
