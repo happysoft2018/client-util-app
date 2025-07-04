@@ -25,7 +25,6 @@ const CSV_PATH = args.csv;
 const TIMEOUT_SEC = parseInt(args.t) ? parseInt(args.t) * 1000 : 3000;
 const API_URL = process.env.API_URL;
 const CHECK_UNIT_ID = Date.now();
-const CHECK_METHOD = 'TELNET';
 const LOCAL_PC_IP = getLocalIp();
 const REGEX_IP_PATTERN = /^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/
 const REGEX_PORT_PATTERN = /^[0-9]{4}$/
@@ -119,7 +118,7 @@ async function unitWorkByServer(row) {
   console.log(`🔎 ${server_ip}:${port} ${title} → ${result.isConnected ? '✅ 연결됨' : '❌ 실패'}`);
 
   const body = {
-    CHECK_UNIT_ID, 
+    check_unit_id: CHECK_UNIT_ID, 
     server_ip,
     port,
     pc_ip: LOCAL_PC_IP,

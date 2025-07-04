@@ -104,7 +104,7 @@ async function unitWorkByServer(row) {
   console.log(`[${row.server_ip},${row.port}][${row.dbname}][${title}] -----> `, resultDB);
 
   const body = {
-    CHECK_UNIT_ID, 
+    check_unit_id: CHECK_UNIT_ID, 
     server_ip,
     port,
     dbname,
