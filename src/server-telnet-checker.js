@@ -82,7 +82,7 @@ async function checkPort(ip, port) {
     socket.on('timeout', () => {
       const elapsed = ((Date.now() - start) / 1000).toFixed(2);
       error_code = 'ETIMEDOUT';
-      error_msg = 'Connection timed out';
+      error_msg = `Connection timed out in ${TIMEOUT_SEC}ms`;
       socket.destroy();
       resolve({
         isConnected: false,
