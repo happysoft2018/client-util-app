@@ -90,7 +90,7 @@ async function checkMssqlConnection({ ip, port, dbname }) {
   }
 }
 
-async function unitWorkByServer(row) {
+async function unitWorkByServer(row, check_unit_id) {
 
   const dbname = row.dbname
   const server_ip = row.server_ip
@@ -101,12 +101,15 @@ async function unitWorkByServer(row) {
   const err_message = result.success ? '' : `[${result.error_code}] ${result.error_msg}`
   console.log(`[${row.server_ip}:${row.port}][${row.env_type}DB][${title}][${row.dbname}] \t→ [${result.success ? '✅ 성공' : '❌ 실패'}] ${err_message}`);
 
+  if(check_unit_id === 0) {
+    return;
+  } 
+
   const body = {
-    check_unit_id: CHECK_UNIT_ID, 
+    check_unit_id, 
     server_ip,
     port,
     dbname,
-    pc_ip: LOCAL_PC_IP,
     result_code: result.success,
     error_code: result.success ? '' : result.error_code,
     error_msg: result.success ? '' : result.error_msg,
@@ -114,7 +117,7 @@ async function unitWorkByServer(row) {
   };
 
   try {
-    const res = await axios.post(API_URL+'/db', body, { timeout: 3000 }); // 3초 타임아웃
+    await axios.post(API_URL+'/db-dtl', body, { timeout: 3000 }); // 3초 타임아웃
   } catch (err) {
     console.error(`체크결과 기록 API (${API_URL}) 전송 실패`);
   }
@@ -136,6 +139,9 @@ async function main() {
     })
     .on('end', async () => {
 
+      const result = await axios.post(API_URL+'/master', {check_method: 'DB_CONN', pc_ip: LOCAL_PC_IP}, { timeout: 3000 });
+      const check_unit_id = result.data.insertId ? result.data.insertId : 0;
+
       for (const row of rows) {
 
         if(!REGEX_IP_PATTERN.test(row.server_ip)) {
@@ -145,7 +151,7 @@ async function main() {
           console.log(`[${row.port}] is not valid port format`);
         }
         else {
-          await unitWorkByServer(row);
+          await unitWorkByServer(row, check_unit_id);
         }
         
       }

@@ -24,7 +24,6 @@ const args = parseArgs();
 const CSV_PATH = args.f;
 const TIMEOUT_SEC = parseInt(args.t) ? parseInt(args.t) * 1000 : 3000;
 const API_URL = process.env.API_URL;
-const CHECK_UNIT_ID = Date.now();
 const LOCAL_PC_IP = getLocalIp();
 const REGEX_IP_PATTERN = /^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/
 const REGEX_PORT_PATTERN = /^[0-9]{4}$/
@@ -108,7 +107,7 @@ async function checkPort(ip, port) {
   });
 }
   
-async function unitWorkByServer(row) {
+async function unitWorkByServer(row, check_unit_id) {
 
   const server_ip = row.server_ip
   const port = row.port
@@ -117,11 +116,14 @@ async function unitWorkByServer(row) {
   const err_message = result.isConnected ? '' : `[${result.error_code}] ${result.error_msg}`
   console.log(`[${server_ip}:${port}][${row.env_type}${row.usage_type}][${row.corp}_${row.proc}] \t→ [${result.isConnected ? '✅ 연결됨' : '❌ 실패'}] ${err_message}`);
 
+  if(check_unit_id === 0) {
+    return;
+  } 
+
   const body = {
-    check_unit_id: CHECK_UNIT_ID, 
+    check_unit_id, 
     server_ip,
     port,
-    pc_ip: LOCAL_PC_IP,
     result_code: result.isConnected,
     error_code: result.error_code,
     error_msg: result.error_msg,
@@ -129,7 +131,7 @@ async function unitWorkByServer(row) {
   };
 
   try {
-    const res = await axios.post(API_URL+'/telnet', body, { timeout: 3000 }); // 3초 타임아웃
+    await axios.post(API_URL+'/telnet-dtl', body, { timeout: 3000 }); // 3초 타임아웃
   } catch (err) {
     console.error(`체크결과 기록 API (${API_URL}) 전송 실패`);
   }
@@ -151,6 +153,9 @@ async function main() {
     })
     .on('end', async () => {
 
+      const result = await axios.post(API_URL+'/master', {check_method: 'TELNET', pc_ip: LOCAL_PC_IP}, { timeout: 3000 });
+      const check_unit_id = result.data.insertId ? result.data.insertId : 0;
+
       for (const row of rows) {
 
         if(!REGEX_IP_PATTERN.test(row.server_ip)) {
@@ -160,7 +165,7 @@ async function main() {
           console.log(`[${row.port}] is not valid port format`);
         }
         else {
-          await unitWorkByServer(row);
+          await unitWorkByServer(row, check_unit_id);
         }
         
       }
