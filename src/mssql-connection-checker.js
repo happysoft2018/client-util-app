@@ -62,14 +62,14 @@ function getLocalIp() {
   return 'unknown';
 }
 
-async function checkMssqlConnection({ ip, port, dbname }) {
+async function checkMssqlConnection({ ip, port, db_name }) {
 
   const config = {
     user: DB_USER,
     password: DB_PASSWORD,
     server: ip,
     port: parseInt(port, 10),
-    database: dbname,
+    database: db_name,
     options: { encrypt: true, trustServerCertificate: true },
     connectionTimeout: TIMEOUT_SEC, // 타임아웃
     requestTimeout: TIMEOUT_SEC     // 타임아웃
@@ -92,14 +92,14 @@ async function checkMssqlConnection({ ip, port, dbname }) {
 
 async function unitWorkByServer(row, check_unit_id) {
 
-  const dbname = row.dbname
+  const db_name = row.db_name
   const server_ip = row.server_ip
   const port = row.port
   const title = row.corp +'_'+ row.proc
 
-  const result = await checkMssqlConnection({ dbname: dbname, ip: server_ip, port: port});
+  const result = await checkMssqlConnection({ db_name: db_name, ip: server_ip, port: port});
   const err_message = result.success ? '' : `[${result.error_code}] ${result.error_msg}`
-  console.log(`[${row.server_ip}:${row.port}][${row.env_type}DB][${title}][${row.dbname}] \t→ [${result.success ? '✅ 성공' : '❌ 실패'}] ${err_message}`);
+  console.log(`[${row.server_ip}:${row.port}][${row.env_type}DB][${title}][${row.db_name}] \t→ [${result.success ? '✅ 성공' : '❌ 실패'}] ${err_message}`);
 
   if(check_unit_id === 0) {
     return;
@@ -109,7 +109,7 @@ async function unitWorkByServer(row, check_unit_id) {
     check_unit_id, 
     server_ip,
     port,
-    dbname,
+    db_name,
     result_code: result.success,
     error_code: result.success ? '' : result.error_code,
     error_msg: result.success ? '' : result.error_msg,
@@ -131,7 +131,7 @@ async function main() {
 
   // CSV 파싱
   fs.createReadStream(CSV_PATH)
-    .pipe(csv(['dbname', 'server_ip', 'port', 'corp', 'proc', 'env_type']))
+    .pipe(csv(['db_name', 'server_ip', 'port', 'corp', 'proc', 'env_type']))
     .on('data', (row) => {
       // 공백 제거
       Object.keys(row).forEach(k => row[k] = row[k].trim());
