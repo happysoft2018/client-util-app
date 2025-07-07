@@ -68,6 +68,17 @@ if (!fs.existsSync(CSV_PATH)) {
   process.exit(1);
 }
 
+// CSV 경로가 파일이 아닐 때(디렉토리 등)
+if (!fs.statSync(CSV_PATH).isFile()) {
+  console.error();
+  console.error('==================================== CSV 경로가 파일이 아닙니다! ========================================' );
+  console.error(`지정된 경로: ${CSV_PATH}`);
+  console.error();
+  console.error('파일 경로가 맞는지, 디렉토리를 지정하지 않았는지 확인해 주세요.');
+  console.error('==================================================================================================================');
+  process.exit(1);
+}
+
 // CSV 파일 확장자 체크
 if (!CSV_PATH.toLowerCase().endsWith('.csv')) {
   console.error();
@@ -172,9 +183,9 @@ async function unitWorkByServer(row, check_unit_id) {
   };
 
   try {
-    await axios.post(API_URL+'/db-dtl', body, { timeout: 3000 }); // 3초 타임아웃
+    await axios.post(API_URL+'/db', body, { timeout: 3000 }); // 3초 타임아웃
   } catch (err) {
-    console.error(`체크결과 기록 API (${API_URL}) 전송 실패`);
+    console.error(`체크결과 기록 API (${API_URL}/db) 전송 실패`);
   }
 
 }
