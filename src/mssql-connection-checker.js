@@ -176,6 +176,7 @@ async function unitWorkByServer(row, check_unit_id) {
     server_ip,
     port,
     db_name,
+    db_userid: DB_USER,
     result_code: result.success,
     error_code: result.success ? '' : result.error_code,
     error_msg: result.success ? '' : result.error_msg,
