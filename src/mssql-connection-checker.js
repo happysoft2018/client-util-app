@@ -42,7 +42,12 @@ if (!CSV_PATH || !DB_USER || !DB_PASSWORD) {
   console.error('          -p  [필수] 패스워드');
   console.error('          -t  [선택] 타임아웃(초) (기본값: 5) ');
   console.error();
-  console.error('사용법: node src/mssql-connection-checker.js -f {csv파일경로} -u {DB계정ID} -p {패스워드} [ -t {타입아웃(초)}]');
+  console.error('기능: MSSQL 데이터베이스 연결 테스트 및 권한 체크');
+  console.error('      - 기본 연결 테스트');
+  console.error('      - SELECT/INSERT/UPDATE/DELETE 권한 체크');
+  console.error('      - 테스트 테이블 생성/삭제를 통한 실제 권한 검증');
+  console.error();
+  console.error('사용법: node src/mssql-connection-checker.js -f {csv파일경로} -u {DB계정ID} -p {패스워드} [ -t {타임아웃(초)}]');
   console.error()
   console.error('   ex)  node src/mssql-connection-checker.js -f c:\\temp\DB목록.csv -u guest -p 1111');
   console.error('        node src/mssql-connection-checker.js -f c:\\temp\DB목록.csv -u guest -p 1111 -t 7 ');
@@ -146,13 +151,93 @@ async function checkMssqlConnection({ ip, port, db_name }) {
   try {
 
     const pool = await mssql.connect(config);
+    
+    // 기본 연결 성공
+    const result = { 
+      success: true, 
+      elapsed: 0,
+      permissions: {
+        select: false,
+        insert: false,
+        update: false,
+        delete: false
+      }
+    };
+
+    // 권한 체크를 위한 테스트 테이블 생성 시도
+    const testTableName = `temp_permission_test_${Date.now()}`;
+    
+    try {
+      // SELECT 권한 체크 - 시스템 테이블 조회
+      try {
+        await pool.request().query('SELECT TOP 1 1 FROM INFORMATION_SCHEMA.TABLES');
+        result.permissions.select = true;
+      } catch (err) {
+        console.log(`  └ SELECT 권한 없음: ${err.message.substring(0, 50)}...`);
+      }
+
+      // CREATE TABLE 및 INSERT 권한 체크
+      try {
+        await pool.request().query(`CREATE TABLE ${testTableName} (id INT, test_data NVARCHAR(50))`);
+        
+        try {
+          // INSERT 권한 체크
+          await pool.request().query(`INSERT INTO ${testTableName} (id, test_data) VALUES (1, 'test')`);
+          result.permissions.insert = true;
+
+          // UPDATE 권한 체크
+          try {
+            await pool.request().query(`UPDATE ${testTableName} SET test_data = 'updated' WHERE id = 1`);
+            result.permissions.update = true;
+          } catch (err) {
+            console.log(`  └ UPDATE 권한 없음: ${err.message.substring(0, 50)}...`);
+          }
+
+          // DELETE 권한 체크
+          try {
+            await pool.request().query(`DELETE FROM ${testTableName} WHERE id = 1`);
+            result.permissions.delete = true;
+          } catch (err) {
+            console.log(`  └ DELETE 권한 없음: ${err.message.substring(0, 50)}...`);
+          }
+
+        } catch (err) {
+          console.log(`  └ INSERT 권한 없음: ${err.message.substring(0, 50)}...`);
+        }
+
+        // 테스트 테이블 삭제
+        try {
+          await pool.request().query(`DROP TABLE ${testTableName}`);
+        } catch (err) {
+          // 테이블 삭제 실패는 무시 (권한 없을 수도 있음)
+        }
+
+      } catch (err) {
+        console.log(`  └ CREATE TABLE 권한 없음 (INSERT/UPDATE/DELETE 테스트 불가): ${err.message.substring(0, 50)}...`);
+      }
+
+    } catch (permErr) {
+      console.log(`  └ 권한 체크 중 오류: ${permErr.message.substring(0, 50)}...`);
+    }
+
     await pool.close();
-    const elapsed = ((Date.now() - start) / 1000).toFixed(2);
-    return { success: true, elapsed };
+    result.elapsed = ((Date.now() - start) / 1000).toFixed(2);
+    return result;
 
   } catch (err) {
     const elapsed = ((Date.now() - start) / 1000).toFixed(2);
-    return { success: false, error_code: err.code, error_msg: err.message, elapsed };
+    return { 
+      success: false, 
+      error_code: err.code, 
+      error_msg: err.message, 
+      elapsed,
+      permissions: {
+        select: false,
+        insert: false,
+        update: false,
+        delete: false
+      }
+    };
   }
 }
 
@@ -165,12 +250,31 @@ async function unitWorkByServer(row, check_unit_id) {
 
   const result = await checkMssqlConnection({ db_name: db_name, ip: server_ip, port: port});
   const err_message = result.success ? '' : `[${result.error_code}] ${result.error_msg}`
-  console.log(`[${row.server_ip}:${row.port}][${row.env_type}DB][${title}][${row.db_name}] \t→ [${result.success ? '✅ 성공' : '❌ 실패'}] ${err_message}`);
+  
+  // 권한 정보 표시
+  let permissionStatus = '';
+  if (result.success) {
+    const perms = result.permissions;
+    const permArray = [];
+    if (perms.select) permArray.push('SELECT');
+    if (perms.insert) permArray.push('INSERT');
+    if (perms.update) permArray.push('UPDATE');
+    if (perms.delete) permArray.push('DELETE');
+    
+    if (permArray.length > 0) {
+      permissionStatus = ` [권한: ${permArray.join(', ')}]`;
+    } else {
+      permissionStatus = ` [권한: 없음]`;
+    }
+  }
+  
+  console.log(`[${row.server_ip}:${row.port}][${row.env_type}DB][${title}][${row.db_name}] \t→ [${result.success ? '✅ 성공' : '❌ 실패'}]${permissionStatus} ${err_message}`);
 
   if(check_unit_id === 0) {
     return;
   } 
 
+  // API 전송용 데이터에 권한 정보 추가
   const body = {
     check_unit_id, 
     server_ip,
@@ -180,7 +284,12 @@ async function unitWorkByServer(row, check_unit_id) {
     result_code: result.success,
     error_code: result.success ? '' : result.error_code,
     error_msg: result.success ? '' : result.error_msg,
-    collapsed_time: result.elapsed
+    collapsed_time: result.elapsed,
+    // 권한 정보 추가
+    perm_select: result.permissions.select,
+    perm_insert: result.permissions.insert,
+    perm_update: result.permissions.update,
+    perm_delete: result.permissions.delete
   };
 
   try {
