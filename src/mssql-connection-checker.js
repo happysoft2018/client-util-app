@@ -27,7 +27,15 @@ const DB_USER = args.u;
 const DB_PASSWORD = args.p;
 const TIMEOUT_SEC = parseInt(args.t) ? parseInt(args.t) * 1000 : 5000;
 const API_URL = process.env.API_URL;
-const CHECK_UNIT_ID = Date.now();
+  // 현지 시각 기반 체크 단위 ID 생성
+  const now = new Date();
+  const CHECK_UNIT_ID = now.getFullYear() + 
+                       String(now.getMonth() + 1).padStart(2, '0') + 
+                       String(now.getDate()).padStart(2, '0') + 
+                       String(now.getHours()).padStart(2, '0') + 
+                       String(now.getMinutes()).padStart(2, '0') + 
+                       String(now.getSeconds()).padStart(2, '0') + 
+                       String(now.getMilliseconds()).padStart(3, '0');
 const LOCAL_PC_IP = getLocalIp();
 const REGEX_IP_PATTERN = /^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/
 const REGEX_PORT_PATTERN = /^[0-9]{4}$/

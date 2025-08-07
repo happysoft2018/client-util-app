@@ -84,8 +84,11 @@ async function main() {
     })
     .on('end', async () => {
       
+      // 현지 시각으로 로그 디렉토리 생성
       const now = new Date();
-      const yyyymmdd = now.toISOString().slice(0, 10).replace(/-/g, '');
+      const yyyymmdd = now.getFullYear() + 
+                      String(now.getMonth() + 1).padStart(2, '0') + 
+                      String(now.getDate()).padStart(2, '0');
       const logDir = path.join('log', yyyymmdd);
 
       if (!fs.existsSync(logDir)) {
@@ -104,8 +107,14 @@ async function main() {
           const result = await request.query(query);
           totalCount += result.recordset.length;
 
-          // 결과를 로그파일에 저장
-          const timestamp = new Date().toISOString().replace(/[-:T.Z]/g, '').slice(0, 14);
+          // 결과를 로그파일에 저장 (현지 시각 사용)
+          const timestampNow = new Date();
+          const timestamp = timestampNow.getFullYear() + 
+                           String(timestampNow.getMonth() + 1).padStart(2, '0') + 
+                           String(timestampNow.getDate()).padStart(2, '0') + 
+                           String(timestampNow.getHours()).padStart(2, '0') + 
+                           String(timestampNow.getMinutes()).padStart(2, '0') + 
+                           String(timestampNow.getSeconds()).padStart(2, '0');
           const logFile = path.join(logDir, `${argFileName}_${timestamp}.log`);
           fs.appendFileSync(logFile, JSON.stringify({ row, result: result.recordset }, null, 2) + '\n');
           console.log(`완료: ${JSON.stringify(row)}`);
