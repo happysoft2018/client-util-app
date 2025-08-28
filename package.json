@@ -13,5 +13,18 @@
     "mssql": "^9.0.1",
     "mysql2": "^3.4.0",
     "telnet-client": "^2.2.5"
+  },
+  "devDependencies": {
+    "pkg": "^5.8.1"
+  },
+  "bin": {
+    "my-node-client-util-app": "src/mssql-connect.js"
+  },
+  "pkg": {
+    "scripts": ["src/mssql-connect.js"],
+    "targets": [
+      "node18-win-x64"
+    ],
+    "outputPath": "dist"
   }
 }
