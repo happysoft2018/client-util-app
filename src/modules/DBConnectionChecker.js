@@ -1,6 +1,5 @@
 const fs = require('fs');
 const csv = require('csv-parser');
-const axios = require('axios');
 const os = require('os');
 const DatabaseFactory = require('./database/DatabaseFactory');
 require('dotenv').config();
@@ -183,7 +182,17 @@ class DBConnectionChecker {
       };
 
       try {
-        await axios.post(this.apiUrl + '/db', body, { timeout: 3000 });
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 3000);
+        
+        await fetch(this.apiUrl + '/db', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body),
+          signal: controller.signal
+        });
+        
+        clearTimeout(timeoutId);
       } catch (err) {
         console.error(`Failed to send check result to API (${this.apiUrl}/db)`);
       }
@@ -235,12 +244,24 @@ class DBConnectionChecker {
           try {
             // API master registration
             if (this.apiUrl) {
-              const result = await axios.post(
-                this.apiUrl + '/master', 
-                { check_method: 'DB_CONN', pc_ip: this.localPcIp }, 
-                { timeout: 3000 }
-              );
-              checkUnitId = result.data.insertId ? result.data.insertId : 0;
+              try {
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 3000);
+                
+                const result = await fetch(this.apiUrl + '/master', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ check_method: 'DB_CONN', pc_ip: this.localPcIp }),
+                  signal: controller.signal
+                });
+                
+                clearTimeout(timeoutId);
+                const data = await result.json();
+                checkUnitId = data.insertId ? data.insertId : 0;
+              } catch (err) {
+                console.warn('⚠️  API master registration failed:', err.message);
+                checkUnitId = 0;
+              }
             }
 
             // Execute check for each server

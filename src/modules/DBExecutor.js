@@ -9,6 +9,19 @@ class DBExecutor {
   constructor(configManager) {
     this.configManager = configManager;
     this.templateDir = path.join(__dirname, '../../templet');
+    this.rl = require('readline').createInterface({
+      input: process.stdin,
+      output: process.stdout
+    });
+  }
+
+  async askQuestion(question, defaultValue = '') {
+    return new Promise((resolve) => {
+      const prompt = defaultValue ? `${question} (default: ${defaultValue}): ` : question;
+      this.rl.question(prompt, (answer) => {
+        resolve(answer.trim() || defaultValue);
+      });
+    });
   }
 
   getLocalIp() {
@@ -140,19 +153,38 @@ class DBExecutor {
     console.log(query);
     console.log('-'.repeat(30));
 
-    // Create DB connection
-    const selectedDbName = this.configManager.getDefaultConfig().sql.selectedDb;
+    // Select database from available databases
+    const availableDbs = this.configManager.getAvailableDbs();
+    if (availableDbs.length === 0) {
+      throw new Error('No databases configured. Please add database configurations to config/dbinfo.json');
+    }
+
+    console.log('\n🗄️  Available Databases:');
+    availableDbs.forEach((dbName, index) => {
+      const dbInfo = this.configManager.getDbConfig(dbName);
+      const dbType = this.configManager.getDbType(dbName);
+      console.log(`  ${index + 1}. ${dbName} (${dbType}) - ${dbInfo.server}:${dbInfo.port}/${dbInfo.database}`);
+    });
+
+    const dbChoice = await this.askQuestion(
+      `Select database to use (1-${availableDbs.length}): `
+    );
+    
+    const selectedDbIndex = parseInt(dbChoice) - 1;
+    if (selectedDbIndex < 0 || selectedDbIndex >= availableDbs.length) {
+      throw new Error('Invalid database selection');
+    }
+    
+    const selectedDbName = availableDbs[selectedDbIndex];
     const { remoteConnection } = await this.createConnections(selectedDbName);
     
-    if (selectedDbName) {
-      const dbConfig = this.configManager.getDbConfig(selectedDbName);
-      const dbType = this.configManager.getDbType(selectedDbName);
-      console.log(`\n🗄️  Database in use: ${selectedDbName}`);
-      console.log(`   DB type: ${dbType || 'MSSQL'}`);
-      console.log(`   Server: ${dbConfig.server}:${dbConfig.port}`);
-      console.log(`   Database: ${dbConfig.database}`);
-      console.log(`   Account: ${dbConfig.user}`);
-    }
+    const dbConfig = this.configManager.getDbConfig(selectedDbName);
+    const dbType = this.configManager.getDbType(selectedDbName);
+    console.log(`\n🗄️  Database in use: ${selectedDbName}`);
+    console.log(`   DB type: ${dbType || 'MSSQL'}`);
+    console.log(`   Server: ${dbConfig.server}:${dbConfig.port}`);
+    console.log(`   Database: ${dbConfig.database}`);
+    console.log(`   Account: ${dbConfig.user}`);
 
     try {
       // Parse CSV file

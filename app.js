@@ -77,13 +77,9 @@ class NodeUtilApp {
     console.log('='.repeat(40));
     
     try {
-      // Get default values from configuration
-      const defaultConfig = this.configManager.getDefaultConfig();
-      
       console.log('\n📁 CSV File Settings:');
       const csvPath = await this.askQuestion(
-        `CSV file path (default: ${defaultConfig.mssql.csvPath || 'input required'}): `,
-        defaultConfig.mssql.csvPath
+        'CSV file path: '
       );
       
       // DB type selection
@@ -103,28 +99,26 @@ class NodeUtilApp {
 
       console.log('\n🔐 Database Authentication Information:');
       const dbUser = await this.askQuestion(
-        `DB Account ID (default: ${defaultConfig.mssql.dbUser || 'input required'}): `,
-        defaultConfig.mssql.dbUser
+        'DB Account ID: '
       );
       
       const dbPassword = await this.askQuestion(
-        `DB Password (default: ${defaultConfig.mssql.dbPassword ? '***' : 'input required'}): `,
-        defaultConfig.mssql.dbPassword
+        'DB Password: '
       );
       
       console.log('\n⏱️  Timeout Settings:');
       const timeout = await this.askQuestion(
-        `Timeout (seconds) (default: ${defaultConfig.mssql.timeout || 5}): `,
-        defaultConfig.mssql.timeout || 5
+        'Timeout (seconds) (default: 5): ',
+        5
       );
 
       console.log('\n🚀 Starting database connection check...');
       console.log('-'.repeat(40));
       
       await this.dbConnectionChecker.run({
-        csvPath: csvPath || defaultConfig.mssql.csvPath,
-        dbUser: dbUser || defaultConfig.mssql.dbUser,
-        dbPassword: dbPassword || defaultConfig.mssql.dbPassword,
+        csvPath: csvPath,
+        dbUser: dbUser,
+        dbPassword: dbPassword,
         timeout: parseInt(timeout) || 5,
         dbType: selectedDbType.type
       });
@@ -145,25 +139,22 @@ class NodeUtilApp {
     console.log('='.repeat(40));
     
     try {
-      const defaultConfig = this.configManager.getDefaultConfig();
-      
       console.log('\n📁 CSV File Settings:');
       const csvPath = await this.askQuestion(
-        `CSV file path (default: ${defaultConfig.telnet.csvPath || 'input required'}): `,
-        defaultConfig.telnet.csvPath
+        'CSV file path: '
       );
       
       console.log('\n⏱️  Timeout Settings:');
       const timeout = await this.askQuestion(
-        `Timeout (seconds) (default: ${defaultConfig.telnet.timeout || 3}): `,
-        defaultConfig.telnet.timeout || 3
+        'Timeout (seconds) (default: 3): ',
+        3
       );
 
       console.log('\n🚀 Starting Telnet connection check...');
       console.log('-'.repeat(40));
       
       await this.telnetChecker.run({
-        csvPath: csvPath || defaultConfig.telnet.csvPath,
+        csvPath: csvPath,
         timeout: parseInt(timeout) || 3
       });
       
@@ -233,30 +224,31 @@ class NodeUtilApp {
     console.clear();
         console.log('⚙️  Configuration Management');
     console.log('='.repeat(40));
-    console.log('1. View Current Configuration');
-    console.log('2. Update Default Configuration');
-    console.log('3. Reset Configuration');
-    console.log('4. Check Environment Variables');
-    console.log('5. Return to Main Menu');
+    console.log('1. Check Environment Variables');
+    console.log('2. View Available Databases');
+    console.log('3. Return to Main Menu');
     console.log();
 
-    const choice = await this.askQuestion('Select (1-5): ');
+    const choice = await this.askQuestion('Select (1-3): ');
     
     switch(choice.trim()) {
       case '1':
-        this.configManager.showCurrentConfig();
-        break;
-      case '2':
-        await this.configManager.updateDefaultConfig(this);
-        break;
-      case '3':
-        this.configManager.resetConfig();
-        console.log('✅ Configuration has been reset.');
-        break;
-      case '4':
         this.configManager.showEnvironmentVariables();
         break;
-      case '5':
+      case '2':
+        const availableDbs = this.configManager.getAvailableDbs();
+        console.log('\n🗄️  Available Databases:');
+        if (availableDbs.length > 0) {
+          availableDbs.forEach((dbName, index) => {
+            const dbInfo = this.configManager.getDbConfig(dbName);
+            const dbType = this.configManager.getDbType(dbName);
+            console.log(`  ${index + 1}. ${dbName} (${dbType}) - ${dbInfo.server}:${dbInfo.port}/${dbInfo.database}`);
+          });
+        } else {
+          console.log('  No databases configured in config/dbinfo.json');
+        }
+        break;
+      case '3':
         await this.showMainMenu();
         return;
       default:
@@ -272,45 +264,12 @@ class NodeUtilApp {
     console.log('🔄 Run All Checks (Batch Processing)');
     console.log('='.repeat(40));
     
-    const defaultConfig = this.configManager.getDefaultConfig();
-    
-    try {
-      console.log('\n🚀 Running all checks sequentially...');
-      console.log('='.repeat(40));
-      
-      // 1. Telnet check
-      if (defaultConfig.telnet.csvPath && fs.existsSync(defaultConfig.telnet.csvPath)) {
-        console.log('\n1️⃣ Starting Telnet connection check...');
-        await this.telnetChecker.run({
-          csvPath: defaultConfig.telnet.csvPath,
-          timeout: defaultConfig.telnet.timeout || 3
-        });
-        console.log('✅ Telnet check completed');
-      } else {
-        console.log('⚠️  Telnet check: CSV file path not set or file does not exist.');
-      }
-      
-      // 2. DB connection check
-      if (defaultConfig.mssql.csvPath && fs.existsSync(defaultConfig.mssql.csvPath) && 
-          defaultConfig.mssql.dbUser && defaultConfig.mssql.dbPassword) {
-        console.log('\n2️⃣ Starting database connection check...');
-        await this.dbConnectionChecker.run({
-          csvPath: defaultConfig.mssql.csvPath,
-          dbUser: defaultConfig.mssql.dbUser,
-          dbPassword: defaultConfig.mssql.dbPassword,
-          timeout: defaultConfig.mssql.timeout || 5,
-          dbType: 'mssql' // default value
-        });
-        console.log('✅ Database check completed');
-      } else {
-        console.log('⚠️  Database check: Required configuration not completed.');
-      }
-      
-      console.log('\n🎉 All checks completed successfully!');
-      
-    } catch (error) {
-      console.error('❌ Error occurred during batch processing:', error.message);
-    }
+    console.log('\n⚠️  Batch processing requires manual configuration.');
+    console.log('Please use individual check functions to configure each check separately.');
+    console.log('\nAvailable checks:');
+    console.log('1. Database Connection and Permission Check');
+    console.log('2. Server Telnet Connection Check');
+    console.log('3. Database SQL Execution');
     
     await this.waitAndContinue();
     await this.showMainMenu();
