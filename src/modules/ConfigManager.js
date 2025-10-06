@@ -19,28 +19,28 @@ class ConfigManager {
       }
     } catch (error) {
       console.warn('⚠️  Error loading DB config file:', error.message);
-      this.dbConfig = { dbs: {} };
+      this.dbConfig = {};
     }
   }
 
   getDbConfig(dbName) {
-    return this.dbConfig.dbs[dbName];
+    return this.dbConfig[dbName];
   }
 
   getAvailableDbs() {
-    return Object.keys(this.dbConfig.dbs || {});
+    return Object.keys(this.dbConfig || {});
   }
 
   getSupportedDbTypes() {
     const dbTypes = new Set();
-    Object.values(this.dbConfig.dbs || {}).forEach(db => {
+    Object.values(this.dbConfig || {}).forEach(db => {
       dbTypes.add({ name: db.type.toUpperCase(), type: db.type });
     });
     return Array.from(dbTypes);
   }
 
   getDbType(dbName) {
-    const db = this.dbConfig.dbs[dbName];
+    const db = this.dbConfig[dbName];
     return db ? db.type : null;
   }
 

@@ -134,42 +134,40 @@ UserDB,192.168.1.102,5432,지사,CRM,STG,postgresql
 
 ```json
 {
-  "dbs": {
-    "sampleDB": {
-      "type": "mssql",
-      "user": "sample",
-      "password": "sample1234!",
-      "server": "localhost",
-      "database": "SampleDB",
-      "port": 1433,
-      "options": { "encrypt": true, "trustServerCertificate": true }
-    },
-    "mysqlDB": {
-      "type": "mysql",
-      "user": "root",
-      "password": "password",
-      "server": "localhost",
-      "database": "testdb",
-      "port": 3306,
-      "options": { "ssl": false }
-    },
-    "postgresDB": {
-      "type": "postgresql",
-      "user": "postgres",
-      "password": "password",
-      "server": "localhost",
-      "database": "testdb",
-      "port": 5432,
-      "options": { "ssl": false }
-    },
-    "oracleDB": {
-      "type": "oracle",
-      "user": "hr",
-      "password": "password",
-      "server": "localhost",
-      "database": "xe",
-      "port": 1521
-    }
+  "sampleDB": {
+    "type": "mssql",
+    "user": "sample",
+    "password": "sample1234!",
+    "server": "localhost",
+    "database": "SampleDB",
+    "port": 1433,
+    "options": { "encrypt": true, "trustServerCertificate": true }
+  },
+  "mysqlDB": {
+    "type": "mysql",
+    "user": "root",
+    "password": "password",
+    "server": "localhost",
+    "database": "testdb",
+    "port": 3306,
+    "options": { "ssl": false }
+  },
+  "postgresDB": {
+    "type": "postgresql",
+    "user": "postgres",
+    "password": "password",
+    "server": "localhost",
+    "database": "testdb",
+    "port": 5432,
+    "options": { "ssl": false }
+  },
+  "oracleDB": {
+    "type": "oracle",
+    "user": "hr",
+    "password": "password",
+    "server": "localhost",
+    "database": "xe",
+    "port": 1521
   }
 }
 ```

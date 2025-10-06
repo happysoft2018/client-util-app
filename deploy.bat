@@ -47,6 +47,10 @@ if exist "templet" (
     exit /b 1
 )
 
+REM Copy results folder
+mkdir "%DEPLOY_DIR%\results\"
+echo ✅ Results folder created
+
 REM Copy documentation
 if exist "README.md" copy "README.md" "%DEPLOY_DIR%\"
 if exist "README_KR.md" copy "README_KR.md" "%DEPLOY_DIR%\"
