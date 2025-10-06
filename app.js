@@ -154,15 +154,7 @@ class NodeUtilApp {
       const selectedFile = csvFiles[selectedFileIndex];
       const csvPath = path.join(dbCheckDir, selectedFile);
       console.log(`✅ Selected CSV file: ${selectedFile}`);
-      
-      console.log('\n🔐 Database Authentication Information:');
-      const dbUser = await this.askQuestion(
-        'DB Account ID: '
-      );
-      
-      const dbPassword = await this.askQuestion(
-        'DB Password: '
-      );
+      console.log('ℹ️  Note: Authentication information will be read from CSV file (username, password columns)');
       
       console.log('\n⏱️  Timeout Settings:');
       const timeout = await this.askQuestion(
@@ -173,11 +165,10 @@ class NodeUtilApp {
       console.log('\n🚀 Starting database connection check...');
       console.log('-'.repeat(40));
       console.log('ℹ️  Note: Each server in CSV can have different database types (mssql, mysql, postgresql, oracle)');
+      console.log('ℹ️  Note: Authentication credentials will be read from CSV file');
       
       await this.dbConnectionChecker.run({
         csvPath: csvPath,
-        dbUser: dbUser,
-        dbPassword: dbPassword,
         timeout: parseInt(timeout) || 5,
         dbType: 'auto' // CSV에서 각 행의 db_type을 사용
       });

@@ -1,4 +1,4 @@
-db_name,server_ip,port,corp,proc,env_type,db_type
-SampleDB,192.168.1.100,1433,ë³¸ì‚¬,ERP,PRD,mssql
-TestDB,192.168.1.101,1433,ë³¸ì‚¬,WMS,DEV,mssql
-UserDB,192.168.1.102,1433,ì§€ì‚¬,CRM,STG,mysql 
+db_name,username,password,server_ip,port,corp,proc,env_type,db_type
+SampleDB,sahara,pass1111,192.168.1.100,1433,º»»ç,ERP,PRD,mssql
+TestDB,sahara,pass1112,192.168.1.101,1433,º»»ç,WMS,DEV,mssql
+UserDB,sahara,pass1113,192.168.1.102,1433,Áö»ç,CRM,STG,mysql 

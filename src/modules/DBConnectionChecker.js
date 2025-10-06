@@ -54,10 +54,10 @@ class DBConnectionChecker {
   }
 
   validateInput(options) {
-    const { csvPath, dbUser, dbPassword } = options;
+    const { csvPath } = options;
     
-    if (!csvPath || !dbUser || !dbPassword) {
-      throw new Error('CSV file path, DB account ID, and password are required.');
+    if (!csvPath) {
+      throw new Error('CSV file path is required.');
     }
 
     if (!fs.existsSync(csvPath)) {
@@ -207,16 +207,16 @@ class DBConnectionChecker {
   }
 
   async run(options) {
-    const { csvPath, dbUser, dbPassword, timeout = 5, dbType = 'mssql' } = options;
+    const { csvPath, timeout = 5, dbType = 'mssql' } = options;
     
-    this.validateInput({ csvPath, dbUser, dbPassword });
+    this.validateInput({ csvPath });
 
     const rows = [];
     let checkUnitId = 0;
 
     return new Promise((resolve, reject) => {
       fs.createReadStream(csvPath)
-        .pipe(csv(['db_name', 'server_ip', 'port', 'corp', 'proc', 'env_type', 'db_type']))
+        .pipe(csv(['db_name', 'username', 'password', 'server_ip', 'port', 'corp', 'proc', 'env_type', 'db_type']))
         .on('data', (row) => {
           Object.keys(row).forEach(k => row[k] = row[k].trim());
           rows.push(row);
@@ -259,8 +259,8 @@ class DBConnectionChecker {
               // Use db_type from CSV if specified, otherwise use default
               const rowDbType = (dbType === 'auto') ? (row.db_type || 'mssql') : (row.db_type || dbType);
               const result = await this.unitWorkByServer(row, 0, { 
-                dbUser, 
-                dbPassword, 
+                dbUser: row.username, 
+                dbPassword: row.password, 
                 timeout, 
                 dbType: rowDbType 
               });
