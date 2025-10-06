@@ -1,5 +1,5 @@
 db_name,username,password,server_ip,port,db_type,db_title,select_sql,crud_test_table,crud_test_columns,crud_test_values
-SampleDB,sahara,pass1111,192.168.1.100,1433,mssql,ë³¸ì‚¬ ERP DB,SELECT TOP 1 username FROM test_table,test_table,"num, name,age","1,james,47"
-TestDB,sahara,pass1112,192.168.1.101,1433,oracle,í…ŒìŠ¤íŠ¸ Oracle DB,SELECT username FROM test_table WHERE rownum <= 2,test_table,"num, name,age","1,james,48"
-UserDB,sahara,pass1113,192.168.1.102,1433,mysql,ì‚¬ìš©ìž MySQL DB,SELECT username FROM test_table LIMIT 3,test_table,"num, name,age","1,james,49"
-OrderDB,sahara,pass1114,192.168.1.103,1434,postgresql,ì£¼ë¬¸ PostgreSQL DB,SELECT username FROM test_table LIMIT 4,test_table,"num, name,age","1,james,50"
+SampleDB,sahara,pass1111,localhost,1433,mssql,º»»ç ERP DB,SELECT TOP 1 username FROM test_table,test_table,"num, name,age","1,james,47"
+TestDB,sahara,pass1112,localhost,1433,oracle,Å×½ºÆ® Oracle DB,SELECT username FROM test_table WHERE rownum <= 2,test_table,"num, name,age","1,james,48"
+UserDB,sahara,pass1113,localhost,1433,mysql,»ç¿ëÀÚ MySQL DB,SELECT username FROM test_table LIMIT 3,test_table,"num, name,age","1,james,49"
+postgres,postgres,1111,localhost,5432,postgresql,ÁÖ¹® PostgreSQL DB,SELECT name FROM servers LIMIT 4,users,"id, email, name, password","111111,james@gmail.com,james,1111"

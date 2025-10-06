@@ -217,7 +217,8 @@ class TelnetChecker {
           
           // Save results to CSV
           if (results.length > 0) {
-            await this.saveResultsToCSV(results, 'telnet_connection_check');
+            const sourceCsvName = path.basename(csvPath);
+            await this.saveResultsToCSV(results, '', sourceCsvName);
             console.log(`\n✅ Results saved to CSV file: ${results.length} entries`);
           }
           
@@ -227,12 +228,21 @@ class TelnetChecker {
     });
   }
 
-  async saveResultsToCSV(results, filename) {
+  async saveResultsToCSV(results, filename, sourceCsvName = '') {
     // 디렉토리 생성 보장
     this.ensureResultsDir();
     
-    const timestamp = new Date().toISOString().replace(/[:.]/g, '-').split('T')[0];
-    const csvFilename = `${filename}_${timestamp}.csv`;
+    const now = new Date();
+    const timestamp = now.getFullYear().toString() + 
+                     (now.getMonth() + 1).toString().padStart(2, '0') +
+                     now.getDate().toString().padStart(2, '0') +
+                     now.getHours().toString().padStart(2, '0') +
+                     now.getMinutes().toString().padStart(2, '0') +
+                     now.getSeconds().toString().padStart(2, '0');
+    
+    // 소스 CSV 파일명에서 확장자 제거
+    const sourceName = sourceCsvName ? sourceCsvName.replace(/\.csv$/i, '') : 'unknown';
+    const csvFilename = `${sourceName}_${filename}_${timestamp}.csv`;
     const csvPath = path.join(this.resultsDir, csvFilename);
 
     // CSV 헤더
