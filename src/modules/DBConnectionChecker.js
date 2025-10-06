@@ -152,8 +152,8 @@ class DBConnectionChecker {
 
   async unitWorkByServer(row, checkUnitId, options) {
     const { dbUser, dbPassword, timeout, dbType = 'mssql' } = options;
-    const { db_name, server_ip, port, corp, proc } = row;
-    const title = corp + '_' + proc;
+    const { db_name, server_ip, port, db_title } = row;
+    const title = db_title || db_name;
 
     const result = await this.checkDbConnection({ 
       db_name, 
@@ -186,7 +186,7 @@ class DBConnectionChecker {
       }
     }
     
-    console.log(`[${server_ip}:${port}][${dbType.toUpperCase()}][${row.env_type}DB][${title}][${db_name}] \t→ [${result.success ? '✅ Success' : '❌ Failed'}]${permissionStatus} ${errMessage}`);
+    console.log(`[${server_ip}:${port}][${dbType.toUpperCase()}][${dbUser}][${title}][${db_name}] \t→ [${result.success ? '✅ Success' : '❌ Failed'}]${permissionStatus} ${errMessage}`);
 
     // Return result for CSV saving
     return {
@@ -235,7 +235,7 @@ class DBConnectionChecker {
           }
 
           // Required column check
-          const requiredColumns = ['db_name', 'server_ip', 'port'];
+          const requiredColumns = ['db_name', 'username', 'password', 'server_ip', 'port', 'db_type'];
           const firstRow = rows[0];
           const missingColumns = requiredColumns.filter(col => !firstRow.hasOwnProperty(col));
           
