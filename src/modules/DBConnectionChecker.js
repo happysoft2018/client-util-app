@@ -30,19 +30,19 @@ class DBConnectionChecker {
     const { csvPath, dbUser, dbPassword } = options;
     
     if (!csvPath || !dbUser || !dbPassword) {
-      throw new Error('CSV 파일 경로, DB 계정 ID, 패스워드는 필수입니다.');
+      throw new Error('CSV file path, DB account ID, and password are required.');
     }
 
     if (!fs.existsSync(csvPath)) {
-      throw new Error(`CSV 파일을 찾을 수 없습니다: ${csvPath}`);
+      throw new Error(`CSV file not found: ${csvPath}`);
     }
 
     if (!fs.statSync(csvPath).isFile()) {
-      throw new Error('CSV 경로가 파일이 아닙니다.');
+      throw new Error('CSV path is not a file.');
     }
 
     if (!csvPath.toLowerCase().endsWith('.csv')) {
-      throw new Error('CSV 파일(.csv 확장자)만 지원됩니다.');
+      throw new Error('Only CSV files (.csv extension) are supported.');
     }
 
     const stats = fs.statSync(csvPath);
@@ -50,11 +50,11 @@ class DBConnectionChecker {
     const MAX_FILE_SIZE_KB = 200;
     
     if (fileSizeInKB > MAX_FILE_SIZE_KB) {
-      throw new Error(`CSV 파일이 너무 큽니다. (${fileSizeInKB.toFixed(2)}KB > ${MAX_FILE_SIZE_KB}KB)`);
+      throw new Error(`CSV file is too large. (${fileSizeInKB.toFixed(2)}KB > ${MAX_FILE_SIZE_KB}KB)`);
     }
 
     if (stats.size === 0) {
-      throw new Error('CSV 파일이 비어있습니다.');
+      throw new Error('CSV file is empty.');
     }
   }
 
@@ -87,12 +87,12 @@ class DBConnectionChecker {
         }
       };
 
-      // 권한 체크
+      // Permission check
       try {
         const permissions = await connection.checkPermissions();
         result.permissions = permissions;
       } catch (permErr) {
-        console.log(`  └ 권한 체크 중 오류: ${permErr.message.substring(0, 50)}...`);
+        console.log(`  └ Error during permission check: ${permErr.message.substring(0, 50)}...`);
       }
 
       await connection.disconnect();
@@ -136,7 +136,7 @@ class DBConnectionChecker {
     
     const errMessage = result.success ? '' : `[${result.error_code}] ${result.error_msg}`;
     
-    // 권한 정보 표시
+    // Permission information display
     let permissionStatus = '';
     if (result.success) {
       const perms = result.permissions;
@@ -149,13 +149,13 @@ class DBConnectionChecker {
       if (perms.drop) permArray.push('DROP');
       
       if (permArray.length > 0) {
-        permissionStatus = ` [권한: ${permArray.join(', ')}]`;
+        permissionStatus = ` [Permissions: ${permArray.join(', ')}]`;
       } else {
-        permissionStatus = ` [권한: 없음]`;
+        permissionStatus = ` [Permissions: None]`;
       }
     }
     
-    console.log(`[${server_ip}:${port}][${dbType.toUpperCase()}][${row.env_type}DB][${title}][${db_name}] \t→ [${result.success ? '✅ 성공' : '❌ 실패'}]${permissionStatus} ${errMessage}`);
+    console.log(`[${server_ip}:${port}][${dbType.toUpperCase()}][${row.env_type}DB][${title}][${db_name}] \t→ [${result.success ? '✅ Success' : '❌ Failed'}]${permissionStatus} ${errMessage}`);
 
     if (checkUnitId === 0) {
       return;
@@ -185,7 +185,7 @@ class DBConnectionChecker {
       try {
         await axios.post(this.apiUrl + '/db', body, { timeout: 3000 });
       } catch (err) {
-        console.error(`체크결과 기록 API (${this.apiUrl}/db) 전송 실패`);
+        console.error(`Failed to send check result to API (${this.apiUrl}/db)`);
       }
     }
   }
@@ -206,34 +206,34 @@ class DBConnectionChecker {
           rows.push(row);
         })
         .on('error', (error) => {
-          reject(new Error(`CSV 파일 읽기 오류: ${error.message}`));
+          reject(new Error(`CSV file read error: ${error.message}`));
         })
         .on('end', async () => {
           if (rows.length === 0) {
-            reject(new Error('CSV 파일이 비어있습니다.'));
+            reject(new Error('CSV file is empty.'));
             return;
           }
 
-          // 필수 컬럼 체크
+          // Required column check
           const requiredColumns = ['db_name', 'server_ip', 'port'];
           const firstRow = rows[0];
           const missingColumns = requiredColumns.filter(col => !firstRow.hasOwnProperty(col));
           
           if (missingColumns.length > 0) {
-            reject(new Error(`필수 컬럼이 누락되었습니다: ${missingColumns.join(', ')}`));
+            reject(new Error(`Required columns are missing: ${missingColumns.join(', ')}`));
             return;
           }
 
           const MAX_ROW_COUNT = 500;
           if (rows.length > MAX_ROW_COUNT) {
-            reject(new Error(`CSV 파일의 데이터 row수가 너무 많습니다. (${rows.length} > ${MAX_ROW_COUNT})`));
+            reject(new Error(`CSV file has too many data rows. (${rows.length} > ${MAX_ROW_COUNT})`));
             return;
           }
 
-          console.log(`총 ${rows.length}개의 DB 정보를 읽었습니다.`);
+          console.log(`Read ${rows.length} DB information entries.`);
 
           try {
-            // API 마스터 등록
+            // API master registration
             if (this.apiUrl) {
               const result = await axios.post(
                 this.apiUrl + '/master', 
@@ -243,14 +243,14 @@ class DBConnectionChecker {
               checkUnitId = result.data.insertId ? result.data.insertId : 0;
             }
 
-            // 각 서버별 체크 실행
+            // Execute check for each server
             for (const row of rows) {
               if (!this.regexIpPattern.test(row.server_ip)) {
                 console.log(`[${row.server_ip}] is not valid ip format`);
               } else if (!this.regexPortPattern.test(row.port)) {
                 console.log(`[${row.port}] is not valid port format`);
               } else {
-                // CSV에서 db_type이 지정되면 해당 타입 사용, 없으면 기본값 사용
+                // Use db_type from CSV if specified, otherwise use default
                 const rowDbType = row.db_type || dbType;
                 await this.unitWorkByServer(row, checkUnitId, { 
                   dbUser, 
@@ -261,14 +261,14 @@ class DBConnectionChecker {
               }
             }
             
-            console.log('모든 DB 체크 및 결과 전송 완료');
+            console.log('All DB checks and result transmission completed');
             resolve();
           } catch (apiError) {
             if (this.apiUrl) {
-              reject(new Error(`API 서버 연결 오류: ${apiError.message}`));
+              reject(new Error(`API server connection error: ${apiError.message}`));
             } else {
-              // API URL이 없어도 로컬 체크는 진행
-              console.log('⚠️  API URL이 설정되지 않아 로컬 체크만 진행합니다.');
+              // Proceed with local check even if API URL is not set
+              console.log('⚠️  API URL not set, proceeding with local check only.');
               for (const row of rows) {
                 if (!this.regexIpPattern.test(row.server_ip)) {
                   console.log(`[${row.server_ip}] is not valid ip format`);

@@ -39,7 +39,7 @@ class ConfigManager {
         this.saveConfig();
       }
     } catch (error) {
-      console.warn('⚠️  설정 파일 로드 중 오류:', error.message);
+      console.warn('⚠️  Error loading config file:', error.message);
       this.config = { ...this.defaultConfig };
     }
   }
@@ -51,10 +51,10 @@ class ConfigManager {
         this.dbConfig = JSON.parse(dbConfigData);
       } else {
         this.dbConfig = { dbs: {} };
-        console.warn('⚠️  DB 설정 파일을 찾을 수 없습니다:', this.dbConfigFile);
+        console.warn('⚠️  DB config file not found:', this.dbConfigFile);
       }
     } catch (error) {
-      console.warn('⚠️  DB 설정 파일 로드 중 오류:', error.message);
+      console.warn('⚠️  Error loading DB config file:', error.message);
       this.dbConfig = { dbs: {} };
     }
   }
@@ -79,7 +79,7 @@ class ConfigManager {
   validateDbConfig(dbName) {
     const dbConfig = this.getDbConfig(dbName);
     if (!dbConfig) {
-      return { valid: false, error: `DB 설정을 찾을 수 없습니다: ${dbName}` };
+      return { valid: false, error: `DB configuration not found: ${dbName}` };
     }
 
     try {
@@ -93,7 +93,7 @@ class ConfigManager {
   async testDbConnection(dbName) {
     const dbConfig = this.getDbConfig(dbName);
     if (!dbConfig) {
-      return { success: false, message: `DB 설정을 찾을 수 없습니다: ${dbName}` };
+      return { success: false, message: `DB configuration not found: ${dbName}` };
     }
 
     try {
@@ -113,7 +113,7 @@ class ConfigManager {
       }
       fs.writeFileSync(this.configFile, JSON.stringify(this.config, null, 2));
     } catch (error) {
-      console.warn('⚠️  설정 파일 저장 중 오류:', error.message);
+      console.warn('⚠️  Error saving config file:', error.message);
     }
   }
 
@@ -131,13 +131,13 @@ class ConfigManager {
 
   async updateDefaultConfig(app) {
     console.clear();
-    console.log('⚙️  기본 설정 변경');
+    console.log('⚙️  Update Default Configuration');
     console.log('='.repeat(40));
 
     // 사용 가능한 DB 목록 표시
     const availableDbs = this.getAvailableDbs();
     if (availableDbs.length > 0) {
-      console.log('\n🗄️  사용 가능한 데이터베이스:');
+      console.log('\n🗄️  Available Databases:');
       availableDbs.forEach((dbName, index) => {
         const dbInfo = this.getDbConfig(dbName);
         console.log(`  ${index + 1}. ${dbName} (${dbInfo.server}:${dbInfo.port}/${dbInfo.database})`);
@@ -145,16 +145,16 @@ class ConfigManager {
       console.log();
     }
 
-    console.log('\n🔍 MSSQL 설정:');
+    console.log('\n🔍 Database Settings:');
     const mssqlCsvPath = await app.askQuestion(
-      `CSV 파일 경로 (현재: ${this.config.mssql.csvPath || '미설정'}): `,
+      `CSV file path (current: ${this.config.mssql.csvPath || 'not set'}): `,
       this.config.mssql.csvPath
     );
     
     // DB 선택
     if (availableDbs.length > 0) {
       const dbChoice = await app.askQuestion(
-        `사용할 DB 선택 (1-${availableDbs.length}) (현재: ${this.config.mssql.selectedDb || '미설정'}): `,
+        `Select DB to use (1-${availableDbs.length}) (current: ${this.config.mssql.selectedDb || 'not set'}): `,
         availableDbs.indexOf(this.config.mssql.selectedDb) + 1
       );
       
@@ -165,17 +165,17 @@ class ConfigManager {
         const dbConfig = this.getDbConfig(selectedDb);
         this.config.mssql.dbUser = dbConfig.user;
         this.config.mssql.dbPassword = dbConfig.password;
-        console.log(`✅ DB 설정 적용: ${selectedDb}`);
+        console.log(`✅ DB configuration applied: ${selectedDb}`);
       }
     } else {
-      // 수동 입력 (레거시)
+      // Manual input (legacy)
       const mssqlDbUser = await app.askQuestion(
-        `DB 계정 ID (현재: ${this.config.mssql.dbUser || '미설정'}): `,
+        `DB Account ID (current: ${this.config.mssql.dbUser || 'not set'}): `,
         this.config.mssql.dbUser
       );
       
       const mssqlDbPassword = await app.askQuestion(
-        `DB 패스워드 (현재: ${this.config.mssql.dbPassword ? '***' : '미설정'}): `,
+        `DB Password (current: ${this.config.mssql.dbPassword ? '***' : 'not set'}): `,
         this.config.mssql.dbPassword
       );
       
@@ -184,33 +184,33 @@ class ConfigManager {
     }
     
     const mssqlTimeout = await app.askQuestion(
-      `타임아웃(초) (현재: ${this.config.mssql.timeout}): `,
+      `Timeout (seconds) (current: ${this.config.mssql.timeout}): `,
       this.config.mssql.timeout.toString()
     );
 
-    console.log('\n🌐 Telnet 설정:');
+    console.log('\n🌐 Telnet Settings:');
     const telnetCsvPath = await app.askQuestion(
-      `CSV 파일 경로 (현재: ${this.config.telnet.csvPath || '미설정'}): `,
+      `CSV file path (current: ${this.config.telnet.csvPath || 'not set'}): `,
       this.config.telnet.csvPath
     );
     
     const telnetTimeout = await app.askQuestion(
-      `타임아웃(초) (현재: ${this.config.telnet.timeout}): `,
+      `Timeout (seconds) (current: ${this.config.telnet.timeout}): `,
       this.config.telnet.timeout.toString()
     );
 
-    // SQL 실행용 DB 선택
+    // SQL execution DB selection
     if (availableDbs.length > 0) {
-      console.log('\n⚙️  SQL 실행 설정:');
+      console.log('\n⚙️  SQL Execution Settings:');
       const sqlDbChoice = await app.askQuestion(
-        `SQL 실행용 DB 선택 (1-${availableDbs.length}) (현재: ${this.config.sql.selectedDb || '미설정'}): `,
+        `Select DB for SQL execution (1-${availableDbs.length}) (current: ${this.config.sql.selectedDb || 'not set'}): `,
         availableDbs.indexOf(this.config.sql.selectedDb) + 1
       );
       
       const selectedSqlDbIndex = parseInt(sqlDbChoice) - 1;
       if (selectedSqlDbIndex >= 0 && selectedSqlDbIndex < availableDbs.length) {
         this.config.sql.selectedDb = availableDbs[selectedSqlDbIndex];
-        console.log(`✅ SQL 실행 DB 설정: ${this.config.sql.selectedDb}`);
+        console.log(`✅ SQL execution DB configured: ${this.config.sql.selectedDb}`);
       }
     }
 
@@ -222,7 +222,7 @@ class ConfigManager {
     if (telnetTimeout) this.config.telnet.timeout = parseInt(telnetTimeout) || 3;
 
     this.saveConfig();
-    console.log('\n✅ 설정이 저장되었습니다.');
+    console.log('\n✅ Configuration saved successfully.');
   }
 
   resetConfig() {
@@ -232,49 +232,49 @@ class ConfigManager {
 
   showCurrentConfig() {
     console.clear();
-    console.log('📋 현재 설정');
+    console.log('📋 Current Configuration');
     console.log('='.repeat(40));
     
-    console.log('\n🔍 MSSQL 설정:');
-    console.log(`  CSV 파일 경로: ${this.config.mssql.csvPath || '미설정'}`);
+    console.log('\n🔍 Database Settings:');
+    console.log(`  CSV file path: ${this.config.mssql.csvPath || 'not set'}`);
     if (this.config.mssql.selectedDb) {
       const dbConfig = this.getDbConfig(this.config.mssql.selectedDb);
       const dbType = this.getDbType(this.config.mssql.selectedDb);
-      console.log(`  선택된 DB: ${this.config.mssql.selectedDb}`);
-      console.log(`  DB 타입: ${dbType || 'MSSQL'}`);
-      console.log(`  서버: ${dbConfig.server}:${dbConfig.port}`);
-      console.log(`  데이터베이스: ${dbConfig.database}`);
-      console.log(`  계정: ${dbConfig.user}`);
+      console.log(`  Selected DB: ${this.config.mssql.selectedDb}`);
+      console.log(`  DB type: ${dbType || 'MSSQL'}`);
+      console.log(`  Server: ${dbConfig.server}:${dbConfig.port}`);
+      console.log(`  Database: ${dbConfig.database}`);
+      console.log(`  Account: ${dbConfig.user}`);
     } else {
-      console.log(`  DB 계정 ID: ${this.config.mssql.dbUser || '미설정'}`);
-      console.log(`  DB 패스워드: ${this.config.mssql.dbPassword ? '***' : '미설정'}`);
+      console.log(`  DB Account ID: ${this.config.mssql.dbUser || 'not set'}`);
+      console.log(`  DB Password: ${this.config.mssql.dbPassword ? '***' : 'not set'}`);
     }
-    console.log(`  타임아웃: ${this.config.mssql.timeout}초`);
+    console.log(`  Timeout: ${this.config.mssql.timeout} seconds`);
     
-    console.log('\n🌐 Telnet 설정:');
-    console.log(`  CSV 파일 경로: ${this.config.telnet.csvPath || '미설정'}`);
-    console.log(`  타임아웃: ${this.config.telnet.timeout}초`);
+    console.log('\n🌐 Telnet Settings:');
+    console.log(`  CSV file path: ${this.config.telnet.csvPath || 'not set'}`);
+    console.log(`  Timeout: ${this.config.telnet.timeout} seconds`);
     
-    console.log('\n⚙️  SQL 설정:');
-    console.log(`  템플릿 경로: ${this.config.sql.templatePath}`);
+    console.log('\n⚙️  SQL Settings:');
+    console.log(`  Template path: ${this.config.sql.templatePath}`);
     if (this.config.sql.selectedDb) {
       const dbConfig = this.getDbConfig(this.config.sql.selectedDb);
       const dbType = this.getDbType(this.config.sql.selectedDb);
-      console.log(`  선택된 DB: ${this.config.sql.selectedDb}`);
-      console.log(`  DB 타입: ${dbType || 'MSSQL'}`);
-      console.log(`  서버: ${dbConfig.server}:${dbConfig.port}`);
-      console.log(`  데이터베이스: ${dbConfig.database}`);
+      console.log(`  Selected DB: ${this.config.sql.selectedDb}`);
+      console.log(`  DB type: ${dbType || 'MSSQL'}`);
+      console.log(`  Server: ${dbConfig.server}:${dbConfig.port}`);
+      console.log(`  Database: ${dbConfig.database}`);
     }
     
-    // 사용 가능한 DB 목록 표시
+    // Available databases list
     const availableDbs = this.getAvailableDbs();
     if (availableDbs.length > 0) {
-      console.log('\n🗄️  사용 가능한 데이터베이스:');
+      console.log('\n🗄️  Available Databases:');
       availableDbs.forEach(dbName => {
         const dbInfo = this.getDbConfig(dbName);
         const dbType = this.getDbType(dbName);
         const isSelected = dbName === this.config.mssql.selectedDb || dbName === this.config.sql.selectedDb;
-        const status = isSelected ? ' (선택됨)' : '';
+        const status = isSelected ? ' (selected)' : '';
         console.log(`  - ${dbName}: [${dbType || 'MSSQL'}] ${dbInfo.server}:${dbInfo.port}/${dbInfo.database}${status}`);
       });
     }
@@ -282,7 +282,7 @@ class ConfigManager {
 
   showEnvironmentVariables() {
     console.clear();
-    console.log('🌍 환경변수 정보');
+    console.log('🌍 Environment Variables');
     console.log('='.repeat(40));
     
     const envVars = [
@@ -291,29 +291,24 @@ class ConfigManager {
       'LOCALDB_USER', 
       'LOCALDB_PASSWORD',
       'LOCALDB_DATABASE',
-      'LOCALDB_PORT',
-      'REMOTEDB_HOST',
-      'REMOTEDB_USER',
-      'REMOTEDB_PASSWORD',
-      'REMOTEDB_DATABASE',
-      'REMOTEDB_PORT'
+      'LOCALDB_PORT'
     ];
     
-    console.log('\n📋 주요 환경변수:');
+    console.log('\n📋 Main Environment Variables:');
     envVars.forEach(varName => {
       const value = process.env[varName];
       if (value) {
         const displayValue = varName.includes('PASSWORD') ? '***' : value;
         console.log(`  ${varName}: ${displayValue}`);
       } else {
-        console.log(`  ${varName}: 미설정`);
+        console.log(`  ${varName}: not set`);
       }
     });
     
-    console.log('\n💻 시스템 정보:');
-    console.log(`  운영체제: ${os.platform()} ${os.arch()}`);
-    console.log(`  Node.js 버전: ${process.version}`);
-    console.log(`  현재 디렉토리: ${process.cwd()}`);
+    console.log('\n💻 System Information:');
+    console.log(`  Operating System: ${os.platform()} ${os.arch()}`);
+    console.log(`  Node.js Version: ${process.version}`);
+    console.log(`  Current Directory: ${process.cwd()}`);
   }
 }
 

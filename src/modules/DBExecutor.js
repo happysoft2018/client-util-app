@@ -37,8 +37,8 @@ class DBExecutor {
     const missingLocalVars = requiredLocalEnvVars.filter(varName => !process.env[varName]);
     
     if (missingLocalVars.length > 0) {
-      console.warn(`⚠️  로컬 DB 환경변수가 설정되지 않았습니다: ${missingLocalVars.join(', ')}`);
-      console.warn('   로그 기능이 비활성화됩니다.');
+      console.warn(`⚠️  Local DB environment variables not set: ${missingLocalVars.join(', ')}`);
+      console.warn('   Logging functionality will be disabled.');
     }
   }
 
@@ -59,7 +59,7 @@ class DBExecutor {
           port: parseInt(process.env.LOCALDB_PORT, 10)
         });
       } catch (error) {
-        console.warn('⚠️  로컬 DB 연결 실패, 로그 기능이 비활성화됩니다:', error.message);
+            console.warn('⚠️  Local DB connection failed, logging functionality will be disabled:', error.message);
       }
     }
 
@@ -68,7 +68,7 @@ class DBExecutor {
     if (selectedDbName) {
       dbConfig = this.configManager.getDbConfig(selectedDbName);
       if (!dbConfig) {
-        throw new Error(`선택된 DB 설정을 찾을 수 없습니다: ${selectedDbName}`);
+        throw new Error(`Selected DB configuration not found: ${selectedDbName}`);
       }
       
       const dbType = this.configManager.getDbType(selectedDbName);
@@ -76,12 +76,12 @@ class DBExecutor {
       await remoteConnection.connect();
       
     } else {
-      // 환경변수에서 가져오기 (레거시)
+      // Get from environment variables (legacy)
       if (!process.env.REMOTEDB_HOST) {
-        throw new Error('DB 설정이 필요합니다. 설정 관리에서 DB를 선택하거나 환경변수를 설정해주세요.');
+        throw new Error('DB configuration is required. Please select a DB in settings management or set environment variables.');
       }
       
-      // 레거시는 MSSQL로 가정
+      // Legacy assumes MSSQL
       dbConfig = {
         server: process.env.REMOTEDB_HOST,
         user: process.env.REMOTEDB_USER,
@@ -120,11 +120,11 @@ class DBExecutor {
         );
         sqlId = insertResult.insertId;
       } catch (error) {
-        console.warn('⚠️  로그 테이블 저장 실패:', error.message);
+        console.warn('⚠️  Failed to save log table:', error.message);
       }
     }
 
-    // 로그 디렉토리 생성
+    // Create log directory
     const now = new Date();
     const yyyymmdd = now.getFullYear() + 
                     String(now.getMonth() + 1).padStart(2, '0') + 
@@ -155,20 +155,20 @@ class DBExecutor {
         const logFile = path.join(logDir, `${sqlName}_${timestamp}.log`);
         fs.appendFileSync(logFile, JSON.stringify({ row, result: result.rows }, null, 2) + '\n');
         
-        console.log(`✅ 완료: ${JSON.stringify(row)} (결과: ${result.rowCount}행)`);
+        console.log(`✅ Completed: ${JSON.stringify(row)} (Result: ${result.rowCount} rows)`);
 
       } catch (err) {
         errorMsg += err.message + '\n';
-        resultCode = '실패';
-        console.error(`❌ 에러: ${JSON.stringify(row)} - ${err.message}`);
+        resultCode = 'Failed';
+        console.error(`❌ Error: ${JSON.stringify(row)} - ${err.message}`);
       }
     }
 
-    // 실행 종료 시간 및 처리 소요시간
+    // Execution end time and processing duration
     const endTime = Date.now();
     const elapsed = ((endTime - startTime) / 1000).toFixed(2);
 
-    // 결과 요약 업데이트 (로컬 DB가 있는 경우에만)
+    // Update result summary (only if local DB is available)
     if (localDBPool && sqlId) {
       try {
         await localDBPool.execute(
@@ -176,15 +176,15 @@ class DBExecutor {
           [totalCount, resultCode, errorMsg, elapsed, sqlId]
         );
       } catch (error) {
-        console.warn('⚠️  로그 업데이트 실패:', error.message);
+        console.warn('⚠️  Log update failed:', error.message);
       }
     }
 
-    console.log('\n📈 실행 결과 요약:');
-    console.log(`  총 처리된 파라미터: ${rows.length}개`);
-    console.log(`  총 결과 행 수: ${totalCount}행`);
-    console.log(`  실행 결과: ${resultCode}`);
-    console.log(`  소요 시간: ${elapsed}초`);
+    console.log('\n📈 Execution Result Summary:');
+    console.log(`  Total processed parameters: ${rows.length}`);
+    console.log(`  Total result rows: ${totalCount}`);
+    console.log(`  Execution result: ${resultCode}`);
+    console.log(`  Elapsed time: ${elapsed} seconds`);
 
     return { totalCount, resultCode, elapsed };
   }
@@ -197,41 +197,41 @@ class DBExecutor {
     const sqlFilePath = path.join(this.templateDir, `${sqlName}.sql`);
     const csvFilePath = path.join(this.templateDir, `${sqlName}.csv`);
 
-    // 파일 존재 여부 체크
+    // Check file existence
     if (!fs.existsSync(sqlFilePath)) {
-      throw new Error(`SQL 파일이 존재하지 않습니다: ${sqlFilePath}`);
+      throw new Error(`SQL file does not exist: ${sqlFilePath}`);
     }
     
     if (!fs.existsSync(csvFilePath)) {
-      throw new Error(`파라미터 CSV 파일이 존재하지 않습니다: ${csvFilePath}`);
+      throw new Error(`Parameter CSV file does not exist: ${csvFilePath}`);
     }
 
-    console.log(`\n📄 SQL 파일: ${sqlFilePath}`);
-    console.log(`📄 파라미터 파일: ${csvFilePath}`);
+    console.log(`\n📄 SQL file: ${sqlFilePath}`);
+    console.log(`📄 Parameter file: ${csvFilePath}`);
 
-    // SQL 파일 읽기
+    // Read SQL file
     const query = fs.readFileSync(sqlFilePath, 'utf-8');
-    console.log(`\n🔍 SQL 쿼리 내용:`);
+    console.log(`\n🔍 SQL Query Content:`);
     console.log('-'.repeat(30));
     console.log(query);
     console.log('-'.repeat(30));
 
-    // DB 연결 생성
+    // Create DB connection
     const selectedDbName = this.configManager.getDefaultConfig().sql.selectedDb;
     const { localDBPool, remoteConnection } = await this.createConnections(selectedDbName);
     
     if (selectedDbName) {
       const dbConfig = this.configManager.getDbConfig(selectedDbName);
       const dbType = this.configManager.getDbType(selectedDbName);
-      console.log(`\n🗄️  사용 중인 데이터베이스: ${selectedDbName}`);
-      console.log(`   DB 타입: ${dbType || 'MSSQL'}`);
-      console.log(`   서버: ${dbConfig.server}:${dbConfig.port}`);
-      console.log(`   데이터베이스: ${dbConfig.database}`);
-      console.log(`   계정: ${dbConfig.user}`);
+      console.log(`\n🗄️  Database in use: ${selectedDbName}`);
+      console.log(`   DB type: ${dbType || 'MSSQL'}`);
+      console.log(`   Server: ${dbConfig.server}:${dbConfig.port}`);
+      console.log(`   Database: ${dbConfig.database}`);
+      console.log(`   Account: ${dbConfig.user}`);
     }
 
     try {
-      // CSV 파일 파싱
+      // Parse CSV file
       const rows = [];
       await new Promise((resolve, reject) => {
         fs.createReadStream(csvFilePath)
@@ -255,10 +255,10 @@ class DBExecutor {
       // SQL 실행
       const result = await this.executeSql(localDBPool, remoteConnection, sqlName, query, rows);
       
-      console.log('\n🎉 모든 작업이 완료되었습니다!');
+      console.log('\n🎉 All tasks completed successfully!');
       
     } finally {
-      // 연결 종료
+      // Close connections
       if (localDBPool) {
         await localDBPool.end();
       }

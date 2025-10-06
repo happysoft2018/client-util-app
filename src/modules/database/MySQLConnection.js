@@ -80,59 +80,59 @@ class MySQLConnection {
         await this.executeQuery('SELECT 1 FROM information_schema.tables LIMIT 1');
         permissions.select = true;
       } catch (err) {
-        console.log(`  └ SELECT 권한 없음: ${err.message.substring(0, 50)}...`);
+        console.log(`  └ No SELECT permission: ${err.message.substring(0, 50)}...`);
       }
 
-      // 테스트 테이블 생성/삭제로 권한 체크
+      // Permission check through test table creation/deletion
       const testTableName = `temp_permission_test_${Date.now()}`;
       
       try {
-        // CREATE TABLE 권한 체크
+        // CREATE TABLE permission check
         await this.executeQuery(`CREATE TABLE ${testTableName} (id INT, test_data VARCHAR(50))`);
         permissions.create = true;
 
         try {
-          // INSERT 권한 체크
+          // INSERT permission check
           await this.executeQuery(`INSERT INTO ${testTableName} (id, test_data) VALUES (1, 'test')`);
           permissions.insert = true;
 
-          // UPDATE 권한 체크
+          // UPDATE permission check
           try {
             await this.executeQuery(`UPDATE ${testTableName} SET test_data = 'updated' WHERE id = 1`);
             permissions.update = true;
           } catch (err) {
-            console.log(`  └ UPDATE 권한 없음: ${err.message.substring(0, 50)}...`);
+            console.log(`  └ No UPDATE permission: ${err.message.substring(0, 50)}...`);
           }
 
-          // DELETE 권한 체크
+          // DELETE permission check
           try {
             await this.executeQuery(`DELETE FROM ${testTableName} WHERE id = 1`);
             permissions.delete = true;
           } catch (err) {
-            console.log(`  └ DELETE 권한 없음: ${err.message.substring(0, 50)}...`);
+            console.log(`  └ No DELETE permission: ${err.message.substring(0, 50)}...`);
           }
 
         } catch (err) {
-          console.log(`  └ INSERT 권한 없음: ${err.message.substring(0, 50)}...`);
+          console.log(`  └ No INSERT permission: ${err.message.substring(0, 50)}...`);
         }
 
-        // DROP TABLE 권한 체크
+        // DROP TABLE permission check
         try {
           await this.executeQuery(`DROP TABLE ${testTableName}`);
           permissions.drop = true;
         } catch (err) {
-          console.log(`  └ DROP TABLE 권한 없음: ${err.message.substring(0, 50)}...`);
+          console.log(`  └ No DROP TABLE permission: ${err.message.substring(0, 50)}...`);
         }
 
       } catch (err) {
-        console.log(`  └ CREATE TABLE 권한 없음: ${err.message.substring(0, 50)}...`);
+        console.log(`  └ No CREATE TABLE permission: ${err.message.substring(0, 50)}...`);
       }
 
       await this.disconnect();
       return permissions;
 
     } catch (error) {
-      console.log(`  └ 권한 체크 중 오류: ${error.message.substring(0, 50)}...`);
+      console.log(`  └ Error during permission check: ${error.message.substring(0, 50)}...`);
       return permissions;
     }
   }

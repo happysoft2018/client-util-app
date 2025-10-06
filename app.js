@@ -26,7 +26,7 @@ class NodeUtilApp {
   async start() {
     console.clear();
     console.log('='.repeat(50));
-    console.log('    Node.js 통합 유틸리티 도구');
+        console.log('    Node.js Integrated Utility Tool');
     console.log('='.repeat(50));
     console.log();
     
@@ -34,16 +34,16 @@ class NodeUtilApp {
   }
 
   async showMainMenu() {
-    console.log('📋 메인 메뉴');
-    console.log('1. 데이터베이스 연결 및 권한 체크');
-    console.log('2. 서버 Telnet 연결 체크');
-    console.log('3. 데이터베이스 SQL 실행');
-    console.log('4. 설정 관리');
-    console.log('5. 모든 체크 실행 (일괄 처리)');
-    console.log('6. 종료');
+    console.log('📋 Main Menu');
+    console.log('1. Database Connection and Permission Check');
+    console.log('2. Server Telnet Connection Check');
+    console.log('3. Database SQL Execution');
+    console.log('4. Configuration Management');
+    console.log('5. Run All Checks (Batch Processing)');
+    console.log('6. Exit');
     console.log();
 
-    const choice = await this.askQuestion('실행할 기능을 선택하세요 (1-6): ');
+    const choice = await this.askQuestion('Select function to execute (1-6): ');
     
     switch(choice.trim()) {
       case '1':
@@ -65,7 +65,7 @@ class NodeUtilApp {
         await this.exitApp();
         break;
       default:
-        console.log('❌ 잘못된 선택입니다. 다시 선택해주세요.');
+        console.log('❌ Invalid selection. Please select again.');
         await this.waitAndContinue();
         await this.showMainMenu();
     }
@@ -73,52 +73,52 @@ class NodeUtilApp {
 
   async runDbConnectionCheck() {
     console.clear();
-    console.log('🔍 데이터베이스 연결 및 권한 체크');
+        console.log('🔍 Database Connection and Permission Check');
     console.log('='.repeat(40));
     
     try {
       // 설정에서 기본값 가져오기
       const defaultConfig = this.configManager.getDefaultConfig();
       
-      console.log('\n📁 CSV 파일 설정:');
+      console.log('\n📁 CSV File Settings:');
       const csvPath = await this.askQuestion(
-        `CSV 파일 경로 (기본값: ${defaultConfig.mssql.csvPath || '입력 필요'}): `,
+        `CSV file path (default: ${defaultConfig.mssql.csvPath || 'input required'}): `,
         defaultConfig.mssql.csvPath
       );
       
-      // DB 타입 선택
+      // DB type selection
       const supportedTypes = this.configManager.getSupportedDbTypes();
-      console.log('\n🗄️  지원하는 데이터베이스 타입:');
+      console.log('\n🗄️  Supported Database Types:');
       supportedTypes.forEach((type, index) => {
         console.log(`  ${index + 1}. ${type.name} (${type.type})`);
       });
       
       const dbTypeChoice = await this.askQuestion(
-        `DB 타입을 선택하세요 (1-${supportedTypes.length}, 기본값: MSSQL): `,
+        `Select DB type (1-${supportedTypes.length}, default: MSSQL): `,
         '1'
       );
       
       const selectedDbType = supportedTypes[parseInt(dbTypeChoice) - 1] || supportedTypes[0];
-      console.log(`✅ 선택된 DB 타입: ${selectedDbType.name}`);
+      console.log(`✅ Selected DB type: ${selectedDbType.name}`);
 
-      console.log('\n🔐 데이터베이스 인증 정보:');
+      console.log('\n🔐 Database Authentication Information:');
       const dbUser = await this.askQuestion(
-        `DB 계정 ID (기본값: ${defaultConfig.mssql.dbUser || '입력 필요'}): `,
+        `DB Account ID (default: ${defaultConfig.mssql.dbUser || 'input required'}): `,
         defaultConfig.mssql.dbUser
       );
       
       const dbPassword = await this.askQuestion(
-        `DB 패스워드 (기본값: ${defaultConfig.mssql.dbPassword ? '***' : '입력 필요'}): `,
+        `DB Password (default: ${defaultConfig.mssql.dbPassword ? '***' : 'input required'}): `,
         defaultConfig.mssql.dbPassword
       );
       
-      console.log('\n⏱️  타임아웃 설정:');
+      console.log('\n⏱️  Timeout Settings:');
       const timeout = await this.askQuestion(
-        `타임아웃(초) (기본값: ${defaultConfig.mssql.timeout || 5}): `,
+        `Timeout (seconds) (default: ${defaultConfig.mssql.timeout || 5}): `,
         defaultConfig.mssql.timeout || 5
       );
 
-      console.log('\n🚀 데이터베이스 연결 체크를 시작합니다...');
+      console.log('\n🚀 Starting database connection check...');
       console.log('-'.repeat(40));
       
       await this.dbConnectionChecker.run({
@@ -129,10 +129,10 @@ class NodeUtilApp {
         dbType: selectedDbType.type
       });
       
-      console.log('\n✅ 데이터베이스 연결 체크가 완료되었습니다.');
+      console.log('\n✅ Database connection check completed.');
       
     } catch (error) {
-      console.error('❌ 데이터베이스 연결 체크 중 오류가 발생했습니다:', error.message);
+      console.error('❌ Error occurred during database connection check:', error.message);
     }
     
     await this.waitAndContinue();
@@ -141,25 +141,25 @@ class NodeUtilApp {
 
   async runTelnetCheck() {
     console.clear();
-    console.log('🌐 서버 Telnet 연결 체크');
+        console.log('🌐 Server Telnet Connection Check');
     console.log('='.repeat(40));
     
     try {
       const defaultConfig = this.configManager.getDefaultConfig();
       
-      console.log('\n📁 CSV 파일 설정:');
+      console.log('\n📁 CSV File Settings:');
       const csvPath = await this.askQuestion(
-        `CSV 파일 경로 (기본값: ${defaultConfig.telnet.csvPath || '입력 필요'}): `,
+        `CSV file path (default: ${defaultConfig.telnet.csvPath || 'input required'}): `,
         defaultConfig.telnet.csvPath
       );
       
-      console.log('\n⏱️  타임아웃 설정:');
+      console.log('\n⏱️  Timeout Settings:');
       const timeout = await this.askQuestion(
-        `타임아웃(초) (기본값: ${defaultConfig.telnet.timeout || 3}): `,
+        `Timeout (seconds) (default: ${defaultConfig.telnet.timeout || 3}): `,
         defaultConfig.telnet.timeout || 3
       );
 
-      console.log('\n🚀 Telnet 연결 체크를 시작합니다...');
+      console.log('\n🚀 Starting Telnet connection check...');
       console.log('-'.repeat(40));
       
       await this.telnetChecker.run({
@@ -167,10 +167,10 @@ class NodeUtilApp {
         timeout: parseInt(timeout) || 3
       });
       
-      console.log('\n✅ Telnet 연결 체크가 완료되었습니다.');
+      console.log('\n✅ Telnet connection check completed.');
       
     } catch (error) {
-      console.error('❌ Telnet 연결 체크 중 오류가 발생했습니다:', error.message);
+      console.error('❌ Error occurred during Telnet connection check:', error.message);
     }
     
     await this.waitAndContinue();
@@ -179,50 +179,50 @@ class NodeUtilApp {
 
   async runSqlExecution() {
     console.clear();
-    console.log('⚙️  데이터베이스 SQL 실행');
+        console.log('⚙️  Database SQL Execution');
     console.log('='.repeat(40));
     
     try {
-      // templet 폴더의 SQL 파일 목록 가져오기
+      // Get SQL file list from templet folder
       const templateDir = path.join(__dirname, 'templet');
       const sqlFiles = fs.readdirSync(templateDir)
         .filter(file => file.endsWith('.sql'))
         .map(file => file.replace('.sql', ''));
 
       if (sqlFiles.length === 0) {
-        console.log('❌ templet 폴더에 SQL 파일이 없습니다.');
+        console.log('❌ No SQL files found in templet folder.');
         await this.waitAndContinue();
         await this.showMainMenu();
         return;
       }
 
-      console.log('\n📄 사용 가능한 SQL 파일:');
+      console.log('\n📄 Available SQL Files:');
       sqlFiles.forEach((file, index) => {
         console.log(`${index + 1}. ${file}`);
       });
       console.log();
 
       const fileChoice = await this.askQuestion(
-        `실행할 SQL 파일 번호를 선택하세요 (1-${sqlFiles.length}): `
+        `Select SQL file number to execute (1-${sqlFiles.length}): `
       );
       
       const selectedFile = sqlFiles[parseInt(fileChoice) - 1];
       if (!selectedFile) {
-        console.log('❌ 잘못된 파일 번호입니다.');
+        console.log('❌ Invalid file number.');
         await this.waitAndContinue();
         await this.showMainMenu();
         return;
       }
 
-      console.log(`\n🚀 SQL 실행을 시작합니다: ${selectedFile}`);
+      console.log(`\n🚀 Starting SQL execution: ${selectedFile}`);
       console.log('-'.repeat(40));
       
       await this.dbExecutor.run(selectedFile);
       
-      console.log('\n✅ SQL 실행이 완료되었습니다.');
+      console.log('\n✅ SQL execution completed.');
       
     } catch (error) {
-      console.error('❌ SQL 실행 중 오류가 발생했습니다:', error.message);
+      console.error('❌ Error occurred during SQL execution:', error.message);
     }
     
     await this.waitAndContinue();
@@ -231,16 +231,16 @@ class NodeUtilApp {
 
   async showConfigMenu() {
     console.clear();
-    console.log('⚙️  설정 관리');
+        console.log('⚙️  Configuration Management');
     console.log('='.repeat(40));
-    console.log('1. 현재 설정 보기');
-    console.log('2. 기본 설정 변경');
-    console.log('3. 설정 초기화');
-    console.log('4. 환경변수 확인');
-    console.log('5. 메인 메뉴로 돌아가기');
+    console.log('1. View Current Configuration');
+    console.log('2. Update Default Configuration');
+    console.log('3. Reset Configuration');
+    console.log('4. Check Environment Variables');
+    console.log('5. Return to Main Menu');
     console.log();
 
-    const choice = await this.askQuestion('선택하세요 (1-5): ');
+    const choice = await this.askQuestion('Select (1-5): ');
     
     switch(choice.trim()) {
       case '1':
@@ -260,7 +260,7 @@ class NodeUtilApp {
         await this.showMainMenu();
         return;
       default:
-        console.log('❌ 잘못된 선택입니다.');
+        console.log('❌ Invalid selection.');
     }
     
     await this.waitAndContinue();
@@ -269,31 +269,31 @@ class NodeUtilApp {
 
   async runAllChecks() {
     console.clear();
-    console.log('🔄 모든 체크 실행 (일괄 처리)');
+    console.log('🔄 Run All Checks (Batch Processing)');
     console.log('='.repeat(40));
     
     const defaultConfig = this.configManager.getDefaultConfig();
     
     try {
-      console.log('\n🚀 모든 체크를 순차적으로 실행합니다...');
+      console.log('\n🚀 Running all checks sequentially...');
       console.log('='.repeat(40));
       
-      // 1. Telnet 체크
+      // 1. Telnet check
       if (defaultConfig.telnet.csvPath && fs.existsSync(defaultConfig.telnet.csvPath)) {
-        console.log('\n1️⃣ Telnet 연결 체크 시작...');
+        console.log('\n1️⃣ Starting Telnet connection check...');
         await this.telnetChecker.run({
           csvPath: defaultConfig.telnet.csvPath,
           timeout: defaultConfig.telnet.timeout || 3
         });
-        console.log('✅ Telnet 체크 완료');
+        console.log('✅ Telnet check completed');
       } else {
-        console.log('⚠️  Telnet 체크: CSV 파일 경로가 설정되지 않았거나 파일이 존재하지 않습니다.');
+        console.log('⚠️  Telnet check: CSV file path not set or file does not exist.');
       }
       
-      // 2. DB 연결 체크
+      // 2. DB connection check
       if (defaultConfig.mssql.csvPath && fs.existsSync(defaultConfig.mssql.csvPath) && 
           defaultConfig.mssql.dbUser && defaultConfig.mssql.dbPassword) {
-        console.log('\n2️⃣ 데이터베이스 연결 체크 시작...');
+        console.log('\n2️⃣ Starting database connection check...');
         await this.dbConnectionChecker.run({
           csvPath: defaultConfig.mssql.csvPath,
           dbUser: defaultConfig.mssql.dbUser,
@@ -301,15 +301,15 @@ class NodeUtilApp {
           timeout: defaultConfig.mssql.timeout || 5,
           dbType: 'mssql' // 기본값
         });
-        console.log('✅ 데이터베이스 체크 완료');
+        console.log('✅ Database check completed');
       } else {
-        console.log('⚠️  데이터베이스 체크: 필요한 설정이 완료되지 않았습니다.');
+        console.log('⚠️  Database check: Required configuration not completed.');
       }
       
-      console.log('\n🎉 모든 체크가 완료되었습니다!');
+      console.log('\n🎉 All checks completed successfully!');
       
     } catch (error) {
-      console.error('❌ 일괄 처리 중 오류가 발생했습니다:', error.message);
+      console.error('❌ Error occurred during batch processing:', error.message);
     }
     
     await this.waitAndContinue();
@@ -317,7 +317,7 @@ class NodeUtilApp {
   }
 
   async exitApp() {
-    console.log('\n👋 프로그램을 종료합니다.');
+    console.log('\n👋 Exiting program.');
     this.rl.close();
     process.exit(0);
   }
@@ -332,7 +332,7 @@ class NodeUtilApp {
   }
 
   async waitAndContinue() {
-    console.log('\n⏳ 계속하려면 Enter 키를 누르세요...');
+    console.log('\n⏳ Press Enter to continue...');
     return new Promise((resolve) => {
       this.rl.once('line', () => resolve());
     });

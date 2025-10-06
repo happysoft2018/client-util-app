@@ -133,7 +133,7 @@ class TelnetChecker {
       try {
         await axios.post(this.apiUrl + '/telnet', body, { timeout: 3000 });
       } catch (err) {
-        console.error(`체크결과 기록 API (${this.apiUrl}/telnet) 전송 실패`);
+        console.error(`Failed to send check result to API (${this.apiUrl}/telnet)`);
       }
     }
   }
@@ -154,34 +154,34 @@ class TelnetChecker {
           rows.push(row);
         })
         .on('error', (error) => {
-          reject(new Error(`CSV 파일 읽기 오류: ${error.message}`));
+          reject(new Error(`CSV file read error: ${error.message}`));
         })
         .on('end', async () => {
           if (rows.length === 0) {
-            reject(new Error('CSV 파일이 비어있습니다.'));
+            reject(new Error('CSV file is empty.'));
             return;
           }
 
-          // 필수 컬럼 체크
+          // Required column check
           const requiredColumns = ['server_ip', 'port'];
           const firstRow = rows[0];
           const missingColumns = requiredColumns.filter(col => !firstRow.hasOwnProperty(col));
           
           if (missingColumns.length > 0) {
-            reject(new Error(`필수 컬럼이 누락되었습니다: ${missingColumns.join(', ')}`));
+            reject(new Error(`Required columns are missing: ${missingColumns.join(', ')}`));
             return;
           }
 
           const MAX_ROW_COUNT = 500;
           if (rows.length > MAX_ROW_COUNT) {
-            reject(new Error(`CSV 파일의 데이터 row수가 너무 많습니다. (${rows.length} > ${MAX_ROW_COUNT})`));
+            reject(new Error(`CSV file has too many data rows. (${rows.length} > ${MAX_ROW_COUNT})`));
             return;
           }
 
-          console.log(`총 ${rows.length}개의 서버 정보를 읽었습니다.`);
+          console.log(`Read ${rows.length} server information entries.`);
 
           try {
-            // API 마스터 등록
+            // API master registration
             if (this.apiUrl) {
               const result = await axios.post(
                 this.apiUrl + '/master', 
@@ -191,7 +191,7 @@ class TelnetChecker {
               checkUnitId = result.data.insertId ? result.data.insertId : 0;
             }
 
-            // 각 서버별 체크 실행
+            // Execute check for each server
             for (const row of rows) {
               if (!this.regexIpPattern.test(row.server_ip)) {
                 console.log(`[${row.server_ip}] is not valid ip format`);
@@ -202,14 +202,14 @@ class TelnetChecker {
               }
             }
             
-            console.log('모든 서버 Telnet 체크 및 결과 전송 완료');
+            console.log('All server Telnet checks and result transmission completed');
             resolve();
           } catch (apiError) {
             if (this.apiUrl) {
-              reject(new Error(`API 서버 연결 오류: ${apiError.message}`));
+              reject(new Error(`API server connection error: ${apiError.message}`));
             } else {
-              // API URL이 없어도 로컬 체크는 진행
-              console.log('⚠️  API URL이 설정되지 않아 로컬 체크만 진행합니다.');
+              // Proceed with local check even if API URL is not set
+              console.log('⚠️  API URL not set, proceeding with local check only.');
               for (const row of rows) {
                 if (!this.regexIpPattern.test(row.server_ip)) {
                   console.log(`[${row.server_ip}] is not valid ip format`);
