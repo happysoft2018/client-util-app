@@ -1,15 +1,15 @@
 const fs = require('fs');
 const csv = require('csv-parser');
-const mssql = require('mssql');
 const mysql = require('mysql2/promise');
 const os = require('os');
 const path = require('path');
+const DatabaseFactory = require('./database/DatabaseFactory');
 require('dotenv').config();
 
-class SqlExecutor {
+class DBExecutor {
   constructor(configManager) {
-    this.templateDir = path.join(__dirname, '../../templet');
     this.configManager = configManager;
+    this.templateDir = path.join(__dirname, '../../templet');
   }
 
   getLocalIp() {
@@ -46,7 +46,7 @@ class SqlExecutor {
     await this.validateEnvironment();
 
     let localDBPool = null;
-    let remoteDBPool = null;
+    let remoteConnection = null;
 
     // 로컬 DB 연결 (MySQL - 로깅용, 선택사항)
     if (process.env.LOCALDB_HOST) {
@@ -63,18 +63,25 @@ class SqlExecutor {
       }
     }
 
-    // 원격 DB 연결 (MSSQL)
+    // 원격 DB 연결
     let dbConfig;
     if (selectedDbName) {
       dbConfig = this.configManager.getDbConfig(selectedDbName);
       if (!dbConfig) {
         throw new Error(`선택된 DB 설정을 찾을 수 없습니다: ${selectedDbName}`);
       }
+      
+      const dbType = this.configManager.getDbType(selectedDbName);
+      remoteConnection = DatabaseFactory.createConnection(dbType, dbConfig);
+      await remoteConnection.connect();
+      
     } else {
       // 환경변수에서 가져오기 (레거시)
       if (!process.env.REMOTEDB_HOST) {
         throw new Error('DB 설정이 필요합니다. 설정 관리에서 DB를 선택하거나 환경변수를 설정해주세요.');
       }
+      
+      // 레거시는 MSSQL로 가정
       dbConfig = {
         server: process.env.REMOTEDB_HOST,
         user: process.env.REMOTEDB_USER,
@@ -88,26 +95,15 @@ class SqlExecutor {
           connectionTimeout: 30000
         }
       };
+      
+      remoteConnection = DatabaseFactory.createConnection('mssql', dbConfig);
+      await remoteConnection.connect();
     }
 
-    remoteDBPool = await mssql.connect({
-      user: dbConfig.user,
-      password: dbConfig.password,
-      server: dbConfig.server,
-      port: parseInt(dbConfig.port, 10),
-      database: dbConfig.database,
-      options: dbConfig.options || { 
-        encrypt: false, 
-        trustServerCertificate: true,
-        requestTimeout: 300000,
-        connectionTimeout: 30000
-      }
-    });
-
-    return { localDBPool, remoteDBPool };
+    return { localDBPool, remoteConnection };
   }
 
-  async executeSql(localDBPool, remoteDBPool, sqlName, query, rows) {
+  async executeSql(localDBPool, remoteConnection, sqlName, query, rows) {
     const pcIp = this.getLocalIp();
     const startTime = Date.now();
     let totalCount = 0;
@@ -145,13 +141,8 @@ class SqlExecutor {
     // 각 행에 대해 SQL 실행
     for (const row of rows) {
       try {
-        const request = remoteDBPool.request();
-        Object.entries(row).forEach(([key, value]) => {
-          request.input(key, value);
-        });
-        
-        const result = await request.query(query);
-        totalCount += result.recordset.length;
+        const result = await remoteConnection.executeQuery(query, row);
+        totalCount += result.rowCount;
 
         // 결과를 로그파일에 저장
         const timestampNow = new Date();
@@ -162,9 +153,9 @@ class SqlExecutor {
                          String(timestampNow.getMinutes()).padStart(2, '0') + 
                          String(timestampNow.getSeconds()).padStart(2, '0');
         const logFile = path.join(logDir, `${sqlName}_${timestamp}.log`);
-        fs.appendFileSync(logFile, JSON.stringify({ row, result: result.recordset }, null, 2) + '\n');
+        fs.appendFileSync(logFile, JSON.stringify({ row, result: result.rows }, null, 2) + '\n');
         
-        console.log(`✅ 완료: ${JSON.stringify(row)} (결과: ${result.recordset.length}행)`);
+        console.log(`✅ 완료: ${JSON.stringify(row)} (결과: ${result.rowCount}행)`);
 
       } catch (err) {
         errorMsg += err.message + '\n';
@@ -227,11 +218,13 @@ class SqlExecutor {
 
     // DB 연결 생성
     const selectedDbName = this.configManager.getDefaultConfig().sql.selectedDb;
-    const { localDBPool, remoteDBPool } = await this.createConnections(selectedDbName);
+    const { localDBPool, remoteConnection } = await this.createConnections(selectedDbName);
     
     if (selectedDbName) {
       const dbConfig = this.configManager.getDbConfig(selectedDbName);
+      const dbType = this.configManager.getDbType(selectedDbName);
       console.log(`\n🗄️  사용 중인 데이터베이스: ${selectedDbName}`);
+      console.log(`   DB 타입: ${dbType || 'MSSQL'}`);
       console.log(`   서버: ${dbConfig.server}:${dbConfig.port}`);
       console.log(`   데이터베이스: ${dbConfig.database}`);
       console.log(`   계정: ${dbConfig.user}`);
@@ -260,7 +253,7 @@ class SqlExecutor {
       });
 
       // SQL 실행
-      const result = await this.executeSql(localDBPool, remoteDBPool, sqlName, query, rows);
+      const result = await this.executeSql(localDBPool, remoteConnection, sqlName, query, rows);
       
       console.log('\n🎉 모든 작업이 완료되었습니다!');
       
@@ -269,9 +262,11 @@ class SqlExecutor {
       if (localDBPool) {
         await localDBPool.end();
       }
-      await remoteDBPool.close();
+      if (remoteConnection) {
+        await remoteConnection.disconnect();
+      }
     }
   }
 }
 
-module.exports = SqlExecutor;
+module.exports = DBExecutor;

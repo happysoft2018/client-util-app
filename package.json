@@ -28,6 +28,8 @@
     "dotenv": "^17.0.1",
     "mssql": "^9.0.1",
     "mysql2": "^3.4.0",
+    "pg": "^8.11.3",
+    "oracledb": "^6.0.5",
     "telnet-client": "^2.2.5"
   },
   "devDependencies": {

@@ -1,6 +1,7 @@
 {
   "dbs": {
     "sampleDB": {
+      "type": "mssql",
       "user": "sample",
       "password": "sample1234!",
       "server": "localhost",
@@ -9,6 +10,7 @@
       "options": { "encrypt": true, "trustServerCertificate": true }
     },
     "erpDB": {
+      "type": "mssql",
       "user": "erp",
       "password": "erp1234!",
       "server": "localhost",
@@ -17,6 +19,7 @@
       "options": { "encrypt": true, "trustServerCertificate": true }
     },
     "sourceDB": {
+      "type": "mssql",
       "user": "sample",
       "password": "sample1234!",
       "server": "localhost",
@@ -29,6 +32,41 @@
         "trustServerCertificate": true,
         "enableArithAbort": true,
         "requestTimeout": 300000,
+        "connectionTimeout": 30000
+      }
+    },
+    "mysqlDB": {
+      "type": "mysql",
+      "user": "root",
+      "password": "password",
+      "server": "localhost",
+      "database": "testdb",
+      "port": 3306,
+      "options": {
+        "ssl": false,
+        "connectionTimeout": 30000
+      }
+    },
+    "postgresDB": {
+      "type": "postgresql",
+      "user": "postgres",
+      "password": "password",
+      "server": "localhost",
+      "database": "testdb",
+      "port": 5432,
+      "options": {
+        "ssl": false,
+        "connectionTimeout": 30000
+      }
+    },
+    "oracleDB": {
+      "type": "oracle",
+      "user": "hr",
+      "password": "password",
+      "server": "localhost",
+      "database": "xe",
+      "port": 1521,
+      "options": {
         "connectionTimeout": 30000
       }
     }

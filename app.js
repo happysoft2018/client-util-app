@@ -5,9 +5,9 @@ const os = require('os');
 require('dotenv').config();
 
 // 모듈 import
-const MssqlChecker = require('./src/modules/MssqlChecker');
+const DBConnectionChecker = require('./src/modules/DBConnectionChecker');
 const TelnetChecker = require('./src/modules/TelnetChecker');
-const SqlExecutor = require('./src/modules/SqlExecutor');
+const DBExecutor = require('./src/modules/DBExecutor');
 const ConfigManager = require('./src/modules/ConfigManager');
 
 class NodeUtilApp {
@@ -18,9 +18,9 @@ class NodeUtilApp {
     });
     
     this.configManager = new ConfigManager();
-    this.mssqlChecker = new MssqlChecker(this.configManager);
+    this.dbConnectionChecker = new DBConnectionChecker(this.configManager);
     this.telnetChecker = new TelnetChecker();
-    this.sqlExecutor = new SqlExecutor(this.configManager);
+    this.dbExecutor = new DBExecutor(this.configManager);
   }
 
   async start() {
@@ -35,9 +35,9 @@ class NodeUtilApp {
 
   async showMainMenu() {
     console.log('📋 메인 메뉴');
-    console.log('1. MSSQL 연결 및 권한 체크');
+    console.log('1. 데이터베이스 연결 및 권한 체크');
     console.log('2. 서버 Telnet 연결 체크');
-    console.log('3. MSSQL SQL 실행');
+    console.log('3. 데이터베이스 SQL 실행');
     console.log('4. 설정 관리');
     console.log('5. 모든 체크 실행 (일괄 처리)');
     console.log('6. 종료');
@@ -47,7 +47,7 @@ class NodeUtilApp {
     
     switch(choice.trim()) {
       case '1':
-        await this.runMssqlCheck();
+        await this.runDbConnectionCheck();
         break;
       case '2':
         await this.runTelnetCheck();
@@ -71,9 +71,9 @@ class NodeUtilApp {
     }
   }
 
-  async runMssqlCheck() {
+  async runDbConnectionCheck() {
     console.clear();
-    console.log('🔍 MSSQL 연결 및 권한 체크');
+    console.log('🔍 데이터베이스 연결 및 권한 체크');
     console.log('='.repeat(40));
     
     try {
@@ -86,6 +86,21 @@ class NodeUtilApp {
         defaultConfig.mssql.csvPath
       );
       
+      // DB 타입 선택
+      const supportedTypes = this.configManager.getSupportedDbTypes();
+      console.log('\n🗄️  지원하는 데이터베이스 타입:');
+      supportedTypes.forEach((type, index) => {
+        console.log(`  ${index + 1}. ${type.name} (${type.type})`);
+      });
+      
+      const dbTypeChoice = await this.askQuestion(
+        `DB 타입을 선택하세요 (1-${supportedTypes.length}, 기본값: MSSQL): `,
+        '1'
+      );
+      
+      const selectedDbType = supportedTypes[parseInt(dbTypeChoice) - 1] || supportedTypes[0];
+      console.log(`✅ 선택된 DB 타입: ${selectedDbType.name}`);
+
       console.log('\n🔐 데이터베이스 인증 정보:');
       const dbUser = await this.askQuestion(
         `DB 계정 ID (기본값: ${defaultConfig.mssql.dbUser || '입력 필요'}): `,
@@ -103,20 +118,21 @@ class NodeUtilApp {
         defaultConfig.mssql.timeout || 5
       );
 
-      console.log('\n🚀 MSSQL 연결 체크를 시작합니다...');
+      console.log('\n🚀 데이터베이스 연결 체크를 시작합니다...');
       console.log('-'.repeat(40));
       
-      await this.mssqlChecker.run({
+      await this.dbConnectionChecker.run({
         csvPath: csvPath || defaultConfig.mssql.csvPath,
         dbUser: dbUser || defaultConfig.mssql.dbUser,
         dbPassword: dbPassword || defaultConfig.mssql.dbPassword,
-        timeout: parseInt(timeout) || 5
+        timeout: parseInt(timeout) || 5,
+        dbType: selectedDbType.type
       });
       
-      console.log('\n✅ MSSQL 연결 체크가 완료되었습니다.');
+      console.log('\n✅ 데이터베이스 연결 체크가 완료되었습니다.');
       
     } catch (error) {
-      console.error('❌ MSSQL 연결 체크 중 오류가 발생했습니다:', error.message);
+      console.error('❌ 데이터베이스 연결 체크 중 오류가 발생했습니다:', error.message);
     }
     
     await this.waitAndContinue();
@@ -163,7 +179,7 @@ class NodeUtilApp {
 
   async runSqlExecution() {
     console.clear();
-    console.log('⚙️  MSSQL SQL 실행');
+    console.log('⚙️  데이터베이스 SQL 실행');
     console.log('='.repeat(40));
     
     try {
@@ -201,7 +217,7 @@ class NodeUtilApp {
       console.log(`\n🚀 SQL 실행을 시작합니다: ${selectedFile}`);
       console.log('-'.repeat(40));
       
-      await this.sqlExecutor.run(selectedFile);
+      await this.dbExecutor.run(selectedFile);
       
       console.log('\n✅ SQL 실행이 완료되었습니다.');
       
@@ -274,19 +290,20 @@ class NodeUtilApp {
         console.log('⚠️  Telnet 체크: CSV 파일 경로가 설정되지 않았거나 파일이 존재하지 않습니다.');
       }
       
-      // 2. MSSQL 체크
+      // 2. DB 연결 체크
       if (defaultConfig.mssql.csvPath && fs.existsSync(defaultConfig.mssql.csvPath) && 
           defaultConfig.mssql.dbUser && defaultConfig.mssql.dbPassword) {
-        console.log('\n2️⃣ MSSQL 연결 체크 시작...');
-        await this.mssqlChecker.run({
+        console.log('\n2️⃣ 데이터베이스 연결 체크 시작...');
+        await this.dbConnectionChecker.run({
           csvPath: defaultConfig.mssql.csvPath,
           dbUser: defaultConfig.mssql.dbUser,
           dbPassword: defaultConfig.mssql.dbPassword,
-          timeout: defaultConfig.mssql.timeout || 5
+          timeout: defaultConfig.mssql.timeout || 5,
+          dbType: 'mssql' // 기본값
         });
-        console.log('✅ MSSQL 체크 완료');
+        console.log('✅ 데이터베이스 체크 완료');
       } else {
-        console.log('⚠️  MSSQL 체크: 필요한 설정이 완료되지 않았습니다.');
+        console.log('⚠️  데이터베이스 체크: 필요한 설정이 완료되지 않았습니다.');
       }
       
       console.log('\n🎉 모든 체크가 완료되었습니다!');

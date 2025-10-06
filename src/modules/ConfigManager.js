@@ -1,6 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 const os = require('os');
+const DatabaseFactory = require('./database/DatabaseFactory');
 
 class ConfigManager {
   constructor() {
@@ -64,6 +65,44 @@ class ConfigManager {
 
   getAvailableDbs() {
     return Object.keys(this.dbConfig.dbs || {});
+  }
+
+  getSupportedDbTypes() {
+    return DatabaseFactory.getSupportedTypes();
+  }
+
+  getDbType(dbName) {
+    const dbConfig = this.getDbConfig(dbName);
+    return dbConfig ? dbConfig.type || 'mssql' : null;
+  }
+
+  validateDbConfig(dbName) {
+    const dbConfig = this.getDbConfig(dbName);
+    if (!dbConfig) {
+      return { valid: false, error: `DB 설정을 찾을 수 없습니다: ${dbName}` };
+    }
+
+    try {
+      DatabaseFactory.validateConfig(dbConfig.type || 'mssql', dbConfig);
+      return { valid: true };
+    } catch (error) {
+      return { valid: false, error: error.message };
+    }
+  }
+
+  async testDbConnection(dbName) {
+    const dbConfig = this.getDbConfig(dbName);
+    if (!dbConfig) {
+      return { success: false, message: `DB 설정을 찾을 수 없습니다: ${dbName}` };
+    }
+
+    try {
+      const connection = DatabaseFactory.createConnection(dbConfig.type || 'mssql', dbConfig);
+      const result = await connection.testConnection();
+      return result;
+    } catch (error) {
+      return { success: false, message: error.message };
+    }
   }
 
   saveConfig() {
@@ -200,7 +239,9 @@ class ConfigManager {
     console.log(`  CSV 파일 경로: ${this.config.mssql.csvPath || '미설정'}`);
     if (this.config.mssql.selectedDb) {
       const dbConfig = this.getDbConfig(this.config.mssql.selectedDb);
+      const dbType = this.getDbType(this.config.mssql.selectedDb);
       console.log(`  선택된 DB: ${this.config.mssql.selectedDb}`);
+      console.log(`  DB 타입: ${dbType || 'MSSQL'}`);
       console.log(`  서버: ${dbConfig.server}:${dbConfig.port}`);
       console.log(`  데이터베이스: ${dbConfig.database}`);
       console.log(`  계정: ${dbConfig.user}`);
@@ -218,7 +259,9 @@ class ConfigManager {
     console.log(`  템플릿 경로: ${this.config.sql.templatePath}`);
     if (this.config.sql.selectedDb) {
       const dbConfig = this.getDbConfig(this.config.sql.selectedDb);
+      const dbType = this.getDbType(this.config.sql.selectedDb);
       console.log(`  선택된 DB: ${this.config.sql.selectedDb}`);
+      console.log(`  DB 타입: ${dbType || 'MSSQL'}`);
       console.log(`  서버: ${dbConfig.server}:${dbConfig.port}`);
       console.log(`  데이터베이스: ${dbConfig.database}`);
     }
@@ -229,9 +272,10 @@ class ConfigManager {
       console.log('\n🗄️  사용 가능한 데이터베이스:');
       availableDbs.forEach(dbName => {
         const dbInfo = this.getDbConfig(dbName);
+        const dbType = this.getDbType(dbName);
         const isSelected = dbName === this.config.mssql.selectedDb || dbName === this.config.sql.selectedDb;
         const status = isSelected ? ' (선택됨)' : '';
-        console.log(`  - ${dbName}: ${dbInfo.server}:${dbInfo.port}/${dbInfo.database}${status}`);
+        console.log(`  - ${dbName}: [${dbType || 'MSSQL'}] ${dbInfo.server}:${dbInfo.port}/${dbInfo.database}${status}`);
       });
     }
   }

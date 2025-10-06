@@ -1,17 +1,17 @@
 const fs = require('fs');
 const csv = require('csv-parser');
-const mssql = require('mssql');
 const axios = require('axios');
 const os = require('os');
+const DatabaseFactory = require('./database/DatabaseFactory');
 require('dotenv').config();
 
-class MssqlChecker {
+class DBConnectionChecker {
   constructor(configManager) {
     this.configManager = configManager;
     this.apiUrl = process.env.API_URL;
     this.localPcIp = this.getLocalIp();
     this.regexIpPattern = /^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/;
-    this.regexPortPattern = /^[0-9]{4}$/;
+    this.regexPortPattern = /^[0-9]+$/; // 포트는 1-65535 범위이므로 4자리 제한 제거
   }
 
   getLocalIp() {
@@ -58,90 +58,44 @@ class MssqlChecker {
     }
   }
 
-  async checkMssqlConnection({ ip, port, db_name, dbUser, dbPassword, timeout }) {
+  async checkDbConnection({ ip, port, db_name, dbUser, dbPassword, timeout, dbType = 'mssql' }) {
     const config = {
       user: dbUser,
       password: dbPassword,
       server: ip,
       port: parseInt(port, 10),
-      database: db_name,
-      options: { encrypt: true, trustServerCertificate: true },
-      connectionTimeout: timeout * 1000,
-      requestTimeout: timeout * 1000
+      database: db_name
     };
     
     const start = Date.now();
 
     try {
-      const pool = await mssql.connect(config);
+      const connection = DatabaseFactory.createConnection(dbType, config);
+      await connection.connect();
       
       const result = { 
         success: true, 
         elapsed: 0,
+        dbType: dbType,
         permissions: {
           select: false,
           insert: false,
           update: false,
-          delete: false
+          delete: false,
+          create: false,
+          drop: false
         }
       };
 
-      const testTableName = `temp_permission_test_${Date.now()}`;
-      
+      // 권한 체크
       try {
-        // SELECT 권한 체크
-        try {
-          await pool.request().query('SELECT TOP 1 1 FROM INFORMATION_SCHEMA.TABLES');
-          result.permissions.select = true;
-        } catch (err) {
-          console.log(`  └ SELECT 권한 없음: ${err.message.substring(0, 50)}...`);
-        }
-
-        // CREATE TABLE 및 INSERT 권한 체크
-        try {
-          await pool.request().query(`CREATE TABLE ${testTableName} (id INT, test_data NVARCHAR(50))`);
-          
-          try {
-            // INSERT 권한 체크
-            await pool.request().query(`INSERT INTO ${testTableName} (id, test_data) VALUES (1, 'test')`);
-            result.permissions.insert = true;
-
-            // UPDATE 권한 체크
-            try {
-              await pool.request().query(`UPDATE ${testTableName} SET test_data = 'updated' WHERE id = 1`);
-              result.permissions.update = true;
-            } catch (err) {
-              console.log(`  └ UPDATE 권한 없음: ${err.message.substring(0, 50)}...`);
-            }
-
-            // DELETE 권한 체크
-            try {
-              await pool.request().query(`DELETE FROM ${testTableName} WHERE id = 1`);
-              result.permissions.delete = true;
-            } catch (err) {
-              console.log(`  └ DELETE 권한 없음: ${err.message.substring(0, 50)}...`);
-            }
-
-          } catch (err) {
-            console.log(`  └ INSERT 권한 없음: ${err.message.substring(0, 50)}...`);
-          }
-
-          // 테스트 테이블 삭제
-          try {
-            await pool.request().query(`DROP TABLE ${testTableName}`);
-          } catch (err) {
-            // 테이블 삭제 실패는 무시
-          }
-
-        } catch (err) {
-          console.log(`  └ CREATE TABLE 권한 없음 (INSERT/UPDATE/DELETE 테스트 불가): ${err.message.substring(0, 50)}...`);
-        }
-
+        const permissions = await connection.checkPermissions();
+        result.permissions = permissions;
       } catch (permErr) {
         console.log(`  └ 권한 체크 중 오류: ${permErr.message.substring(0, 50)}...`);
       }
 
-      await pool.close();
+      await connection.disconnect();
       result.elapsed = ((Date.now() - start) / 1000).toFixed(2);
       return result;
 
@@ -152,28 +106,32 @@ class MssqlChecker {
         error_code: err.code, 
         error_msg: err.message, 
         elapsed,
+        dbType: dbType,
         permissions: {
           select: false,
           insert: false,
           update: false,
-          delete: false
+          delete: false,
+          create: false,
+          drop: false
         }
       };
     }
   }
 
   async unitWorkByServer(row, checkUnitId, options) {
-    const { dbUser, dbPassword, timeout } = options;
+    const { dbUser, dbPassword, timeout, dbType = 'mssql' } = options;
     const { db_name, server_ip, port, corp, proc } = row;
     const title = corp + '_' + proc;
 
-    const result = await this.checkMssqlConnection({ 
+    const result = await this.checkDbConnection({ 
       db_name, 
       ip: server_ip, 
       port, 
       dbUser, 
       dbPassword, 
-      timeout 
+      timeout,
+      dbType
     });
     
     const errMessage = result.success ? '' : `[${result.error_code}] ${result.error_msg}`;
@@ -187,6 +145,8 @@ class MssqlChecker {
       if (perms.insert) permArray.push('INSERT');
       if (perms.update) permArray.push('UPDATE');
       if (perms.delete) permArray.push('DELETE');
+      if (perms.create) permArray.push('CREATE');
+      if (perms.drop) permArray.push('DROP');
       
       if (permArray.length > 0) {
         permissionStatus = ` [권한: ${permArray.join(', ')}]`;
@@ -195,7 +155,7 @@ class MssqlChecker {
       }
     }
     
-    console.log(`[${server_ip}:${port}][${row.env_type}DB][${title}][${db_name}] \t→ [${result.success ? '✅ 성공' : '❌ 실패'}]${permissionStatus} ${errMessage}`);
+    console.log(`[${server_ip}:${port}][${dbType.toUpperCase()}][${row.env_type}DB][${title}][${db_name}] \t→ [${result.success ? '✅ 성공' : '❌ 실패'}]${permissionStatus} ${errMessage}`);
 
     if (checkUnitId === 0) {
       return;
@@ -208,6 +168,7 @@ class MssqlChecker {
         server_ip,
         port,
         db_name,
+        db_type: dbType,
         db_userid: dbUser,
         result_code: result.success,
         error_code: result.success ? '' : result.error_code,
@@ -216,7 +177,9 @@ class MssqlChecker {
         perm_select: result.permissions.select,
         perm_insert: result.permissions.insert,
         perm_update: result.permissions.update,
-        perm_delete: result.permissions.delete
+        perm_delete: result.permissions.delete,
+        perm_create: result.permissions.create,
+        perm_drop: result.permissions.drop
       };
 
       try {
@@ -228,33 +191,16 @@ class MssqlChecker {
   }
 
   async run(options) {
-    const { csvPath, dbUser, dbPassword, timeout = 5 } = options;
+    const { csvPath, dbUser, dbPassword, timeout = 5, dbType = 'mssql' } = options;
     
-    // 설정에서 DB 정보 가져오기
-    const config = this.configManager.getDefaultConfig();
-    const selectedDbName = config.mssql.selectedDb;
-    
-    let finalDbUser = dbUser;
-    let finalDbPassword = dbPassword;
-    
-    // 설정된 DB가 있으면 해당 DB 정보 사용
-    if (selectedDbName && !dbUser && !dbPassword) {
-      const dbConfig = this.configManager.getDbConfig(selectedDbName);
-      if (dbConfig) {
-        finalDbUser = dbConfig.user;
-        finalDbPassword = dbConfig.password;
-        console.log(`\n🗄️  설정된 DB 사용: ${selectedDbName} (${dbConfig.server}:${dbConfig.port})`);
-      }
-    }
-    
-    this.validateInput({ csvPath, dbUser: finalDbUser, dbPassword: finalDbPassword });
+    this.validateInput({ csvPath, dbUser, dbPassword });
 
     const rows = [];
     let checkUnitId = 0;
 
     return new Promise((resolve, reject) => {
       fs.createReadStream(csvPath)
-        .pipe(csv(['db_name', 'server_ip', 'port', 'corp', 'proc', 'env_type']))
+        .pipe(csv(['db_name', 'server_ip', 'port', 'corp', 'proc', 'env_type', 'db_type']))
         .on('data', (row) => {
           Object.keys(row).forEach(k => row[k] = row[k].trim());
           rows.push(row);
@@ -304,7 +250,14 @@ class MssqlChecker {
               } else if (!this.regexPortPattern.test(row.port)) {
                 console.log(`[${row.port}] is not valid port format`);
               } else {
-                await this.unitWorkByServer(row, checkUnitId, { dbUser: finalDbUser, dbPassword: finalDbPassword, timeout });
+                // CSV에서 db_type이 지정되면 해당 타입 사용, 없으면 기본값 사용
+                const rowDbType = row.db_type || dbType;
+                await this.unitWorkByServer(row, checkUnitId, { 
+                  dbUser, 
+                  dbPassword, 
+                  timeout, 
+                  dbType: rowDbType 
+                });
               }
             }
             
@@ -322,7 +275,13 @@ class MssqlChecker {
                 } else if (!this.regexPortPattern.test(row.port)) {
                   console.log(`[${row.port}] is not valid port format`);
                 } else {
-                  await this.unitWorkByServer(row, 0, { dbUser: finalDbUser, dbPassword: finalDbPassword, timeout });
+                  const rowDbType = row.db_type || dbType;
+                  await this.unitWorkByServer(row, 0, { 
+                    dbUser, 
+                    dbPassword, 
+                    timeout, 
+                    dbType: rowDbType 
+                  });
                 }
               }
               resolve();
@@ -333,4 +292,4 @@ class MssqlChecker {
   }
 }
 
-module.exports = MssqlChecker;
+module.exports = DBConnectionChecker;
