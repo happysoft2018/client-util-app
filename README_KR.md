@@ -123,7 +123,7 @@ UserDB,192.168.1.102,5432,지사,CRM,STG,postgresql
 
 2. **의존성 패키지**
    - 배치파일 실행 시 자동으로 `npm install` 실행
-   - 필요한 패키지: csv-parser, dotenv, mssql, mysql2, pg, oracledb, telnet-client
+   - 필요한 패키지: csv-parser, mssql, mysql2, pg, oracledb, telnet-client
 
 ## 🔧 설정
 
@@ -174,28 +174,10 @@ UserDB,192.168.1.102,5432,지사,CRM,STG,postgresql
 }
 ```
 
-#### 🌍 **환경변수 설정 (`.env` 파일)**
-다음 환경변수들을 설정할 수 있습니다:
-
-```env
-# API 서버 설정 (선택사항)
-API_URL=http://localhost:3000
-
-# 로컬 데이터베이스 설정 (MySQL - 로깅용, 선택사항)
-LOCALDB_HOST=localhost
-LOCALDB_USER=root
-LOCALDB_PASSWORD=password
-LOCALDB_DATABASE=util_logs
-LOCALDB_PORT=3306
-```
-
-### 사용자 설정 관리
-통합 애플리케이션의 **설정 관리** 메뉴에서 자주 사용하는 설정을 저장할 수 있습니다:
-- **DB 선택**: `config/dbinfo.json`에서 정의된 DB 중 선택
-- **DB 체크 설정**: CSV 파일 경로, 선택된 DB, 타임아웃
-- **Telnet 체크 설정**: CSV 파일 경로, 타임아웃
-- **SQL 실행 설정**: 템플릿 경로, 선택된 DB
-- 설정은 `config/user-config.json`에 자동 저장됩니다.
+### 설정 관리
+애플리케이션은 시스템 정보를 위한 **설정 관리** 메뉴를 제공합니다:
+- **시스템 정보**: 시스템 세부사항 및 설정 파일 상태 확인
+- **사용 가능한 데이터베이스**: `config/dbinfo.json`에서 설정된 모든 데이터베이스 보기
 
 ## 📝 주의사항
 

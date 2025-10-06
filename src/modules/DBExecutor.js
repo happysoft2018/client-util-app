@@ -3,7 +3,6 @@ const csv = require('csv-parser');
 const os = require('os');
 const path = require('path');
 const DatabaseFactory = require('./database/DatabaseFactory');
-require('dotenv').config();
 
 class DBExecutor {
   constructor(configManager) {

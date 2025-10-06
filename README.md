@@ -127,7 +127,7 @@ UserDB,192.168.1.102,5432,지사,CRM,STG,postgresql
 
 2. **Dependency Packages**
    - Automatically runs `npm install` when batch file is executed
-   - Required packages: csv-parser, dotenv, mssql, mysql2, pg, oracledb, telnet-client
+   - Required packages: csv-parser, mssql, mysql2, pg, oracledb, telnet-client
 
 ## 🔧 Configuration
 
@@ -178,24 +178,12 @@ Database connection information is managed in the `config/dbinfo.json` file:
 }
 ```
 
-#### 🌍 **Environment Variables Settings (`.env` file)**
-The following environment variables can be configured:
+### Configuration Management
+The application provides a **Configuration Management** menu for system information:
+- **System Information**: Check system details and configuration file status
+- **Available Databases**: View all configured databases from `config/dbinfo.json`
 
-```env
-# API server settings (optional)
-API_URL=http://localhost:3000
-
-```
-
-### User Configuration Management
-You can save frequently used settings through the **Configuration Management** menu in the integrated application:
-- **DB Selection**: Choose from DBs defined in `config/dbinfo.json`
-- **DB Check Settings**: CSV file path, selected DB, timeout
-- **Telnet Check Settings**: CSV file path, timeout
-- **SQL Execution Settings**: Template path, selected DB
-- Settings are automatically saved to `config/user-config.json`.
-
-**Note**: All database connections now use `config/dbinfo.json`. Legacy environment variables (`LOCALDB_*`, `REMOTEDB_*`) are no longer used.
+**Note**: All database connections use `config/dbinfo.json`. No additional environment variables are required.
 
 ## 🏗️ Build and Deployment
 
