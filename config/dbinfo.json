@@ -1,0 +1,36 @@
+{
+  "dbs": {
+    "sampleDB": {
+      "user": "sample",
+      "password": "sample1234!",
+      "server": "localhost",
+      "database": "SampleDB",
+      "port": 1433,
+      "options": { "encrypt": true, "trustServerCertificate": true }
+    },
+    "erpDB": {
+      "user": "erp",
+      "password": "erp1234!",
+      "server": "localhost",
+      "database": "ERP_DB",
+      "port": 1433,
+      "options": { "encrypt": true, "trustServerCertificate": true }
+    },
+    "sourceDB": {
+      "user": "sample",
+      "password": "sample1234!",
+      "server": "localhost",
+      "database": "sourceDB",
+      "port": 1433,
+      "isWritable": false,
+      "description": "운영 환경 소스 데이터베이스 (읽기 전용)",
+      "options": { 
+        "encrypt": true, 
+        "trustServerCertificate": true,
+        "enableArithAbort": true,
+        "requestTimeout": 300000,
+        "connectionTimeout": 30000
+      }
+    }
+  }
+} 

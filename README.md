@@ -1,49 +1,64 @@
-# Node.js 클라이언트 유틸리티 앱
+# Node.js 통합 유틸리티 도구
 
-로컬환경에서 사용하는 각종 유틸리티 모음입니다.
+로컬환경에서 사용하는 각종 유틸리티를 통합 관리하는 도구입니다.
 
 ## 📁 프로젝트 구조
 
 ```
 my-node-client-util-app/
+├── app.js                          # 🚀 메인 통합 애플리케이션
 ├── src/
-│   ├── server-telnet-checker.js    # 서버 Telnet 연결 체크
-│   ├── mssql-connection-checker.js # MSSQL 연결 및 권한 체크 (개선됨)
-│   └── execute-mssql-sql.js        # MSSQL SQL 실행
-├── sample/                         # 샘플 파일들
+│   └── modules/                    # 📦 모듈화된 기능들
+│       ├── ConfigManager.js        # 설정 관리
+│       ├── MssqlChecker.js         # MSSQL 연결 및 권한 체크
+│       ├── TelnetChecker.js        # 서버 Telnet 연결 체크
+│       └── SqlExecutor.js          # MSSQL SQL 실행
+├── config/
+│   ├── dbinfo.json                 # DB 연결 정보 설정
+│   └── user-config.json            # 사용자 기본 설정 (자동 생성)
 ├── templet/                        # 템플릿 파일들
-│   └── DB_sample.csv               # MSSQL 체크용 CSV 샘플
-├── run-telnet-checker.bat          # Telnet 체크 실행
-├── run-mssql-checker.bat           # MSSQL 체크 실행
-├── run-mssql-executor.bat          # MSSQL SQL 실행
-└── 프로그램실행하기.bat               # 통합 실행 도구
+│   ├── DB_sample.csv               # MSSQL 체크용 CSV 샘플
+│   ├── SQL_001.sql                 # SQL 쿼리 템플릿
+│   └── SQL_001.csv                 # SQL 파라미터 템플릿
+├── log/                            # 실행 로그 (자동 생성)
+└── 프로그램실행하기.bat               # 🎯 통합 실행 도구
 ```
 
 ## 🚀 사용법
 
-### 1. 개별 실행
-각 유틸리티를 개별적으로 실행할 수 있습니다:
-
-- **`run-telnet-checker.bat`** - 서버 Telnet 연결 체크
-- **`run-mssql-checker.bat`** - MSSQL 연결 및 권한 체크 (향상됨)
-- **`run-mssql-executor.bat`** - MSSQL SQL 실행
-
-### 2. 통합 실행
-**`run-all-utils.bat`**를 실행하면 메뉴에서 원하는 도구를 선택할 수 있습니다:
+### 🎯 **통합 실행 (권장)**
+**`프로그램실행하기.bat`**를 더블클릭하면 통합 메뉴가 나타납니다:
 
 ```
 ========================================
-    Node.js 유틸리티 도구 모음
+    Node.js 통합 유틸리티 도구
 ========================================
 
-[1] 서버 Telnet 연결 체크
-[2] MSSQL 연결 체크
-[3] MSSQL SQL 실행
-[4] 모든 도구 실행
-[5] 종료
+📋 메인 메뉴
+1. MSSQL 연결 및 권한 체크
+2. 서버 Telnet 연결 체크  
+3. MSSQL SQL 실행
+4. 설정 관리
+5. 모든 체크 실행 (일괄 처리)
+6. 종료
 
-실행할 도구를 선택하세요 (1-5):
+실행할 기능을 선택하세요 (1-6):
 ```
+
+### 🔧 **Node.js 명령어 실행**
+```bash
+# 통합 애플리케이션 실행
+npm start
+# 또는
+node app.js
+```
+
+### 📦 **주요 개선사항**
+- **통합 관리**: 모든 기능을 하나의 애플리케이션에서 관리
+- **설정 저장**: 자주 사용하는 설정을 저장하여 재사용 가능
+- **일괄 처리**: 모든 체크를 한 번에 실행
+- **모듈화**: 코드 구조 개선으로 유지보수성 향상
+- **사용자 친화적**: 직관적인 메뉴 시스템
 
 ## 🔍 주요 기능
 
@@ -89,8 +104,56 @@ TestDB,192.168.1.101,1433,본사,WMS,DEV
 
 ## 🔧 설정
 
-각 스크립트는 환경변수나 설정 파일을 통해 데이터베이스 연결 정보를 관리합니다.
-자세한 설정 방법은 각 스크립트 파일의 주석을 참조하세요.
+### 데이터베이스 설정
+
+#### 🗄️ **DB 연결 정보 설정 (`config/dbinfo.json`)**
+데이터베이스 연결 정보는 `config/dbinfo.json` 파일에서 관리됩니다:
+
+```json
+{
+  "dbs": {
+    "sampleDB": {
+      "user": "sample",
+      "password": "sample1234!",
+      "server": "localhost",
+      "database": "SampleDB",
+      "port": 1433,
+      "options": { "encrypt": true, "trustServerCertificate": true }
+    },
+    "erpDB": {
+      "user": "erp",
+      "password": "erp1234!",
+      "server": "localhost",
+      "database": "ERP_DB",
+      "port": 1433,
+      "options": { "encrypt": true, "trustServerCertificate": true }
+    }
+  }
+}
+```
+
+#### 🌍 **환경변수 설정 (`.env` 파일)**
+다음 환경변수들을 설정할 수 있습니다:
+
+```env
+# API 서버 설정 (선택사항)
+API_URL=http://localhost:3000
+
+# 로컬 데이터베이스 설정 (MySQL - 로깅용, 선택사항)
+LOCALDB_HOST=localhost
+LOCALDB_USER=root
+LOCALDB_PASSWORD=password
+LOCALDB_DATABASE=util_logs
+LOCALDB_PORT=3306
+```
+
+### 사용자 설정 관리
+통합 애플리케이션의 **설정 관리** 메뉴에서 자주 사용하는 설정을 저장할 수 있습니다:
+- **DB 선택**: `config/dbinfo.json`에서 정의된 DB 중 선택
+- **MSSQL 체크 설정**: CSV 파일 경로, 선택된 DB, 타임아웃
+- **Telnet 체크 설정**: CSV 파일 경로, 타임아웃
+- **SQL 실행 설정**: 템플릿 경로, 선택된 DB
+- 설정은 `config/user-config.json`에 자동 저장됩니다.
 
 ## 📝 주의사항
 
