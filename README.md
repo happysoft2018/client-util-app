@@ -21,12 +21,14 @@ my-node-client-util-app/
 │           └── OracleConnection.js # Oracle connection class
 ├── config/
 │   └── dbinfo.json                 # DB connection information settings
-├── request_resources/
+├── request_resources/              # Resource files directory
+│   ├── db_check/                   # DB connection check CSV files
+│   │   └── DB_sample.csv           # Sample DB check CSV
+│   ├── telnet_check/               # Telnet connection check CSV files
+│   │   └── server_sample.csv       # Sample telnet check CSV
 │   └── sql_files/                  # SQL files directory
 │       ├── SQL_001.sql             # SQL query template
 │       └── SQL_001.csv             # SQL parameter template
-├── templet/                        # Template files
-│   └── DB_sample.csv               # CSV sample for DB checking
 ├── results/                        # Check results (auto-generated)
 │   ├── db_connection_check_*.csv   # DB check results
 │   ├── telnet_connection_check_*.csv # Telnet check results

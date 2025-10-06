@@ -47,15 +47,6 @@ if exist "request_resources" (
     exit /b 1
 )
 
-REM Copy template folder
-if exist "templet" (
-    xcopy "templet" "%DEPLOY_DIR%\templet\" /e /i /h /y
-    echo ✅ Template folder copied
-) else (
-    echo ❌ Template folder not found
-    pause
-    exit /b 1
-)
 
 REM Copy results folder
 mkdir "%DEPLOY_DIR%\results\"

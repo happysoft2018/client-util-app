@@ -111,10 +111,49 @@ class NodeUtilApp {
     console.log('='.repeat(40));
     
     try {
-      console.log('\n📁 CSV File Settings:');
-      const csvPath = await this.askQuestion(
-        'CSV file path: '
+      // Get CSV file list from request_resources/db_check folder
+      const dbCheckDir = path.join(__dirname, 'request_resources', 'db_check');
+      
+      if (!fs.existsSync(dbCheckDir)) {
+        console.log('❌ DB check CSV directory not found: request_resources/db_check/');
+        console.log('Please create the directory and add CSV files.');
+        await this.waitAndContinue();
+        await this.showMainMenu();
+        return;
+      }
+
+      const csvFiles = fs.readdirSync(dbCheckDir)
+        .filter(file => file.endsWith('.csv'));
+
+      if (csvFiles.length === 0) {
+        console.log('❌ No CSV files found in request_resources/db_check/ directory.');
+        console.log('Please add .csv files to the request_resources/db_check/ directory.');
+        await this.waitAndContinue();
+        await this.showMainMenu();
+        return;
+      }
+
+      console.log('\n📄 Available DB Check CSV Files:');
+      csvFiles.forEach((file, index) => {
+        console.log(`  ${index + 1}. ${file}`);
+      });
+      console.log();
+
+      const fileChoice = await this.askQuestion(
+        `Select CSV file number to use (1-${csvFiles.length}): `
       );
+      
+      const selectedFileIndex = parseInt(fileChoice) - 1;
+      if (selectedFileIndex < 0 || selectedFileIndex >= csvFiles.length) {
+        console.log('❌ Invalid file selection.');
+        await this.waitAndContinue();
+        await this.showMainMenu();
+        return;
+      }
+
+      const selectedFile = csvFiles[selectedFileIndex];
+      const csvPath = path.join(dbCheckDir, selectedFile);
+      console.log(`✅ Selected CSV file: ${selectedFile}`);
       
       console.log('\n🔐 Database Authentication Information:');
       const dbUser = await this.askQuestion(
@@ -159,10 +198,49 @@ class NodeUtilApp {
     console.log('='.repeat(40));
     
     try {
-      console.log('\n📁 CSV File Settings:');
-      const csvPath = await this.askQuestion(
-        'CSV file path: '
+      // Get CSV file list from request_resources/telnet_check folder
+      const telnetCheckDir = path.join(__dirname, 'request_resources', 'telnet_check');
+      
+      if (!fs.existsSync(telnetCheckDir)) {
+        console.log('❌ Telnet check CSV directory not found: request_resources/telnet_check/');
+        console.log('Please create the directory and add CSV files.');
+        await this.waitAndContinue();
+        await this.showMainMenu();
+        return;
+      }
+
+      const csvFiles = fs.readdirSync(telnetCheckDir)
+        .filter(file => file.endsWith('.csv'));
+
+      if (csvFiles.length === 0) {
+        console.log('❌ No CSV files found in request_resources/telnet_check/ directory.');
+        console.log('Please add .csv files to the request_resources/telnet_check/ directory.');
+        await this.waitAndContinue();
+        await this.showMainMenu();
+        return;
+      }
+
+      console.log('\n📄 Available Telnet Check CSV Files:');
+      csvFiles.forEach((file, index) => {
+        console.log(`  ${index + 1}. ${file}`);
+      });
+      console.log();
+
+      const fileChoice = await this.askQuestion(
+        `Select CSV file number to use (1-${csvFiles.length}): `
       );
+      
+      const selectedFileIndex = parseInt(fileChoice) - 1;
+      if (selectedFileIndex < 0 || selectedFileIndex >= csvFiles.length) {
+        console.log('❌ Invalid file selection.');
+        await this.waitAndContinue();
+        await this.showMainMenu();
+        return;
+      }
+
+      const selectedFile = csvFiles[selectedFileIndex];
+      const csvPath = path.join(telnetCheckDir, selectedFile);
+      console.log(`✅ Selected CSV file: ${selectedFile}`);
       
       console.log('\n⏱️  Timeout Settings:');
       const timeout = await this.askQuestion(
