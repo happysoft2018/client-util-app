@@ -91,7 +91,11 @@ class DBConnectionChecker {
       password: dbPassword,
       server: ip,
       port: parseInt(port, 10),
-      database: db_name
+      database: db_name,
+      options: {
+        connectionTimeout: timeout * 1000, // Convert seconds to milliseconds
+        requestTimeout: timeout * 1000
+      }
     };
     
     const start = Date.now();
@@ -216,7 +220,7 @@ class DBConnectionChecker {
 
     return new Promise((resolve, reject) => {
       fs.createReadStream(csvPath)
-        .pipe(csv(['db_name', 'username', 'password', 'server_ip', 'port', 'corp', 'proc', 'env_type', 'db_type']))
+        .pipe(csv())
         .on('data', (row) => {
           Object.keys(row).forEach(k => row[k] = row[k].trim());
           rows.push(row);

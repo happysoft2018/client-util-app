@@ -22,7 +22,7 @@ class NodeUtilApp {
     this.configManager = new ConfigManager();
     this.dbConnectionChecker = new DBConnectionChecker(this.configManager);
     this.telnetChecker = new TelnetChecker();
-    this.dbExecutor = new DBExecutor(this.configManager);
+    this.dbExecutor = new DBExecutor(this.configManager, this.rl);
   }
 
   ensureResultsDirectory() {
@@ -384,7 +384,7 @@ class NodeUtilApp {
 
   askQuestion(question, defaultValue = '') {
     return new Promise((resolve) => {
-      const prompt = defaultValue ? `${question}` : question;
+      const prompt = defaultValue ? `${question} (default: ${defaultValue}): ` : `${question} `;
       this.rl.question(prompt, (answer) => {
         resolve(answer.trim() || defaultValue);
       });

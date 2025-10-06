@@ -5,10 +5,10 @@ const path = require('path');
 const DatabaseFactory = require('./database/DatabaseFactory');
 
 class DBExecutor {
-  constructor(configManager) {
+  constructor(configManager, readlineInterface = null) {
     this.configManager = configManager;
     this.sqlFilesDir = path.join(__dirname, '../../request_resources/sql_files');
-    this.rl = require('readline').createInterface({
+    this.rl = readlineInterface || require('readline').createInterface({
       input: process.stdin,
       output: process.stdout
     });
@@ -16,7 +16,7 @@ class DBExecutor {
 
   async askQuestion(question, defaultValue = '') {
     return new Promise((resolve) => {
-      const prompt = defaultValue ? `${question} (default: ${defaultValue}): ` : question;
+      const prompt = defaultValue ? `${question} (default: ${defaultValue}): ` : `${question} `;
       this.rl.question(prompt, (answer) => {
         resolve(answer.trim() || defaultValue);
       });

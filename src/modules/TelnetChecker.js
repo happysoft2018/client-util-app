@@ -168,7 +168,7 @@ class TelnetChecker {
 
     return new Promise((resolve, reject) => {
       fs.createReadStream(csvPath)
-        .pipe(csv(['server_ip', 'port', 'hostname', 'usage_type', 'env_type', 'corp', 'proc', 'role_type']))
+        .pipe(csv())
         .on('data', (row) => {
           Object.keys(row).forEach(k => row[k] = row[k].trim());
           rows.push(row);

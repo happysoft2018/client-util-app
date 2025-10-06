@@ -12,11 +12,11 @@ class MSSQLConnection {
       server: this.config.server,
       port: parseInt(this.config.port, 10),
       database: this.config.database,
+      connectionTimeout: this.config.options?.connectionTimeout || 30000,
+      requestTimeout: this.config.options?.requestTimeout || 300000,
       options: {
         encrypt: this.config.options?.encrypt || true,
         trustServerCertificate: this.config.options?.trustServerCertificate || true,
-        requestTimeout: this.config.options?.requestTimeout || 300000,
-        connectionTimeout: this.config.options?.connectionTimeout || 30000,
         ...this.config.options
       }
     };

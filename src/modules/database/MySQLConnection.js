@@ -13,10 +13,7 @@ class MySQLConnection {
       password: this.config.password,
       database: this.config.database,
       connectTimeout: this.config.options?.connectionTimeout || 30000,
-      acquireTimeout: this.config.options?.acquireTimeout || 60000,
-      timeout: this.config.options?.requestTimeout || 300000,
-      ssl: this.config.options?.ssl || false,
-      ...this.config.options
+      ssl: this.config.options?.ssl || false
     };
 
     this.pool = await mysql.createConnection(connectionConfig);
