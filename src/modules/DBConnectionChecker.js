@@ -10,13 +10,34 @@ class DBConnectionChecker {
     this.localPcIp = this.getLocalIp();
     this.regexIpPattern = /^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/;
     this.regexPortPattern = /^[0-9]+$/; // Port range is 1-65535, so removed 4-digit limit
-    this.resultsDir = path.join(__dirname, '../../results');
-    this.ensureResultsDir();
+    this.resultsDir = this.getResultsDir();
+  }
+
+  getResultsDir() {
+    // pkg 환경에서는 실행 파일과 같은 디렉토리에 results 폴더 생성
+    if (process.pkg) {
+      return path.join(path.dirname(process.execPath), 'results');
+    } else {
+      return path.join(__dirname, '../../results');
+    }
   }
 
   ensureResultsDir() {
-    if (!fs.existsSync(this.resultsDir)) {
-      fs.mkdirSync(this.resultsDir, { recursive: true });
+    try {
+      if (!fs.existsSync(this.resultsDir)) {
+        fs.mkdirSync(this.resultsDir, { recursive: true });
+      }
+    } catch (error) {
+      console.warn('⚠️  Warning: Could not create results directory:', error.message);
+      // 대체 경로로 현재 작업 디렉토리 사용
+      this.resultsDir = path.join(process.cwd(), 'results');
+      try {
+        if (!fs.existsSync(this.resultsDir)) {
+          fs.mkdirSync(this.resultsDir, { recursive: true });
+        }
+      } catch (fallbackError) {
+        console.error('❌ Error: Could not create results directory even in fallback location');
+      }
     }
   }
 
@@ -262,6 +283,9 @@ class DBConnectionChecker {
   }
 
   async saveResultsToCSV(results, filename) {
+    // 디렉토리 생성 보장
+    this.ensureResultsDir();
+    
     const timestamp = new Date().toISOString().replace(/[:.]/g, '-').split('T')[0];
     const csvFilename = `${filename}_${timestamp}.csv`;
     const csvPath = path.join(this.resultsDir, csvFilename);
@@ -281,9 +305,14 @@ class DBConnectionChecker {
       )
     ].join('\n');
 
-    // 파일 저장
-    fs.writeFileSync(csvPath, csvContent, 'utf8');
-    console.log(`📁 CSV file saved: ${csvPath}`);
+    try {
+      // 파일 저장
+      fs.writeFileSync(csvPath, csvContent, 'utf8');
+      console.log(`📁 CSV file saved: ${csvPath}`);
+    } catch (error) {
+      console.error(`❌ Error saving CSV file: ${error.message}`);
+      console.log(`📁 Attempted path: ${csvPath}`);
+    }
   }
 }
 

@@ -16,10 +16,43 @@ class NodeUtilApp {
       output: process.stdout
     });
     
+    // results 디렉토리 미리 생성
+    this.ensureResultsDirectory();
+    
     this.configManager = new ConfigManager();
     this.dbConnectionChecker = new DBConnectionChecker(this.configManager);
     this.telnetChecker = new TelnetChecker();
     this.dbExecutor = new DBExecutor(this.configManager);
+  }
+
+  ensureResultsDirectory() {
+    try {
+      let resultsDir;
+      
+      // pkg 환경에서는 실행 파일과 같은 디렉토리에 results 폴더 생성
+      if (process.pkg) {
+        resultsDir = path.join(path.dirname(process.execPath), 'results');
+      } else {
+        resultsDir = path.join(__dirname, 'results');
+      }
+      
+      if (!fs.existsSync(resultsDir)) {
+        fs.mkdirSync(resultsDir, { recursive: true });
+        console.log(`📁 Created results directory: ${resultsDir}`);
+      }
+    } catch (error) {
+      console.warn('⚠️  Warning: Could not create results directory:', error.message);
+      // 대체 경로로 현재 작업 디렉토리 사용
+      try {
+        const fallbackDir = path.join(process.cwd(), 'results');
+        if (!fs.existsSync(fallbackDir)) {
+          fs.mkdirSync(fallbackDir, { recursive: true });
+          console.log(`📁 Created fallback results directory: ${fallbackDir}`);
+        }
+      } catch (fallbackError) {
+        console.error('❌ Error: Could not create results directory even in fallback location');
+      }
+    }
   }
 
   async start() {
