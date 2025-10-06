@@ -17,6 +17,7 @@
     ],
     "assets": [
       "config/dbinfo.json",
+      "request_resources/**/*",
       "templet/**/*",
       "README.md",
       "README_KR.md"

@@ -20,12 +20,13 @@ my-node-client-util-app/
 │           ├── PostgreSQLConnection.js # PostgreSQL 연결 클래스
 │           └── OracleConnection.js # Oracle 연결 클래스
 ├── config/
-│   ├── dbinfo.json                 # DB 연결 정보 설정
-│   └── user-config.json            # 사용자 기본 설정 (자동 생성)
+│   └── dbinfo.json                 # DB 연결 정보 설정
+├── request_resources/
+│   └── sql_files/                  # SQL 파일 디렉토리
+│       ├── SQL_001.sql             # SQL 쿼리 템플릿
+│       └── SQL_001.csv             # SQL 파라미터 템플릿
 ├── templet/                        # 템플릿 파일들
-│   ├── DB_sample.csv               # DB 체크용 CSV 샘플
-│   ├── SQL_001.sql                 # SQL 쿼리 템플릿
-│   └── SQL_001.csv                 # SQL 파라미터 템플릿
+│   └── DB_sample.csv               # DB 체크용 CSV 샘플
 ├── log/                            # 실행 로그 (자동 생성)
 └── 프로그램실행하기.bat               # 🎯 통합 실행 도구
 ```

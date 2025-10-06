@@ -37,6 +37,16 @@ if exist "config" (
     exit /b 1
 )
 
+REM Copy request_resources folder
+if exist "request_resources" (
+    xcopy "request_resources" "%DEPLOY_DIR%\request_resources\" /e /i /h /y
+    echo ✅ Request resources folder copied
+) else (
+    echo ❌ Request resources folder not found
+    pause
+    exit /b 1
+)
+
 REM Copy template folder
 if exist "templet" (
     xcopy "templet" "%DEPLOY_DIR%\templet\" /e /i /h /y

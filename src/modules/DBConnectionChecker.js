@@ -257,7 +257,7 @@ class DBConnectionChecker {
               console.log(`[${row.port}] is not valid port format`);
             } else {
               // Use db_type from CSV if specified, otherwise use default
-              const rowDbType = row.db_type || dbType;
+              const rowDbType = (dbType === 'auto') ? (row.db_type || 'mssql') : (row.db_type || dbType);
               const result = await this.unitWorkByServer(row, 0, { 
                 dbUser, 
                 dbPassword, 

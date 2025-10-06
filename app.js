@@ -67,12 +67,14 @@ class NodeUtilApp {
 
   async showMainMenu() {
     console.log('📋 Main Menu');
+    console.log('------------------------------------------------');
     console.log('1. Database Connection and Permission Check');
     console.log('2. Server Telnet Connection Check');
     console.log('3. Database SQL Execution');
     console.log('4. Configuration Management');
     console.log('5. Run All Checks (Batch Processing)');
     console.log('6. Exit');
+    console.log('------------------------------------------------');
     console.log();
 
     const choice = await this.askQuestion('Select function to execute (1-6): ');
@@ -114,21 +116,6 @@ class NodeUtilApp {
         'CSV file path: '
       );
       
-      // DB type selection
-      const supportedTypes = this.configManager.getSupportedDbTypes();
-      console.log('\n🗄️  Supported Database Types:');
-      supportedTypes.forEach((type, index) => {
-        console.log(`  ${index + 1}. ${type.name} (${type.type})`);
-      });
-      
-      const dbTypeChoice = await this.askQuestion(
-        `Select DB type (1-${supportedTypes.length}, default: MSSQL): `,
-        '1'
-      );
-      
-      const selectedDbType = supportedTypes[parseInt(dbTypeChoice) - 1] || supportedTypes[0];
-      console.log(`✅ Selected DB type: ${selectedDbType.name}`);
-
       console.log('\n🔐 Database Authentication Information:');
       const dbUser = await this.askQuestion(
         'DB Account ID: '
@@ -146,13 +133,14 @@ class NodeUtilApp {
 
       console.log('\n🚀 Starting database connection check...');
       console.log('-'.repeat(40));
+      console.log('ℹ️  Note: Each server in CSV can have different database types (mssql, mysql, postgresql, oracle)');
       
       await this.dbConnectionChecker.run({
         csvPath: csvPath,
         dbUser: dbUser,
         dbPassword: dbPassword,
         timeout: parseInt(timeout) || 5,
-        dbType: selectedDbType.type
+        dbType: 'auto' // CSV에서 각 행의 db_type을 사용
       });
       
       console.log('\n✅ Database connection check completed.');
@@ -206,14 +194,24 @@ class NodeUtilApp {
     console.log('='.repeat(40));
     
     try {
-      // Get SQL file list from templet folder
-      const templateDir = path.join(__dirname, 'templet');
-      const sqlFiles = fs.readdirSync(templateDir)
+      // Get SQL file list from request_resources/sql_files folder
+      const sqlFilesDir = path.join(__dirname, 'request_resources', 'sql_files');
+      
+      if (!fs.existsSync(sqlFilesDir)) {
+        console.log('❌ SQL files directory not found: request_resources/sql_files/');
+        console.log('Please create the directory and add SQL files.');
+        await this.waitAndContinue();
+        await this.showMainMenu();
+        return;
+      }
+
+      const sqlFiles = fs.readdirSync(sqlFilesDir)
         .filter(file => file.endsWith('.sql'))
         .map(file => file.replace('.sql', ''));
 
       if (sqlFiles.length === 0) {
-        console.log('❌ No SQL files found in templet folder.');
+        console.log('❌ No SQL files found in request_resources/sql_files/ directory.');
+        console.log('Please add .sql files to the request_resources/sql_files/ directory.');
         await this.waitAndContinue();
         await this.showMainMenu();
         return;
@@ -221,7 +219,7 @@ class NodeUtilApp {
 
       console.log('\n📄 Available SQL Files:');
       sqlFiles.forEach((file, index) => {
-        console.log(`${index + 1}. ${file}`);
+        console.log(`  ${index + 1}. ${file}.sql`);
       });
       console.log();
 
@@ -229,15 +227,17 @@ class NodeUtilApp {
         `Select SQL file number to execute (1-${sqlFiles.length}): `
       );
       
-      const selectedFile = sqlFiles[parseInt(fileChoice) - 1];
-      if (!selectedFile) {
-        console.log('❌ Invalid file number.');
+      const selectedFileIndex = parseInt(fileChoice) - 1;
+      if (selectedFileIndex < 0 || selectedFileIndex >= sqlFiles.length) {
+        console.log('❌ Invalid file selection.');
         await this.waitAndContinue();
         await this.showMainMenu();
         return;
       }
 
-      console.log(`\n🚀 Starting SQL execution: ${selectedFile}`);
+      const selectedFile = sqlFiles[selectedFileIndex];
+      console.log(`✅ Selected SQL file: ${selectedFile}.sql`);
+      console.log(`\n🚀 Starting SQL execution...`);
       console.log('-'.repeat(40));
       
       await this.dbExecutor.run(selectedFile);

@@ -7,7 +7,7 @@ const DatabaseFactory = require('./database/DatabaseFactory');
 class DBExecutor {
   constructor(configManager) {
     this.configManager = configManager;
-    this.templateDir = path.join(__dirname, '../../templet');
+    this.sqlFilesDir = path.join(__dirname, '../../request_resources/sql_files');
     this.rl = require('readline').createInterface({
       input: process.stdin,
       output: process.stdout
@@ -130,8 +130,8 @@ class DBExecutor {
       throw new Error('SQL file name is required.');
     }
 
-    const sqlFilePath = path.join(this.templateDir, `${sqlName}.sql`);
-    const csvFilePath = path.join(this.templateDir, `${sqlName}.csv`);
+    const sqlFilePath = path.join(this.sqlFilesDir, `${sqlName}.sql`);
+    const csvFilePath = path.join(this.sqlFilesDir, `${sqlName}.csv`);
 
     // Check file existence
     if (!fs.existsSync(sqlFilePath)) {
