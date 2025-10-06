@@ -1,16 +1,23 @@
 const fs = require('fs');
 const csv = require('csv-parser');
 const os = require('os');
+const path = require('path');
 const DatabaseFactory = require('./database/DatabaseFactory');
-require('dotenv').config();
 
 class DBConnectionChecker {
   constructor(configManager) {
     this.configManager = configManager;
-    this.apiUrl = process.env.API_URL;
     this.localPcIp = this.getLocalIp();
     this.regexIpPattern = /^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/;
     this.regexPortPattern = /^[0-9]+$/; // Port range is 1-65535, so removed 4-digit limit
+    this.resultsDir = path.join(__dirname, '../../results');
+    this.ensureResultsDir();
+  }
+
+  ensureResultsDir() {
+    if (!fs.existsSync(this.resultsDir)) {
+      fs.mkdirSync(this.resultsDir, { recursive: true });
+    }
   }
 
   getLocalIp() {
@@ -156,47 +163,26 @@ class DBConnectionChecker {
     
     console.log(`[${server_ip}:${port}][${dbType.toUpperCase()}][${row.env_type}DB][${title}][${db_name}] \t→ [${result.success ? '✅ Success' : '❌ Failed'}]${permissionStatus} ${errMessage}`);
 
-    if (checkUnitId === 0) {
-      return;
-    }
-
-    // API transmission
-    if (this.apiUrl) {
-      const body = {
-        check_unit_id: checkUnitId, 
-        server_ip,
-        port,
-        db_name,
-        db_type: dbType,
-        db_userid: dbUser,
-        result_code: result.success,
-        error_code: result.success ? '' : result.error_code,
-        error_msg: result.success ? '' : result.error_msg,
-        collapsed_time: result.elapsed,
-        perm_select: result.permissions.select,
-        perm_insert: result.permissions.insert,
-        perm_update: result.permissions.update,
-        perm_delete: result.permissions.delete,
-        perm_create: result.permissions.create,
-        perm_drop: result.permissions.drop
-      };
-
-      try {
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 3000);
-        
-        await fetch(this.apiUrl + '/db', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(body),
-          signal: controller.signal
-        });
-        
-        clearTimeout(timeoutId);
-      } catch (err) {
-        console.error(`Failed to send check result to API (${this.apiUrl}/db)`);
-      }
-    }
+    // Return result for CSV saving
+    return {
+      timestamp: new Date().toISOString(),
+      pc_ip: this.localPcIp,
+      server_ip,
+      port,
+      db_name,
+      db_type: dbType,
+      db_userid: dbUser,
+      result_code: result.success ? 'SUCCESS' : 'FAILED',
+      error_code: result.success ? '' : result.error_code,
+      error_msg: result.success ? '' : result.error_msg,
+      collapsed_time: result.elapsed,
+      perm_select: result.permissions.select ? 'Y' : 'N',
+      perm_insert: result.permissions.insert ? 'Y' : 'N',
+      perm_update: result.permissions.update ? 'Y' : 'N',
+      perm_delete: result.permissions.delete ? 'Y' : 'N',
+      perm_create: result.permissions.create ? 'Y' : 'N',
+      perm_drop: result.permissions.drop ? 'Y' : 'N'
+    };
   }
 
   async run(options) {
@@ -241,75 +227,63 @@ class DBConnectionChecker {
 
           console.log(`Read ${rows.length} DB information entries.`);
 
-          try {
-            // API master registration
-            if (this.apiUrl) {
-              try {
-                const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 3000);
-                
-                const result = await fetch(this.apiUrl + '/master', {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({ check_method: 'DB_CONN', pc_ip: this.localPcIp }),
-                  signal: controller.signal
-                });
-                
-                clearTimeout(timeoutId);
-                const data = await result.json();
-                checkUnitId = data.insertId ? data.insertId : 0;
-              } catch (err) {
-                console.warn('⚠️  API master registration failed:', err.message);
-                checkUnitId = 0;
-              }
-            }
-
-            // Execute check for each server
-            for (const row of rows) {
-              if (!this.regexIpPattern.test(row.server_ip)) {
-                console.log(`[${row.server_ip}] is not valid ip format`);
-              } else if (!this.regexPortPattern.test(row.port)) {
-                console.log(`[${row.port}] is not valid port format`);
-              } else {
-                // Use db_type from CSV if specified, otherwise use default
-                const rowDbType = row.db_type || dbType;
-                await this.unitWorkByServer(row, checkUnitId, { 
-                  dbUser, 
-                  dbPassword, 
-                  timeout, 
-                  dbType: rowDbType 
-                });
-              }
-            }
-            
-            console.log('All DB checks and result transmission completed');
-            resolve();
-          } catch (apiError) {
-            if (this.apiUrl) {
-              reject(new Error(`API server connection error: ${apiError.message}`));
+          // Execute check for each server and collect results
+          const results = [];
+          for (const row of rows) {
+            if (!this.regexIpPattern.test(row.server_ip)) {
+              console.log(`[${row.server_ip}] is not valid ip format`);
+            } else if (!this.regexPortPattern.test(row.port)) {
+              console.log(`[${row.port}] is not valid port format`);
             } else {
-              // Proceed with local check even if API URL is not set
-              console.log('⚠️  API URL not set, proceeding with local check only.');
-              for (const row of rows) {
-                if (!this.regexIpPattern.test(row.server_ip)) {
-                  console.log(`[${row.server_ip}] is not valid ip format`);
-                } else if (!this.regexPortPattern.test(row.port)) {
-                  console.log(`[${row.port}] is not valid port format`);
-                } else {
-                  const rowDbType = row.db_type || dbType;
-                  await this.unitWorkByServer(row, 0, { 
-                    dbUser, 
-                    dbPassword, 
-                    timeout, 
-                    dbType: rowDbType 
-                  });
-                }
+              // Use db_type from CSV if specified, otherwise use default
+              const rowDbType = row.db_type || dbType;
+              const result = await this.unitWorkByServer(row, 0, { 
+                dbUser, 
+                dbPassword, 
+                timeout, 
+                dbType: rowDbType 
+              });
+              if (result) {
+                results.push(result);
               }
-              resolve();
             }
           }
+          
+          // Save results to CSV
+          if (results.length > 0) {
+            await this.saveResultsToCSV(results, 'db_connection_check');
+            console.log(`\n✅ Results saved to CSV file: ${results.length} entries`);
+          }
+          
+          console.log('All DB checks completed');
+          resolve();
         });
     });
+  }
+
+  async saveResultsToCSV(results, filename) {
+    const timestamp = new Date().toISOString().replace(/[:.]/g, '-').split('T')[0];
+    const csvFilename = `${filename}_${timestamp}.csv`;
+    const csvPath = path.join(this.resultsDir, csvFilename);
+
+    // CSV 헤더
+    const headers = [
+      'timestamp', 'pc_ip', 'server_ip', 'port', 'db_name', 'db_type', 'db_userid',
+      'result_code', 'error_code', 'error_msg', 'collapsed_time',
+      'perm_select', 'perm_insert', 'perm_update', 'perm_delete', 'perm_create', 'perm_drop'
+    ];
+
+    // CSV 내용 생성
+    const csvContent = [
+      headers.join(','),
+      ...results.map(result => 
+        headers.map(header => `"${result[header] || ''}"`).join(',')
+      )
+    ].join('\n');
+
+    // 파일 저장
+    fs.writeFileSync(csvPath, csvContent, 'utf8');
+    console.log(`📁 CSV file saved: ${csvPath}`);
   }
 }
 

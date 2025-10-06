@@ -62,7 +62,7 @@ node app.js
 ### 📦 **주요 개선사항**
 - **다중 DB 지원**: MSSQL, MySQL, PostgreSQL, Oracle 지원
 - **통합 관리**: 모든 기능을 하나의 애플리케이션에서 관리
-- **설정 저장**: 자주 사용하는 설정을 저장하여 재사용 가능
+- **CSV 결과 저장**: 모든 체크 결과가 자동으로 CSV 파일로 저장
 - **일괄 처리**: 모든 체크를 한 번에 실행
 - **모듈화**: 코드 구조 개선으로 유지보수성 향상
 - **사용자 친화적**: 직관적인 메뉴 시스템
@@ -123,7 +123,7 @@ UserDB,192.168.1.102,5432,지사,CRM,STG,postgresql
 
 2. **의존성 패키지**
    - 배치파일 실행 시 자동으로 `npm install` 실행
-   - 필요한 패키지: axios, csv-parser, dotenv, mssql, mysql2, pg, oracledb, telnet-client
+   - 필요한 패키지: csv-parser, dotenv, mssql, mysql2, pg, oracledb, telnet-client
 
 ## 🔧 설정
 

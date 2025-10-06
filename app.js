@@ -224,7 +224,7 @@ class NodeUtilApp {
     console.clear();
         console.log('⚙️  Configuration Management');
     console.log('='.repeat(40));
-    console.log('1. Check Environment Variables');
+    console.log('1. Check System Information');
     console.log('2. View Available Databases');
     console.log('3. Return to Main Menu');
     console.log();

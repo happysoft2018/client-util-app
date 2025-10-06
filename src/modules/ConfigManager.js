@@ -76,23 +76,8 @@ class ConfigManager {
 
   showEnvironmentVariables() {
     console.clear();
-    console.log('🌍 Environment Variables');
+    console.log('🌍 System Information');
     console.log('='.repeat(40));
-    
-    const envVars = [
-      'API_URL'
-    ];
-    
-    console.log('\n📋 Main Environment Variables:');
-    envVars.forEach(varName => {
-      const value = process.env[varName];
-      if (value) {
-        const displayValue = varName.includes('PASSWORD') ? '***' : value;
-        console.log(`  ${varName}: ${displayValue}`);
-      } else {
-        console.log(`  ${varName}: not set`);
-      }
-    });
     
     console.log('\n💻 System Information:');
     console.log(`  Operating System: ${process.platform} ${process.arch}`);
@@ -102,6 +87,11 @@ class ConfigManager {
     console.log('\n📁 Configuration Files:');
     console.log(`  DB Config: ${this.dbConfigFile}`);
     console.log(`  DB Config Status: ${fs.existsSync(this.dbConfigFile) ? '✅ Found' : '❌ Not found'}`);
+    
+    console.log('\n📁 Results Directory:');
+    const resultsDir = path.join(__dirname, '../../results');
+    console.log(`  Results Dir: ${resultsDir}`);
+    console.log(`  Results Status: ${fs.existsSync(resultsDir) ? '✅ Found' : '❌ Not found'}`);
   }
 }
 

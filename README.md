@@ -20,12 +20,15 @@ my-node-client-util-app/
 │           ├── PostgreSQLConnection.js # PostgreSQL connection class
 │           └── OracleConnection.js # Oracle connection class
 ├── config/
-│   ├── dbinfo.json                 # DB connection information settings
-│   └── user-config.json            # User default settings (auto-generated)
+│   └── dbinfo.json                 # DB connection information settings
 ├── templet/                        # Template files
 │   ├── DB_sample.csv               # CSV sample for DB checking
 │   ├── SQL_001.sql                 # SQL query template
 │   └── SQL_001.csv                 # SQL parameter template
+├── results/                        # Check results (auto-generated)
+│   ├── db_connection_check_*.csv   # DB check results
+│   ├── telnet_connection_check_*.csv # Telnet check results
+│   └── README.md                   # Results format documentation
 ├── log/                            # Execution logs (auto-generated)
 └── run.bat                         # 🎯 Integrated execution tool
 ```
@@ -62,7 +65,7 @@ node app.js
 ### 📦 **Key Improvements**
 - **Multi-DB Support**: MSSQL, MySQL, PostgreSQL, Oracle support
 - **Unified Management**: Manage all features in a single application
-- **Configuration Storage**: Save frequently used settings for reuse
+- **CSV Result Export**: All check results are automatically saved to CSV files
 - **Batch Processing**: Execute all checks at once
 - **Modularization**: Improved code structure for better maintainability
 - **User-Friendly**: Intuitive menu system
@@ -97,9 +100,10 @@ The following databases are supported:
    [192.168.1.101:3306][MYSQL][DEVDB][본사_WMS][TestDB]   → [❌ Failed] [LOGIN_FAILED] Login failed
    ```
 
-4. **API Integration**
-   - Automatically sends check results to server API
-   - Includes DB type and permission information for history management
+4. **CSV Result Export**
+   - All check results are automatically saved to CSV files
+   - Files are saved in `results/` directory with timestamp
+   - Includes detailed information for analysis and reporting
 
 ### 📋 **CSV File Format**
 
@@ -123,7 +127,7 @@ UserDB,192.168.1.102,5432,지사,CRM,STG,postgresql
 
 2. **Dependency Packages**
    - Automatically runs `npm install` when batch file is executed
-   - Required packages: axios, csv-parser, dotenv, mssql, mysql2, pg, oracledb, telnet-client
+   - Required packages: csv-parser, dotenv, mssql, mysql2, pg, oracledb, telnet-client
 
 ## 🔧 Configuration
 
