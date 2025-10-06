@@ -53,6 +53,181 @@ class DBConnectionChecker {
     return 'unknown';
   }
 
+  generateCrudSqls(row, dbType) {
+    const { select_sql, crud_test_table, crud_test_columns, crud_test_values } = row;
+    
+    if (!crud_test_table || !crud_test_columns || !crud_test_values) {
+      return {
+        selectSql: select_sql || 'SELECT 1 as test',
+        insertSql: null,
+        updateSql: null,
+        deleteSql: null
+      };
+    }
+
+    // Parse columns and values
+    const columns = crud_test_columns.split(',').map(col => col.trim());
+    const values = crud_test_values.split(',').map(val => val.trim());
+    
+    if (columns.length !== values.length) {
+      console.warn(`⚠️  Column count (${columns.length}) doesn't match value count (${values.length})`);
+      return {
+        selectSql: select_sql || 'SELECT 1 as test',
+        insertSql: null,
+        updateSql: null,
+        deleteSql: null
+      };
+    }
+
+    // Generate INSERT SQL
+    let insertSql;
+    if (dbType.toLowerCase() === 'mssql') {
+      insertSql = `INSERT INTO ${crud_test_table} (${columns.join(', ')}) VALUES (${values.map(val => `'${val}'`).join(', ')})`;
+    } else if (dbType.toLowerCase() === 'mysql') {
+      insertSql = `INSERT INTO ${crud_test_table} (${columns.join(', ')}) VALUES (${values.map(val => `'${val}'`).join(', ')})`;
+    } else if (dbType.toLowerCase() === 'postgresql') {
+      insertSql = `INSERT INTO ${crud_test_table} (${columns.join(', ')}) VALUES (${values.map((val, idx) => `$${idx + 1}`).join(', ')})`;
+    } else if (dbType.toLowerCase() === 'oracle') {
+      insertSql = `INSERT INTO ${crud_test_table} (${columns.join(', ')}) VALUES (${values.map(val => `'${val}'`).join(', ')})`;
+    }
+
+    // Generate UPDATE SQL (using first column as WHERE condition)
+    let updateSql;
+    if (columns.length > 0) {
+      const whereCondition = `${columns[0]} = '${values[0]}'`;
+      const setClause = columns.slice(1).map((col, idx) => `${col} = '${values[idx + 1]}'`).join(', ');
+      
+      if (setClause) {
+        updateSql = `UPDATE ${crud_test_table} SET ${setClause} WHERE ${whereCondition}`;
+      }
+    }
+
+    // Generate DELETE SQL (using first column as WHERE condition)
+    let deleteSql;
+    if (columns.length > 0) {
+      deleteSql = `DELETE FROM ${crud_test_table} WHERE ${columns[0]} = '${values[0]}'`;
+    }
+
+    return {
+      selectSql: select_sql || 'SELECT 1 as test',
+      insertSql,
+      updateSql,
+      deleteSql
+    };
+  }
+
+  async testCrudOperations(connection, crudSqls, dbType) {
+    const results = {
+      select: { success: false, message: '', elapsed: 0 },
+      insert: { success: false, message: '', elapsed: 0 },
+      update: { success: false, message: '', elapsed: 0 },
+      delete: { success: false, message: '', elapsed: 0 }
+    };
+
+    // Test SELECT (필수 - 항상 실행)
+    try {
+      const start = Date.now();
+      await connection.executeQuery(crudSqls.selectSql);
+      results.select = {
+        success: true,
+        message: 'SELECT executed successfully',
+        elapsed: ((Date.now() - start) / 1000).toFixed(3)
+      };
+      console.log(`  └ SELECT: ✅ Success (${results.select.elapsed}s)`);
+    } catch (error) {
+      results.select = {
+        success: false,
+        message: error.message.substring(0, 50),
+        elapsed: 0
+      };
+      console.log(`  └ SELECT: ❌ Failed - ${error.message.substring(0, 50)}...`);
+      // SELECT 실패 시 CRUD 테스트 중단
+      console.log(`  └ CRUD Test: ❌ Skipped - SELECT failed`);
+      return results;
+    }
+
+    // Test INSERT (SELECT 성공 시에만 실행)
+    if (crudSqls.insertSql) {
+      try {
+        const start = Date.now();
+        await connection.executeQuery(crudSqls.insertSql);
+        results.insert = {
+          success: true,
+          message: 'INSERT executed successfully',
+          elapsed: ((Date.now() - start) / 1000).toFixed(3)
+        };
+        console.log(`  └ INSERT: ✅ Success (${results.insert.elapsed}s)`);
+      } catch (error) {
+        results.insert = {
+          success: false,
+          message: error.message.substring(0, 50),
+          elapsed: 0
+        };
+        console.log(`  └ INSERT: ❌ Failed - ${error.message.substring(0, 50)}...`);
+        // INSERT 실패 시 UPDATE, DELETE 테스트 중단
+        console.log(`  └ UPDATE/DELETE Test: ❌ Skipped - INSERT failed`);
+        return results;
+      }
+    } else {
+      // INSERT SQL이 없으면 UPDATE, DELETE 테스트 중단
+      console.log(`  └ UPDATE/DELETE Test: ❌ Skipped - No INSERT SQL`);
+      return results;
+    }
+
+    // Test UPDATE (INSERT 성공 시에만 실행)
+    if (crudSqls.updateSql) {
+      try {
+        const start = Date.now();
+        await connection.executeQuery(crudSqls.updateSql);
+        results.update = {
+          success: true,
+          message: 'UPDATE executed successfully',
+          elapsed: ((Date.now() - start) / 1000).toFixed(3)
+        };
+        console.log(`  └ UPDATE: ✅ Success (${results.update.elapsed}s)`);
+      } catch (error) {
+        results.update = {
+          success: false,
+          message: error.message.substring(0, 50),
+          elapsed: 0
+        };
+        console.log(`  └ UPDATE: ❌ Failed - ${error.message.substring(0, 50)}...`);
+        // UPDATE 실패 시 DELETE 테스트 중단
+        console.log(`  └ DELETE Test: ❌ Skipped - UPDATE failed`);
+        return results;
+      }
+    } else {
+      // UPDATE SQL이 없으면 DELETE 테스트 중단
+      console.log(`  └ DELETE Test: ❌ Skipped - No UPDATE SQL`);
+      return results;
+    }
+
+    // Test DELETE (UPDATE 성공 시에만 실행)
+    if (crudSqls.deleteSql) {
+      try {
+        const start = Date.now();
+        await connection.executeQuery(crudSqls.deleteSql);
+        results.delete = {
+          success: true,
+          message: 'DELETE executed successfully',
+          elapsed: ((Date.now() - start) / 1000).toFixed(3)
+        };
+        console.log(`  └ DELETE: ✅ Success (${results.delete.elapsed}s)`);
+      } catch (error) {
+        results.delete = {
+          success: false,
+          message: error.message.substring(0, 50),
+          elapsed: 0
+        };
+        console.log(`  └ DELETE: ❌ Failed - ${error.message.substring(0, 50)}...`);
+      }
+    } else {
+      console.log(`  └ DELETE: ❌ Skipped - No DELETE SQL`);
+    }
+
+    return results;
+  }
+
   validateInput(options) {
     const { csvPath } = options;
     
@@ -85,7 +260,7 @@ class DBConnectionChecker {
     }
   }
 
-  async checkDbConnection({ ip, port, db_name, dbUser, dbPassword, timeout, dbType = 'mssql' }) {
+  async checkDbConnection({ ip, port, db_name, dbUser, dbPassword, timeout, dbType = 'mssql', row = null }) {
     const config = {
       user: dbUser,
       password: dbPassword,
@@ -126,6 +301,18 @@ class DBConnectionChecker {
         console.log(`  └ Error during permission check: ${permErr.message.substring(0, 50)}...`);
       }
 
+      // CRUD test if row data is provided
+      if (row) {
+        try {
+          const crudSqls = this.generateCrudSqls(row, dbType);
+          const crudResults = await this.testCrudOperations(connection, crudSqls, dbType);
+          result.crudResults = crudResults;
+        } catch (crudErr) {
+          console.log(`  └ Error during CRUD test: ${crudErr.message.substring(0, 50)}...`);
+          result.crudResults = null;
+        }
+      }
+
       await connection.disconnect();
       result.elapsed = ((Date.now() - start) / 1000).toFixed(2);
       return result;
@@ -162,7 +349,8 @@ class DBConnectionChecker {
       dbUser, 
       dbPassword, 
       timeout,
-      dbType
+      dbType,
+      row
     });
     
     const errMessage = result.success ? '' : `[${result.error_code}] ${result.error_msg}`;
