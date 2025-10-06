@@ -6,7 +6,7 @@
   "scripts": {
     "start": "node app.js",
     "dev": "node app.js",
-    "build": "pkg . --public --no-native-build"
+    "build": "pkg . --public --no-native-build --compress GZip"
   },
   "bin": {
     "my-node-client-util-app": "app.js"
@@ -16,20 +16,26 @@
       "src/**/*.js"
     ],
     "assets": [
+      "config/dbinfo.json",
+      "templet/**/*",
+      "README.md",
+      "README_KR.md"
     ],
     "targets": [
       "node18-win-x64"
     ],
-    "outputPath": "dist"
+    "outputPath": "dist",
+    "ignore": [
+      "node_modules/open/xdg-open"
+    ]
   },
   "dependencies": {
-    "axios": "^1.9.0",
     "csv-parser": "^3.0.0",
     "dotenv": "^17.0.1",
     "mssql": "^9.0.1",
     "mysql2": "^3.4.0",
-    "pg": "^8.11.3",
     "oracledb": "^6.0.5",
+    "pg": "^8.11.3",
     "telnet-client": "^2.2.5"
   },
   "devDependencies": {

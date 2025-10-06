@@ -208,7 +208,7 @@ LOCALDB_PORT=3306
 ## 🌐 다국어 지원
 
 이 애플리케이션은 다국어 인터페이스를 지원합니다:
-- **한국어**: 이 파일 (`README.md`) - 한국어 문서
-- **English**: `README_EN.md` - English documentation
+- **English**: `README.md` - English documentation (메인 문서)
+- **한국어**: 이 파일 (`README_KR.md`) - 한국어 문서
 
 애플리케이션 실행 시 모든 사용자 인터페이스 메시지와 로그가 영문으로 표시됩니다.

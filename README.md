@@ -193,17 +193,41 @@ You can save frequently used settings through the **Configuration Management** m
 
 **Note**: All database connections now use `config/dbinfo.json`. Legacy environment variables (`LOCALDB_*`, `REMOTEDB_*`) are no longer used.
 
+## 🏗️ Build and Deployment
+
+### Building Executable
+```bash
+# Build standalone executable
+npm run build
+# or use batch file
+build.bat
+```
+
+### Creating Deployment Package
+```bash
+# Create complete deployment package
+deploy.bat
+```
+
+The deployment package includes:
+- `my-node-client-util-app.exe` - Standalone executable
+- `config/` - Configuration files
+- `templet/` - Template files
+- `run.bat` - Launcher script
+- Documentation files
+
 ## 📝 Important Notes
 
 - Batch files only run on Windows environment.
 - Uses UTF-8 encoding for proper character output.
 - Ensure Node.js is installed before execution.
+- For distribution, copy the entire deployment folder to target machines.
 
 ## 🌐 Internationalization
 
 This application supports internationalization with both Korean and English interfaces:
-- **한국어 (Korean)**: `README.md` - Korean documentation
-- **English**: This file (`README_EN.md`) provides English documentation
+- **English**: This file (`README.md`) - English documentation (main)
+- **한국어 (Korean)**: `README_KR.md` - Korean documentation
 
 All user interface messages and logs are displayed in English when running the application.
 
