@@ -1,6 +1,5 @@
 const fs = require('fs');
 const csv = require('csv-parser');
-const mysql = require('mysql2/promise');
 const os = require('os');
 const path = require('path');
 const DatabaseFactory = require('./database/DatabaseFactory');
@@ -25,85 +24,31 @@ class DBExecutor {
   }
 
   async validateEnvironment() {
-    // Check local DB environment variables (MySQL - for logging)
-    const requiredLocalEnvVars = [
-      'LOCALDB_HOST',
-      'LOCALDB_USER',
-      'LOCALDB_PASSWORD',
-      'LOCALDB_DATABASE',
-      'LOCALDB_PORT'
-    ];
-
-    const missingLocalVars = requiredLocalEnvVars.filter(varName => !process.env[varName]);
-    
-    if (missingLocalVars.length > 0) {
-      console.warn(`⚠️  Local DB environment variables not set: ${missingLocalVars.join(', ')}`);
-      console.warn('   Logging functionality will be disabled.');
-    }
+    // Local logging functionality is now optional and uses config/dbinfo.json
+    // No environment variable validation needed
   }
 
   async createConnections(selectedDbName = null) {
     await this.validateEnvironment();
 
-    let localDBPool = null;
-    let remoteConnection = null;
-
-    // Local DB connection (MySQL - for logging, optional)
-    if (process.env.LOCALDB_HOST) {
-      try {
-        localDBPool = await mysql.createConnection({
-          host: process.env.LOCALDB_HOST,
-          user: process.env.LOCALDB_USER,
-          password: process.env.LOCALDB_PASSWORD,
-          database: process.env.LOCALDB_DATABASE,
-          port: parseInt(process.env.LOCALDB_PORT, 10)
-        });
-      } catch (error) {
-            console.warn('⚠️  Local DB connection failed, logging functionality will be disabled:', error.message);
-      }
+    // All DB connections now use config/dbinfo.json
+    if (!selectedDbName) {
+      throw new Error('DB configuration is required. Please select a DB in settings management.');
     }
 
-    // Remote DB connection
-    let dbConfig;
-    if (selectedDbName) {
-      dbConfig = this.configManager.getDbConfig(selectedDbName);
-      if (!dbConfig) {
-        throw new Error(`Selected DB configuration not found: ${selectedDbName}`);
-      }
-      
-      const dbType = this.configManager.getDbType(selectedDbName);
-      remoteConnection = DatabaseFactory.createConnection(dbType, dbConfig);
-      await remoteConnection.connect();
-      
-    } else {
-      // Get from environment variables (legacy)
-      if (!process.env.REMOTEDB_HOST) {
-        throw new Error('DB configuration is required. Please select a DB in settings management or set environment variables.');
-      }
-      
-      // Legacy assumes MSSQL
-      dbConfig = {
-        server: process.env.REMOTEDB_HOST,
-        user: process.env.REMOTEDB_USER,
-        password: process.env.REMOTEDB_PASSWORD,
-        database: process.env.REMOTEDB_DATABASE,
-        port: parseInt(process.env.REMOTEDB_PORT, 10),
-        options: { 
-          encrypt: false, 
-          trustServerCertificate: true,
-          requestTimeout: 300000,
-          connectionTimeout: 30000
-        }
-      };
-      
-      remoteConnection = DatabaseFactory.createConnection('mssql', dbConfig);
-      await remoteConnection.connect();
+    const dbConfig = this.configManager.getDbConfig(selectedDbName);
+    if (!dbConfig) {
+      throw new Error(`Selected DB configuration not found: ${selectedDbName}`);
     }
+    
+    const dbType = this.configManager.getDbType(selectedDbName);
+    const remoteConnection = DatabaseFactory.createConnection(dbType, dbConfig);
+    await remoteConnection.connect();
 
-    return { localDBPool, remoteConnection };
+    return { remoteConnection };
   }
 
-  async executeSql(localDBPool, remoteConnection, sqlName, query, rows) {
+  async executeSql(remoteConnection, sqlName, query, rows) {
     const pcIp = this.getLocalIp();
     const startTime = Date.now();
     let totalCount = 0;
@@ -111,18 +56,7 @@ class DBExecutor {
     let resultCode = 'Success';
     let sqlId = null;
 
-    // Save execution information to log table (only if local DB is available)
-    if (localDBPool) {
-      try {
-        const [insertResult] = await localDBPool.execute(
-          'INSERT INTO sql_exec_log (sql_name, sql_content, pc_ip) VALUES (?, ?, ?)',
-          [sqlName, query, pcIp]
-        );
-        sqlId = insertResult.insertId;
-      } catch (error) {
-        console.warn('⚠️  Failed to save log table:', error.message);
-      }
-    }
+    // Logging functionality removed - all DB operations now use config/dbinfo.json
 
     // Create log directory
     const now = new Date();
@@ -168,17 +102,7 @@ class DBExecutor {
     const endTime = Date.now();
     const elapsed = ((endTime - startTime) / 1000).toFixed(2);
 
-    // Update result summary (only if local DB is available)
-    if (localDBPool && sqlId) {
-      try {
-        await localDBPool.execute(
-          'UPDATE sql_exec_log SET result_count = ?, result_code = ?, result_msg = ?, collapsed_time = ? WHERE sql_id = ?',
-          [totalCount, resultCode, errorMsg, elapsed, sqlId]
-        );
-      } catch (error) {
-        console.warn('⚠️  Log update failed:', error.message);
-      }
-    }
+    // Logging functionality removed - results are shown in console and log files
 
     console.log('\n📈 Execution Result Summary:');
     console.log(`  Total processed parameters: ${rows.length}`);
@@ -218,7 +142,7 @@ class DBExecutor {
 
     // Create DB connection
     const selectedDbName = this.configManager.getDefaultConfig().sql.selectedDb;
-    const { localDBPool, remoteConnection } = await this.createConnections(selectedDbName);
+    const { remoteConnection } = await this.createConnections(selectedDbName);
     
     if (selectedDbName) {
       const dbConfig = this.configManager.getDbConfig(selectedDbName);
@@ -253,15 +177,12 @@ class DBExecutor {
       });
 
       // Execute SQL
-      const result = await this.executeSql(localDBPool, remoteConnection, sqlName, query, rows);
+      const result = await this.executeSql(remoteConnection, sqlName, query, rows);
       
       console.log('\n🎉 All tasks completed successfully!');
       
     } finally {
       // Close connections
-      if (localDBPool) {
-        await localDBPool.end();
-      }
       if (remoteConnection) {
         await remoteConnection.disconnect();
       }

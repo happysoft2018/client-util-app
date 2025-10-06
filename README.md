@@ -181,12 +181,6 @@ The following environment variables can be configured:
 # API server settings (optional)
 API_URL=http://localhost:3000
 
-# Local database settings (MySQL - for logging, optional)
-LOCALDB_HOST=localhost
-LOCALDB_USER=root
-LOCALDB_PASSWORD=password
-LOCALDB_DATABASE=util_logs
-LOCALDB_PORT=3306
 ```
 
 ### User Configuration Management
@@ -196,6 +190,8 @@ You can save frequently used settings through the **Configuration Management** m
 - **Telnet Check Settings**: CSV file path, timeout
 - **SQL Execution Settings**: Template path, selected DB
 - Settings are automatically saved to `config/user-config.json`.
+
+**Note**: All database connections now use `config/dbinfo.json`. Legacy environment variables (`LOCALDB_*`, `REMOTEDB_*`) are no longer used.
 
 ## 📝 Important Notes
 

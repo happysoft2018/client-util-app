@@ -286,12 +286,7 @@ class ConfigManager {
     console.log('='.repeat(40));
     
     const envVars = [
-      'API_URL',
-      'LOCALDB_HOST',
-      'LOCALDB_USER', 
-      'LOCALDB_PASSWORD',
-      'LOCALDB_DATABASE',
-      'LOCALDB_PORT'
+      'API_URL'
     ];
     
     console.log('\n📋 Main Environment Variables:');
