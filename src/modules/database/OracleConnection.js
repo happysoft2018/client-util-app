@@ -14,7 +14,21 @@ class OracleConnection {
       ...this.config.options
     };
 
-    this.connection = await oracledb.getConnection(connectionConfig);
+    // Set connection timeout if specified
+    if (this.config.options?.connectionTimeout) {
+      const timeoutMs = this.config.options.connectionTimeout;
+      
+      // Oracle connection timeout is handled differently - we'll use Promise.race
+      const connectionPromise = oracledb.getConnection(connectionConfig);
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error('Connection timeout')), timeoutMs);
+      });
+      
+      this.connection = await Promise.race([connectionPromise, timeoutPromise]);
+    } else {
+      this.connection = await oracledb.getConnection(connectionConfig);
+    }
+    
     return this.connection;
   }
 

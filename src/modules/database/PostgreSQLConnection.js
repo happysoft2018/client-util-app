@@ -19,12 +19,29 @@ class PostgreSQLConnection {
     };
 
     this.pool = new Pool(connectionConfig);
-    return this.pool;
+    
+    // Test the connection by getting a client from the pool
+    try {
+      const client = await this.pool.connect();
+      client.release(); // Release the client back to the pool
+      return this.pool;
+    } catch (error) {
+      // If connection fails, ensure pool is properly closed
+      if (this.pool && !this.pool.ended) {
+        await this.pool.end();
+      }
+      throw error;
+    }
   }
 
   async disconnect() {
-    if (this.pool) {
-      await this.pool.end();
+    if (this.pool && !this.pool.ended) {
+      try {
+        await this.pool.end();
+      } catch (error) {
+        // Ignore errors when pool is already ended
+        console.warn('Warning: Pool already ended or error during disconnect:', error.message);
+      }
     }
   }
 
@@ -59,6 +76,12 @@ class PostgreSQLConnection {
       await this.disconnect();
       return { success: true, message: 'PostgreSQL connection successful' };
     } catch (error) {
+      // Ensure disconnect is called even on connection failure
+      try {
+        await this.disconnect();
+      } catch (disconnectError) {
+        // Ignore disconnect errors
+      }
       return { success: false, message: error.message, code: error.code };
     }
   }

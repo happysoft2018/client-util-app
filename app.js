@@ -158,7 +158,7 @@ class NodeUtilApp {
       
       console.log('\n⏱️  Timeout Settings:');
       const timeout = await this.askQuestion(
-        'Timeout (seconds) (default: 5): ',
+        'Timeout (seconds)',
         5
       );
 
@@ -235,7 +235,7 @@ class NodeUtilApp {
       
       console.log('\n⏱️  Timeout Settings:');
       const timeout = await this.askQuestion(
-        'Timeout (seconds) (default: 3): ',
+        'Timeout (seconds)',
         3
       );
 
