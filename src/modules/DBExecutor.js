@@ -25,7 +25,7 @@ class DBExecutor {
   }
 
   async validateEnvironment() {
-    // 로컬 DB 환경변수 체크 (MySQL - 로깅용)
+    // Check local DB environment variables (MySQL - for logging)
     const requiredLocalEnvVars = [
       'LOCALDB_HOST',
       'LOCALDB_USER',
@@ -48,7 +48,7 @@ class DBExecutor {
     let localDBPool = null;
     let remoteConnection = null;
 
-    // 로컬 DB 연결 (MySQL - 로깅용, 선택사항)
+    // Local DB connection (MySQL - for logging, optional)
     if (process.env.LOCALDB_HOST) {
       try {
         localDBPool = await mysql.createConnection({
@@ -63,7 +63,7 @@ class DBExecutor {
       }
     }
 
-    // 원격 DB 연결
+    // Remote DB connection
     let dbConfig;
     if (selectedDbName) {
       dbConfig = this.configManager.getDbConfig(selectedDbName);
@@ -108,10 +108,10 @@ class DBExecutor {
     const startTime = Date.now();
     let totalCount = 0;
     let errorMsg = '';
-    let resultCode = '성공';
+    let resultCode = 'Success';
     let sqlId = null;
 
-    // 로그 테이블에 실행 정보 저장 (로컬 DB가 있는 경우에만)
+    // Save execution information to log table (only if local DB is available)
     if (localDBPool) {
       try {
         const [insertResult] = await localDBPool.execute(
@@ -135,16 +135,16 @@ class DBExecutor {
       fs.mkdirSync(logDir, { recursive: true });
     }
 
-    console.log(`\n📊 ${rows.length}개의 파라미터로 SQL을 실행합니다...`);
+    console.log(`\n📊 Executing SQL with ${rows.length} parameters...`);
     console.log('-'.repeat(50));
 
-    // 각 행에 대해 SQL 실행
+    // Execute SQL for each row
     for (const row of rows) {
       try {
         const result = await remoteConnection.executeQuery(query, row);
         totalCount += result.rowCount;
 
-        // 결과를 로그파일에 저장
+        // Save result to log file
         const timestampNow = new Date();
         const timestamp = timestampNow.getFullYear() + 
                          String(timestampNow.getMonth() + 1).padStart(2, '0') + 
@@ -191,7 +191,7 @@ class DBExecutor {
 
   async run(sqlName) {
     if (!sqlName) {
-      throw new Error('SQL 파일명이 필요합니다.');
+      throw new Error('SQL file name is required.');
     }
 
     const sqlFilePath = path.join(this.templateDir, `${sqlName}.sql`);
@@ -244,15 +244,15 @@ class DBExecutor {
       });
 
       if (rows.length === 0) {
-        throw new Error('CSV 파일이 비어있습니다.');
+        throw new Error('CSV file is empty.');
       }
 
-      console.log(`\n📋 파라미터 데이터 (${rows.length}개):`);
+      console.log(`\n📋 Parameter Data (${rows.length} entries):`);
       rows.forEach((row, index) => {
         console.log(`  ${index + 1}. ${JSON.stringify(row)}`);
       });
 
-      // SQL 실행
+      // Execute SQL
       const result = await this.executeSql(localDBPool, remoteConnection, sqlName, query, rows);
       
       console.log('\n🎉 All tasks completed successfully!');

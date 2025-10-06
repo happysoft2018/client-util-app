@@ -4,7 +4,7 @@ const path = require('path');
 const os = require('os');
 require('dotenv').config();
 
-// 모듈 import
+// Module imports
 const DBConnectionChecker = require('./src/modules/DBConnectionChecker');
 const TelnetChecker = require('./src/modules/TelnetChecker');
 const DBExecutor = require('./src/modules/DBExecutor');
@@ -77,7 +77,7 @@ class NodeUtilApp {
     console.log('='.repeat(40));
     
     try {
-      // 설정에서 기본값 가져오기
+      // Get default values from configuration
       const defaultConfig = this.configManager.getDefaultConfig();
       
       console.log('\n📁 CSV File Settings:');
@@ -251,7 +251,7 @@ class NodeUtilApp {
         break;
       case '3':
         this.configManager.resetConfig();
-        console.log('✅ 설정이 초기화되었습니다.');
+        console.log('✅ Configuration has been reset.');
         break;
       case '4':
         this.configManager.showEnvironmentVariables();
@@ -299,7 +299,7 @@ class NodeUtilApp {
           dbUser: defaultConfig.mssql.dbUser,
           dbPassword: defaultConfig.mssql.dbPassword,
           timeout: defaultConfig.mssql.timeout || 5,
-          dbType: 'mssql' // 기본값
+          dbType: 'mssql' // default value
         });
         console.log('✅ Database check completed');
       } else {
@@ -339,11 +339,11 @@ class NodeUtilApp {
   }
 }
 
-// 애플리케이션 시작
+// Application startup
 if (require.main === module) {
   const app = new NodeUtilApp();
   app.start().catch(error => {
-    console.error('❌ 애플리케이션 시작 중 오류:', error);
+    console.error('❌ Error starting application:', error);
     process.exit(1);
   });
 }

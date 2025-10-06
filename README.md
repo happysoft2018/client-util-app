@@ -1,109 +1,109 @@
-# Node.js 통합 유틸리티 도구
+# Node.js Integrated Utility Tool
 
-로컬환경에서 사용하는 각종 유틸리티를 통합 관리하는 도구입니다.
+A comprehensive utility tool for managing various local environment utilities in a unified application.
 
-## 📁 프로젝트 구조
+## 📁 Project Structure
 
 ```
 my-node-client-util-app/
-├── app.js                          # 🚀 메인 통합 애플리케이션
+├── app.js                          # 🚀 Main integrated application
 ├── src/
-│   └── modules/                    # 📦 모듈화된 기능들
-│       ├── ConfigManager.js        # 설정 관리
-│       ├── DBConnectionChecker.js  # 범용 DB 연결 및 권한 체크
-│       ├── DBExecutor.js           # 범용 DB SQL 실행
-│       ├── TelnetChecker.js        # 서버 Telnet 연결 체크
-│       └── database/               # DB 타입별 연결 클래스들
-│           ├── DatabaseFactory.js  # DB 연결 팩토리
-│           ├── MSSQLConnection.js  # MSSQL 연결 클래스
-│           ├── MySQLConnection.js  # MySQL 연결 클래스
-│           ├── PostgreSQLConnection.js # PostgreSQL 연결 클래스
-│           └── OracleConnection.js # Oracle 연결 클래스
+│   └── modules/                    # 📦 Modularized features
+│       ├── ConfigManager.js        # Configuration management
+│       ├── DBConnectionChecker.js  # Universal DB connection and permission checker
+│       ├── DBExecutor.js           # Universal DB SQL executor
+│       ├── TelnetChecker.js        # Server Telnet connection checker
+│       └── database/               # DB type-specific connection classes
+│           ├── DatabaseFactory.js  # DB connection factory
+│           ├── MSSQLConnection.js  # MSSQL connection class
+│           ├── MySQLConnection.js  # MySQL connection class
+│           ├── PostgreSQLConnection.js # PostgreSQL connection class
+│           └── OracleConnection.js # Oracle connection class
 ├── config/
-│   ├── dbinfo.json                 # DB 연결 정보 설정
-│   └── user-config.json            # 사용자 기본 설정 (자동 생성)
-├── templet/                        # 템플릿 파일들
-│   ├── DB_sample.csv               # DB 체크용 CSV 샘플
-│   ├── SQL_001.sql                 # SQL 쿼리 템플릿
-│   └── SQL_001.csv                 # SQL 파라미터 템플릿
-├── log/                            # 실행 로그 (자동 생성)
-└── 프로그램실행하기.bat               # 🎯 통합 실행 도구
+│   ├── dbinfo.json                 # DB connection information settings
+│   └── user-config.json            # User default settings (auto-generated)
+├── templet/                        # Template files
+│   ├── DB_sample.csv               # CSV sample for DB checking
+│   ├── SQL_001.sql                 # SQL query template
+│   └── SQL_001.csv                 # SQL parameter template
+├── log/                            # Execution logs (auto-generated)
+└── run.bat                         # 🎯 Integrated execution tool
 ```
 
-## 🚀 사용법
+## 🚀 Usage
 
-### 🎯 **통합 실행 (권장)**
-**`프로그램실행하기.bat`**를 더블클릭하면 통합 메뉴가 나타납니다:
+### 🎯 **Integrated Execution (Recommended)**
+Double-click **`run.bat`** to launch the integrated menu:
 
 ```
 ========================================
-    Node.js 통합 유틸리티 도구
+    Node.js Integrated Utility Tool
 ========================================
 
-📋 메인 메뉴
-1. 데이터베이스 연결 및 권한 체크
-2. 서버 Telnet 연결 체크  
-3. 데이터베이스 SQL 실행
-4. 설정 관리
-5. 모든 체크 실행 (일괄 처리)
-6. 종료
+📋 Main Menu
+1. Database Connection and Permission Check
+2. Server Telnet Connection Check  
+3. Database SQL Execution
+4. Configuration Management
+5. Run All Checks (Batch Processing)
+6. Exit
 
-실행할 기능을 선택하세요 (1-6):
+Select function to execute (1-6):
 ```
 
-### 🔧 **Node.js 명령어 실행**
+### 🔧 **Node.js Command Execution**
 ```bash
-# 통합 애플리케이션 실행
+# Run integrated application
 npm start
-# 또는
+# or
 node app.js
 ```
 
-### 📦 **주요 개선사항**
-- **다중 DB 지원**: MSSQL, MySQL, PostgreSQL, Oracle 지원
-- **통합 관리**: 모든 기능을 하나의 애플리케이션에서 관리
-- **설정 저장**: 자주 사용하는 설정을 저장하여 재사용 가능
-- **일괄 처리**: 모든 체크를 한 번에 실행
-- **모듈화**: 코드 구조 개선으로 유지보수성 향상
-- **사용자 친화적**: 직관적인 메뉴 시스템
+### 📦 **Key Improvements**
+- **Multi-DB Support**: MSSQL, MySQL, PostgreSQL, Oracle support
+- **Unified Management**: Manage all features in a single application
+- **Configuration Storage**: Save frequently used settings for reuse
+- **Batch Processing**: Execute all checks at once
+- **Modularization**: Improved code structure for better maintainability
+- **User-Friendly**: Intuitive menu system
 
-## 🔍 주요 기능
+## 🔍 Key Features
 
-### 🗄️ **다중 데이터베이스 지원**
-다음 데이터베이스들을 지원합니다:
+### 🗄️ **Multi-Database Support**
+The following databases are supported:
 - **Microsoft SQL Server** (MSSQL)
 - **MySQL** 
 - **PostgreSQL**
 - **Oracle Database**
 
-### 📊 **데이터베이스 연결 및 권한 체크**
-`DBConnectionChecker.js`는 다음과 같은 종합적인 체크를 수행합니다:
+### 📊 **Database Connection and Permission Check**
+`DBConnectionChecker.js` performs comprehensive checks including:
 
-1. **기본 연결 테스트**
-   - 지정된 서버:포트로 데이터베이스 연결 시도
-   - 연결 성공/실패 및 소요 시간 측정
+1. **Basic Connection Test**
+   - Attempts database connection to specified server:port
+   - Measures connection success/failure and elapsed time
 
-2. **데이터베이스 권한 체크**
-   - **SELECT 권한**: 시스템 테이블 조회 테스트
-   - **INSERT 권한**: 임시 테이블에 데이터 삽입 테스트
-   - **UPDATE 권한**: 임시 테이블 데이터 수정 테스트  
-   - **DELETE 권한**: 임시 테이블 데이터 삭제 테스트
-   - **CREATE 권한**: 테이블 생성 테스트
-   - **DROP 권한**: 테이블 삭제 테스트
+2. **Database Permission Check**
+   - **SELECT Permission**: System table query test
+   - **INSERT Permission**: Temporary table data insertion test
+   - **UPDATE Permission**: Temporary table data modification test  
+   - **DELETE Permission**: Temporary table data deletion test
+   - **CREATE Permission**: Table creation test
+   - **DROP Permission**: Table deletion test
 
-3. **결과 표시**
+3. **Result Display**
    ```
-   [192.168.1.100:1433][MSSQL][PRDDB][본사_ERP][SampleDB] → [✅ 성공] [권한: SELECT, INSERT, UPDATE, DELETE]
-   [192.168.1.101:3306][MYSQL][DEVDB][본사_WMS][TestDB]   → [❌ 실패] [LOGIN_FAILED] 로그인 실패
+   [192.168.1.100:1433][MSSQL][PRDDB][본사_ERP][SampleDB] → [✅ Success] [Permissions: SELECT, INSERT, UPDATE, DELETE]
+   [192.168.1.101:3306][MYSQL][DEVDB][본사_WMS][TestDB]   → [❌ Failed] [LOGIN_FAILED] Login failed
    ```
 
-4. **API 연동**
-   - 체크 결과를 자동으로 서버 API로 전송
-   - DB 타입 및 권한 정보까지 포함하여 이력 관리
+4. **API Integration**
+   - Automatically sends check results to server API
+   - Includes DB type and permission information for history management
 
-### 📋 **CSV 파일 형식**
+### 📋 **CSV File Format**
 
-#### DB 체크용 CSV:
+#### DB Check CSV:
 ```csv
 db_name,server_ip,port,corp,proc,env_type,db_type
 SampleDB,192.168.1.100,1433,본사,ERP,PRD,mssql
@@ -111,26 +111,26 @@ TestDB,192.168.1.101,3306,본사,WMS,DEV,mysql
 UserDB,192.168.1.102,5432,지사,CRM,STG,postgresql
 ```
 
-**필수 컬럼**: `db_name`, `server_ip`, `port`
-**선택 컬럼**: `corp`, `proc`, `env_type`, `db_type`
-- `db_type`: mssql, mysql, postgresql, oracle (기본값: mssql)
+**Required Columns**: `db_name`, `server_ip`, `port`
+**Optional Columns**: `corp`, `proc`, `env_type`, `db_type`
+- `db_type`: mssql, mysql, postgresql, oracle (default: mssql)
 
-## ⚙️ 사전 요구사항
+## ⚙️ Prerequisites
 
-1. **Node.js 설치**
-   - Node.js 14.0.0 이상 필요
-   - https://nodejs.org/ 에서 다운로드
+1. **Node.js Installation**
+   - Node.js 14.0.0 or higher required
+   - Download from https://nodejs.org/
 
-2. **의존성 패키지**
-   - 배치파일 실행 시 자동으로 `npm install` 실행
-   - 필요한 패키지: axios, csv-parser, dotenv, mssql, mysql2, pg, oracledb, telnet-client
+2. **Dependency Packages**
+   - Automatically runs `npm install` when batch file is executed
+   - Required packages: axios, csv-parser, dotenv, mssql, mysql2, pg, oracledb, telnet-client
 
-## 🔧 설정
+## 🔧 Configuration
 
-### 데이터베이스 설정
+### Database Configuration
 
-#### 🗄️ **DB 연결 정보 설정 (`config/dbinfo.json`)**
-데이터베이스 연결 정보는 `config/dbinfo.json` 파일에서 관리됩니다:
+#### 🗄️ **DB Connection Information Settings (`config/dbinfo.json`)**
+Database connection information is managed in the `config/dbinfo.json` file:
 
 ```json
 {
@@ -174,14 +174,14 @@ UserDB,192.168.1.102,5432,지사,CRM,STG,postgresql
 }
 ```
 
-#### 🌍 **환경변수 설정 (`.env` 파일)**
-다음 환경변수들을 설정할 수 있습니다:
+#### 🌍 **Environment Variables Settings (`.env` file)**
+The following environment variables can be configured:
 
 ```env
-# API 서버 설정 (선택사항)
+# API server settings (optional)
 API_URL=http://localhost:3000
 
-# 로컬 데이터베이스 설정 (MySQL - 로깅용, 선택사항)
+# Local database settings (MySQL - for logging, optional)
 LOCALDB_HOST=localhost
 LOCALDB_USER=root
 LOCALDB_PASSWORD=password
@@ -189,16 +189,46 @@ LOCALDB_DATABASE=util_logs
 LOCALDB_PORT=3306
 ```
 
-### 사용자 설정 관리
-통합 애플리케이션의 **설정 관리** 메뉴에서 자주 사용하는 설정을 저장할 수 있습니다:
-- **DB 선택**: `config/dbinfo.json`에서 정의된 DB 중 선택
-- **DB 체크 설정**: CSV 파일 경로, 선택된 DB, 타임아웃
-- **Telnet 체크 설정**: CSV 파일 경로, 타임아웃
-- **SQL 실행 설정**: 템플릿 경로, 선택된 DB
-- 설정은 `config/user-config.json`에 자동 저장됩니다.
+### User Configuration Management
+You can save frequently used settings through the **Configuration Management** menu in the integrated application:
+- **DB Selection**: Choose from DBs defined in `config/dbinfo.json`
+- **DB Check Settings**: CSV file path, selected DB, timeout
+- **Telnet Check Settings**: CSV file path, timeout
+- **SQL Execution Settings**: Template path, selected DB
+- Settings are automatically saved to `config/user-config.json`.
 
-## 📝 주의사항
+## 📝 Important Notes
 
-- 배치파일은 Windows 환경에서만 실행됩니다.
-- 한글 출력을 위해 UTF-8 인코딩을 사용합니다.
-- 실행 전 Node.js가 설치되어 있는지 확인하세요.
+- Batch files only run on Windows environment.
+- Uses UTF-8 encoding for proper character output.
+- Ensure Node.js is installed before execution.
+
+## 🌐 Internationalization
+
+This application supports internationalization with both Korean and English interfaces:
+- **한국어 (Korean)**: `README.md` - Korean documentation
+- **English**: This file (`README_EN.md`) provides English documentation
+
+All user interface messages and logs are displayed in English when running the application.
+
+## 🔄 Migration from Legacy Scripts
+
+If you're migrating from the previous separate utility scripts:
+1. The old individual scripts (`mssql-check`, `telnet-check`, `sql-exec`) have been integrated into this unified application
+2. All functionality is now available through the main menu system
+3. Configuration management has been centralized for better user experience
+4. Multi-database support has been added beyond just MSSQL
+
+## 📞 Support
+
+For issues or questions:
+1. Check the configuration files (`config/dbinfo.json`, `.env`)
+2. Verify Node.js and dependency package installation
+3. Ensure database servers are accessible from your network
+4. Check CSV file formats and required columns
+
+---
+
+**Version**: 1.0.0  
+**Last Updated**: 2024  
+**Compatibility**: Node.js 14.0.0+

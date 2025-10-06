@@ -23,7 +23,7 @@ class DatabaseFactory {
         return new OracleConnection(config);
       
       default:
-        throw new Error(`지원하지 않는 데이터베이스 타입입니다: ${dbType}`);
+        throw new Error(`Unsupported database type: ${dbType}`);
     }
   }
 
@@ -46,13 +46,13 @@ class DatabaseFactory {
     const missingFields = requiredFields.filter(field => !config[field]);
     
     if (missingFields.length > 0) {
-      throw new Error(`필수 설정이 누락되었습니다: ${missingFields.join(', ')}`);
+      throw new Error(`Required configuration is missing: ${missingFields.join(', ')}`);
     }
 
-    // 포트 번호 검증
+    // Port number validation
     const port = parseInt(config.port, 10);
     if (isNaN(port) || port < 1 || port > 65535) {
-      throw new Error('포트 번호는 1-65535 사이의 숫자여야 합니다.');
+      throw new Error('Port number must be a number between 1-65535.');
     }
 
     return true;

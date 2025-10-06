@@ -134,7 +134,7 @@ class ConfigManager {
     console.log('⚙️  Update Default Configuration');
     console.log('='.repeat(40));
 
-    // 사용 가능한 DB 목록 표시
+    // Display available DB list
     const availableDbs = this.getAvailableDbs();
     if (availableDbs.length > 0) {
       console.log('\n🗄️  Available Databases:');
@@ -151,7 +151,7 @@ class ConfigManager {
       this.config.mssql.csvPath
     );
     
-    // DB 선택
+    // DB selection
     if (availableDbs.length > 0) {
       const dbChoice = await app.askQuestion(
         `Select DB to use (1-${availableDbs.length}) (current: ${this.config.mssql.selectedDb || 'not set'}): `,
@@ -214,7 +214,7 @@ class ConfigManager {
       }
     }
 
-    // 설정 업데이트
+    // Update settings
     if (mssqlCsvPath) this.config.mssql.csvPath = mssqlCsvPath;
     if (mssqlTimeout) this.config.mssql.timeout = parseInt(mssqlTimeout) || 5;
     

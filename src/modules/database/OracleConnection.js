@@ -6,7 +6,7 @@ class OracleConnection {
   }
 
   async connect() {
-    // Oracle 연결 설정
+    // Oracle connection configuration
     const connectionConfig = {
       user: this.config.user,
       password: this.config.password,
@@ -25,11 +25,11 @@ class OracleConnection {
   }
 
   async executeQuery(query, params = {}) {
-    // Oracle 파라미터 바인딩
+    // Oracle parameter binding
     const bindVars = {};
     let processedQuery = query;
     
-    // @param 형태를 :param 형태로 변환 (Oracle 형식)
+    // Convert @param format to :param format (Oracle format)
     Object.entries(params).forEach(([key, value]) => {
       const placeholder = `@${key}`;
       const bindVar = `:${key}`;
@@ -52,7 +52,7 @@ class OracleConnection {
       await this.connect();
       const result = await this.executeQuery('SELECT 1 as test FROM dual');
       await this.disconnect();
-      return { success: true, message: 'Oracle 연결 성공' };
+      return { success: true, message: 'Oracle connection successful' };
     } catch (error) {
       return { success: false, message: error.message, code: error.code };
     }
@@ -71,7 +71,7 @@ class OracleConnection {
     try {
       await this.connect();
       
-      // SELECT 권한 체크
+      // SELECT permission check
       try {
         await this.executeQuery('SELECT 1 FROM user_tables WHERE rownum = 1');
         permissions.select = true;

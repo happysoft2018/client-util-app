@@ -29,11 +29,11 @@ class PostgreSQLConnection {
   }
 
   async executeQuery(query, params = {}) {
-    // PostgreSQL 파라미터 바인딩을 위해 $1, $2 형태 사용
+    // Use $1, $2 format for PostgreSQL parameter binding
     let processedQuery = query;
     const values = [];
     
-    // @param 형태를 $1, $2 형태로 변환
+    // Convert @param format to $1, $2 format
     const paramKeys = Object.keys(params);
     paramKeys.forEach((key, index) => {
       const placeholder = `@${key}`;
@@ -57,7 +57,7 @@ class PostgreSQLConnection {
       await this.connect();
       const result = await this.executeQuery('SELECT 1 as test');
       await this.disconnect();
-      return { success: true, message: 'PostgreSQL 연결 성공' };
+      return { success: true, message: 'PostgreSQL connection successful' };
     } catch (error) {
       return { success: false, message: error.message, code: error.code };
     }
@@ -76,7 +76,7 @@ class PostgreSQLConnection {
     try {
       await this.connect();
       
-      // SELECT 권한 체크
+      // SELECT permission check
       try {
         await this.executeQuery('SELECT 1 FROM information_schema.tables LIMIT 1');
         permissions.select = true;

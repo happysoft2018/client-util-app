@@ -34,7 +34,7 @@ class MSSQLConnection {
   async executeQuery(query, params = {}) {
     const request = this.pool.request();
     
-    // 파라미터 바인딩
+    // Parameter binding
     Object.entries(params).forEach(([key, value]) => {
       request.input(key, value);
     });
@@ -52,7 +52,7 @@ class MSSQLConnection {
       await this.connect();
       const result = await this.executeQuery('SELECT 1 as test');
       await this.disconnect();
-      return { success: true, message: 'MSSQL 연결 성공' };
+      return { success: true, message: 'MSSQL connection successful' };
     } catch (error) {
       return { success: false, message: error.message, code: error.code };
     }
@@ -71,7 +71,7 @@ class MSSQLConnection {
     try {
       await this.connect();
       
-      // SELECT 권한 체크
+      // SELECT permission check
       try {
         await this.executeQuery('SELECT TOP 1 1 FROM INFORMATION_SCHEMA.TABLES');
         permissions.select = true;

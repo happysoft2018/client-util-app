@@ -29,19 +29,19 @@ class TelnetChecker {
     const { csvPath } = options;
     
     if (!csvPath) {
-      throw new Error('CSV 파일 경로는 필수입니다.');
+      throw new Error('CSV file path is required.');
     }
 
     if (!fs.existsSync(csvPath)) {
-      throw new Error(`CSV 파일을 찾을 수 없습니다: ${csvPath}`);
+      throw new Error(`CSV file not found: ${csvPath}`);
     }
 
     if (!fs.statSync(csvPath).isFile()) {
-      throw new Error('CSV 경로가 파일이 아닙니다.');
+      throw new Error('CSV path is not a file.');
     }
 
     if (!csvPath.toLowerCase().endsWith('.csv')) {
-      throw new Error('CSV 파일(.csv 확장자)만 지원됩니다.');
+      throw new Error('Only CSV files (.csv extension) are supported.');
     }
 
     const stats = fs.statSync(csvPath);
@@ -49,11 +49,11 @@ class TelnetChecker {
     const MAX_FILE_SIZE_KB = 200;
     
     if (fileSizeInKB > MAX_FILE_SIZE_KB) {
-      throw new Error(`CSV 파일이 너무 큽니다. (${fileSizeInKB.toFixed(2)}KB > ${MAX_FILE_SIZE_KB}KB)`);
+      throw new Error(`CSV file is too large. (${fileSizeInKB.toFixed(2)}KB > ${MAX_FILE_SIZE_KB}KB)`);
     }
 
     if (stats.size === 0) {
-      throw new Error('CSV 파일이 비어있습니다.');
+      throw new Error('CSV file is empty.');
     }
   }
 
@@ -112,13 +112,13 @@ class TelnetChecker {
     const result = await this.checkPort(server_ip, port, timeout);
     const errMessage = result.isConnected ? '' : `[${result.error_code}] ${result.error_msg}`;
     
-    console.log(`[${server_ip}:${port}][${env_type}${usage_type}][${corp}_${proc}] \t→ [${result.isConnected ? '✅ 연결됨' : '❌ 실패'}] ${errMessage}`);
+    console.log(`[${server_ip}:${port}][${env_type}${usage_type}][${corp}_${proc}] \t→ [${result.isConnected ? '✅ Connected' : '❌ Failed'}] ${errMessage}`);
 
     if (checkUnitId === 0) {
       return;
     }
 
-    // API 전송
+    // API transmission
     if (this.apiUrl) {
       const body = {
         check_unit_id: checkUnitId, 

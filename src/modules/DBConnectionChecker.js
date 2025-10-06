@@ -11,7 +11,7 @@ class DBConnectionChecker {
     this.apiUrl = process.env.API_URL;
     this.localPcIp = this.getLocalIp();
     this.regexIpPattern = /^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/;
-    this.regexPortPattern = /^[0-9]+$/; // 포트는 1-65535 범위이므로 4자리 제한 제거
+    this.regexPortPattern = /^[0-9]+$/; // Port range is 1-65535, so removed 4-digit limit
   }
 
   getLocalIp() {
@@ -161,7 +161,7 @@ class DBConnectionChecker {
       return;
     }
 
-    // API 전송
+    // API transmission
     if (this.apiUrl) {
       const body = {
         check_unit_id: checkUnitId, 
