@@ -90,38 +90,59 @@ The following databases are supported:
    - Attempts database connection to specified server:port
    - Measures connection success/failure and elapsed time
 
-2. **Database Permission Check**
-   - **SELECT Permission**: System table query test
-   - **INSERT Permission**: Temporary table data insertion test
-   - **UPDATE Permission**: Temporary table data modification test  
-   - **DELETE Permission**: Temporary table data deletion test
-   - **CREATE Permission**: Table creation test
-   - **DROP Permission**: Table deletion test
+2. **Database Permission Check** (v1.1.0 Updated)
+   - **SELECT Permission**: Executes actual query specified in CSV
+   - **INSERT Permission**: Inserts test data into actual table specified in CSV
+   - **DELETE Permission**: Deletes inserted test data
+   
+   > ⚠️ **Note**: CREATE, DROP, and UPDATE permission checks have been removed for safety.
 
-3. **Result Display**
+3. **Actual Query Testing**
+   - Executes SELECT query specified in CSV file
+   - Verifies query execution success and results
+   - Tests under the same conditions as production environment
+
+4. **Result Display**
    ```
-   [192.168.1.100:1433][MSSQL][PRDDB][본사_ERP][SampleDB] → [✅ Success] [Permissions: SELECT, INSERT, UPDATE, DELETE]
-   [192.168.1.101:3306][MYSQL][DEVDB][본사_WMS][TestDB]   → [❌ Failed] [LOGIN_FAILED] Login failed
+   [192.168.1.100:1433][MSSQL][sa][SampleDB][customers] → [✅ Success] [Permissions: SELECT, INSERT, DELETE]
+   [192.168.1.101:3306][MYSQL][root][TestDB][users]    → [❌ Failed] [LOGIN_FAILED] Login failed
    ```
 
-4. **CSV Result Export**
-   - All check results are automatically saved to CSV files
-   - Files are saved in `results/` directory with timestamp
+5. **CSV Result Export**
+   - All check results are automatically saved to CSV files with timestamp
+   - Files are saved in `results/` directory
+   - Records success/failure status for each permission
    - Includes detailed information for analysis and reporting
 
-### 📋 **CSV File Format**
+### 📋 **CSV File Format** (v1.1.0 Updated)
 
-#### DB Check CSV:
+#### DB Check CSV (Basic Connection Check Only):
 ```csv
-db_name,server_ip,port,corp,proc,env_type,db_type
-SampleDB,192.168.1.100,1433,본사,ERP,PRD,mssql
-TestDB,192.168.1.101,3306,본사,WMS,DEV,mysql
-UserDB,192.168.1.102,5432,지사,CRM,STG,postgresql
+db_name,username,password,server_ip,port,db_type,db_title
+SampleDB,sa,1111,localhost,1433,mssql,Sample MSSQL DB
+TestDB,root,1111,localhost,3306,mysql,Test MySQL DB
+UserDB,postgres,1111,localhost,5432,postgresql,User PostgreSQL DB
 ```
 
-**Required Columns**: `db_name`, `server_ip`, `port`
-**Optional Columns**: `corp`, `proc`, `env_type`, `db_type`
-- `db_type`: mssql, mysql, postgresql, oracle (default: mssql)
+**Required Columns**: `db_name`, `username`, `password`, `server_ip`, `port`, `db_type`
+**Optional Columns**: `db_title`
+
+#### DB Check CSV (With Full Permission Check):
+```csv
+db_name,username,password,server_ip,port,db_type,db_title,select_sql,crud_test_table,crud_test_columns,crud_test_values
+SampleDB,sa,1111,localhost,1433,mssql,Sample DB,"SELECT top 3 customername from customers",customers,"customercode, customername","test001, Test Customer"
+TestDB,root,1111,localhost,3306,mysql,Test DB,"SELECT title from boards",boards,"title, content, userid","test, test content, admin"
+UserDB,postgres,1111,localhost,5432,postgresql,User DB,"SELECT name from servers",users,"id, email, name","test001, test@example.com, Test User"
+```
+
+**Additional Columns (For Permission Check)**:
+- `select_sql`: SELECT query to execute
+- `crud_test_table`: Table name for INSERT/DELETE testing
+- `crud_test_columns`: Column names for testing (comma-separated)
+- `crud_test_values`: Test values (comma-separated)
+
+**Database Types**:
+- `db_type`: mssql, mysql, postgresql, oracle
 
 ## ⚙️ Prerequisites
 

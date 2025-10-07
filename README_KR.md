@@ -86,37 +86,58 @@ node app.js
    - 지정된 서버:포트로 데이터베이스 연결 시도
    - 연결 성공/실패 및 소요 시간 측정
 
-2. **데이터베이스 권한 체크**
-   - **SELECT 권한**: 시스템 테이블 조회 테스트
-   - **INSERT 권한**: 임시 테이블에 데이터 삽입 테스트
-   - **UPDATE 권한**: 임시 테이블 데이터 수정 테스트  
-   - **DELETE 권한**: 임시 테이블 데이터 삭제 테스트
-   - **CREATE 권한**: 테이블 생성 테스트
-   - **DROP 권한**: 테이블 삭제 테스트
+2. **데이터베이스 권한 체크** (v1.1.0 업데이트)
+   - **SELECT 권한**: CSV에 지정된 실제 쿼리 실행 테스트
+   - **INSERT 권한**: CSV에 지정된 실제 테이블에 데이터 삽입 테스트
+   - **DELETE 권한**: 삽입한 테스트 데이터 삭제 테스트
+   
+   > ⚠️ **주의**: CREATE, DROP, UPDATE 권한 체크는 안전성을 위해 제거되었습니다.
 
-3. **결과 표시**
+3. **실제 쿼리 테스트**
+   - CSV 파일에 명시한 SELECT 쿼리를 직접 실행
+   - 쿼리 실행 성공 여부 및 결과 확인
+   - 실제 운영 환경과 동일한 조건으로 테스트
+
+4. **결과 표시**
    ```
-   [192.168.1.100:1433][MSSQL][PRDDB][본사_ERP][SampleDB] → [✅ 성공] [권한: SELECT, INSERT, UPDATE, DELETE]
-   [192.168.1.101:3306][MYSQL][DEVDB][본사_WMS][TestDB]   → [❌ 실패] [LOGIN_FAILED] 로그인 실패
+   [192.168.1.100:1433][MSSQL][sa][SampleDB][customers] → [✅ Success] [Permissions: SELECT, INSERT, DELETE]
+   [192.168.1.101:3306][MYSQL][root][TestDB][users]    → [❌ Failed] [LOGIN_FAILED] 로그인 실패
    ```
 
-4. **API 연동**
-   - 체크 결과를 자동으로 서버 API로 전송
-   - DB 타입 및 권한 정보까지 포함하여 이력 관리
+5. **결과 자동 저장**
+   - 모든 체크 결과를 타임스탬프가 포함된 CSV 파일로 저장
+   - `results/` 디렉토리에 자동 저장
+   - 권한별 성공/실패 상태 기록
 
-### 📋 **CSV 파일 형식**
+### 📋 **CSV 파일 형식** (v1.1.0 업데이트)
 
-#### DB 체크용 CSV:
+#### DB 체크용 CSV (기본 연결 체크만):
 ```csv
-db_name,server_ip,port,corp,proc,env_type,db_type
-SampleDB,192.168.1.100,1433,본사,ERP,PRD,mssql
-TestDB,192.168.1.101,3306,본사,WMS,DEV,mysql
-UserDB,192.168.1.102,5432,지사,CRM,STG,postgresql
+db_name,username,password,server_ip,port,db_type,db_title
+SampleDB,sa,1111,localhost,1433,mssql,샘플 MSSQL DB
+TestDB,root,1111,localhost,3306,mysql,테스트 MySQL DB
+UserDB,postgres,1111,localhost,5432,postgresql,사용자 PostgreSQL DB
 ```
 
-**필수 컬럼**: `db_name`, `server_ip`, `port`
-**선택 컬럼**: `corp`, `proc`, `env_type`, `db_type`
-- `db_type`: mssql, mysql, postgresql, oracle (기본값: mssql)
+**필수 컬럼**: `db_name`, `username`, `password`, `server_ip`, `port`, `db_type`
+**선택 컬럼**: `db_title`
+
+#### DB 체크용 CSV (전체 권한 체크 포함):
+```csv
+db_name,username,password,server_ip,port,db_type,db_title,select_sql,crud_test_table,crud_test_columns,crud_test_values
+SampleDB,sa,1111,localhost,1433,mssql,샘플DB,"SELECT top 3 customername from customers",customers,"customercode, customername","test001, 테스트고객"
+TestDB,root,1111,localhost,3306,mysql,테스트DB,"SELECT title from boards",boards,"title, content, userid","test, test content, admin"
+UserDB,postgres,1111,localhost,5432,postgresql,사용자DB,"SELECT name from servers",users,"id, email, name","test001, test@example.com, 테스트"
+```
+
+**추가 컬럼 (권한 체크용)**:
+- `select_sql`: 실행할 SELECT 쿼리
+- `crud_test_table`: INSERT/DELETE 테스트할 테이블명
+- `crud_test_columns`: 테스트할 컬럼명 (쉼표로 구분)
+- `crud_test_values`: 테스트할 값 (쉼표로 구분)
+
+**데이터베이스 타입**:
+- `db_type`: mssql, mysql, postgresql, oracle
 
 ## ⚙️ 사전 요구사항
 
