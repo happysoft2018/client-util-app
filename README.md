@@ -166,6 +166,17 @@ UserDB,postgres,1111,localhost,5432,postgresql,User DB,"SELECT name from servers
 **Database Types**:
 - `db_type`: mssql, mysql, postgresql, oracle
 
+#### Telnet Check CSV:
+```csv
+server_ip,port,server_name
+192.168.1.100,8080,HQ ERP Web Server
+192.168.1.101,3306,HQ WMS DB Server
+192.168.1.102,22,Branch CRM SSH Server
+```
+
+**Required Columns**: `server_ip`, `port`
+**Optional Columns**: `server_name` (Server description for identification)
+
 ## ⚙️ Prerequisites
 
 1. **Node.js Installation**

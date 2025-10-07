@@ -166,6 +166,27 @@ db_name,username,password,server_ip,port,db_type,db_title,select_sql,crud_test_t
 OracleDB,system,Pass123,localhost,1521,oracle,Oracle DB,"SELECT employee_name FROM employees WHERE rownum <= 5",employees,"employee_id, employee_name, department","E001, John Doe, IT"
 ```
 
+### Telnet Check CSV Format
+
+#### Basic Format:
+```csv
+server_ip,port,server_name
+192.168.1.100,8080,HQ ERP Web Server
+192.168.1.101,3306,HQ WMS DB Server
+192.168.1.102,22,Branch CRM SSH Server
+10.0.0.50,443,Production API Server
+```
+
+**Column Descriptions:**
+- `server_ip` (Required): Server IP address or hostname to check
+- `port` (Required): Port number to check
+- `server_name` (Optional): Server description for identification
+
+**Result CSV Columns:**
+```csv
+timestamp,pc_ip,server_ip,port,server_name,result_code,error_code,error_msg,collapsed_time
+```
+
 ---
 
 ## Database Permission Check

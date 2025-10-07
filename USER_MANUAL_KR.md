@@ -166,6 +166,27 @@ db_name,username,password,server_ip,port,db_type,db_title,select_sql,crud_test_t
 OracleDB,system,Pass123,localhost,1521,oracle,오라클DB,"SELECT employee_name FROM employees WHERE rownum <= 5",employees,"employee_id, employee_name, department","E001, 홍길동, IT"
 ```
 
+### 텔넷 체크 CSV 형식
+
+#### 기본 형식:
+```csv
+server_ip,port,server_name
+192.168.1.100,8080,본사 ERP 웹서버
+192.168.1.101,3306,본사 WMS DB서버
+192.168.1.102,22,지사 CRM SSH서버
+10.0.0.50,443,운영 API 서버
+```
+
+**컬럼 설명:**
+- `server_ip` (필수): 체크할 서버 IP 주소 또는 호스트명
+- `port` (필수): 체크할 포트 번호
+- `server_name` (선택): 서버 식별을 위한 설명
+
+**결과 CSV 컬럼:**
+```csv
+timestamp,pc_ip,server_ip,port,server_name,result_code,error_code,error_msg,collapsed_time
+```
+
 ---
 
 ## 데이터베이스 권한 체크

@@ -161,6 +161,17 @@ UserDB,postgres,1111,localhost,5432,postgresql,사용자DB,"SELECT name from ser
 **데이터베이스 타입**:
 - `db_type`: mssql, mysql, postgresql, oracle
 
+#### 텔넷 체크 CSV:
+```csv
+server_ip,port,server_name
+192.168.1.100,8080,본사 ERP 웹서버
+192.168.1.101,3306,본사 WMS DB서버
+192.168.1.102,22,지사 CRM SSH서버
+```
+
+**필수 컬럼**: `server_ip`, `port`
+**선택 컬럼**: `server_name` (서버 식별을 위한 설명)
+
 ## ⚙️ 사전 요구사항
 
 1. **Node.js 설치**
