@@ -335,11 +335,24 @@ class DBConnectionChecker {
     const insertQuery = result.permissions.insertQuery || '';
     const deleteQuery = result.permissions.deleteQuery || '';
     
+    // 에러 메시지들을 하나의 컬럼으로 합치기
+    const operationErrors = [];
+    if (result.permissions.selectError) {
+      operationErrors.push(`SELECT: ${result.permissions.selectError}`);
+    }
+    if (result.permissions.insertError) {
+      operationErrors.push(`INSERT: ${result.permissions.insertError}`);
+    }
+    if (result.permissions.deleteError) {
+      operationErrors.push(`DELETE: ${result.permissions.deleteError}`);
+    }
+
     let crudData = {
       insert_success: insertQuery ? (result.permissions.insert ? 'SUCCESS' : 'FAILED') : 'SKIPPED',
       delete_success: deleteQuery ? (result.permissions.delete ? 'SUCCESS' : 'FAILED') : 'SKIPPED',
       insert_query: insertQuery,
-      delete_query: deleteQuery
+      delete_query: deleteQuery,
+      operation_errors: operationErrors.join(' | ')
     };
 
     // Return result for CSV saving
@@ -461,7 +474,8 @@ class DBConnectionChecker {
       'timestamp', 'pc_ip', 'server_ip', 'port', 'db_name', 'db_type', 'db_userid',
       'result_code', 'error_code', 'error_msg', 'collapsed_time',
       'perm_select', 'perm_insert', 'perm_delete',
-      'insert_success', 'delete_success', 'insert_query', 'delete_query'
+      'insert_success', 'delete_success', 'insert_query', 'delete_query',
+      'operation_errors'
     ];
 
     // CSV 내용 생성

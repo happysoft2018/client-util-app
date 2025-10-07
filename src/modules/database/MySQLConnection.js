@@ -109,7 +109,10 @@ class MySQLConnection {
       insert: false,
       delete: false,
       insertQuery: '',
-      deleteQuery: ''
+      deleteQuery: '',
+      selectError: '',
+      insertError: '',
+      deleteError: ''
     };
 
     try {
@@ -125,6 +128,7 @@ class MySQLConnection {
         await this.executeQuery(selectQuery);
         permissions.select = true;
       } catch (err) {
+        permissions.selectError = err.message.substring(0, 500);
         console.log(`  └ No SELECT permission: ${err.message.substring(0, 200)}...`);
       }
 
@@ -145,17 +149,20 @@ class MySQLConnection {
             console.log(`  └ INSERT: ✅ Success`);
 
             // DELETE permission check
-            try {
-              const deleteSql = `DELETE FROM ${table} WHERE ${columns[0]} = '${values[0]}'`;
-              permissions.deleteQuery = deleteSql;
-              await this.executeQuery(deleteSql);
-              permissions.delete = true;
-              console.log(`  └ DELETE: ✅ Success`);
-            } catch (err) {
-              console.log(`  └ DELETE: ❌ Failed - ${err.message.substring(0, 200)}...`);
-            }
+               try {
+                 const whereConditions = columns.map((col, idx) => `${col} = '${values[idx]}'`).join(' AND ');
+                 const deleteSql = `DELETE FROM ${table} WHERE ${whereConditions}`;
+                 permissions.deleteQuery = deleteSql;
+                 await this.executeQuery(deleteSql);
+                 permissions.delete = true;
+                 console.log(`  └ DELETE: ✅ Success`);
+               } catch (err) {
+                 permissions.deleteError = err.message.substring(0, 500);
+                 console.log(`  └ DELETE: ❌ Failed - ${err.message.substring(0, 200)}...`);
+               }
 
           } catch (err) {
+            permissions.insertError = err.message.substring(0, 500);
             console.log(`  └ INSERT: ❌ Failed - ${err.message.substring(0, 200)}...`);
           }
         }

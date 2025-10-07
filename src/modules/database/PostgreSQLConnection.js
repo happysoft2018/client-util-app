@@ -92,7 +92,10 @@ class PostgreSQLConnection {
       insert: false,
       delete: false,
       insertQuery: '',
-      deleteQuery: ''
+      deleteQuery: '',
+      selectError: '',
+      insertError: '',
+      deleteError: ''
     };
 
     try {
@@ -108,6 +111,7 @@ class PostgreSQLConnection {
         await this.executeQuery(selectQuery);
         permissions.select = true;
       } catch (err) {
+        permissions.selectError = err.message.substring(0, 500);
         console.log(`  └ No SELECT permission: ${err.message.substring(0, 200)}...`);
       }
 
@@ -122,23 +126,32 @@ class PostgreSQLConnection {
           try {
             // INSERT permission check
             const insertSql = `INSERT INTO ${table} (${columns.join(', ')}) VALUES (${values.map((val, idx) => `$${idx + 1}`).join(', ')})`;
-            permissions.insertQuery = insertSql;
+            const insertSqlWithValues = `INSERT INTO ${table} (${columns.join(', ')}) VALUES (${values.map(val => `'${val}'`).join(', ')})`;
+            permissions.insertQuery = insertSqlWithValues; // CSV에는 실제 값이 포함된 쿼리 저장
+            console.log(`  └ INSERT Query: ${insertSql}`);
+            console.log(`  └ INSERT Values: [${values.join(', ')}]`);
             await this.pool.query(insertSql, values);
             permissions.insert = true;
             console.log(`  └ INSERT: ✅ Success`);
 
             // DELETE permission check
             try {
-              const deleteSql = `DELETE FROM ${table} WHERE ${columns[0]} = $1`;
-              permissions.deleteQuery = deleteSql;
-              await this.pool.query(deleteSql, [values[0]]);
+              const whereConditions = columns.map((col, idx) => `${col} = $${idx + 1}`).join(' AND ');
+              const deleteSql = `DELETE FROM ${table} WHERE ${whereConditions}`;
+              const deleteSqlWithValues = `DELETE FROM ${table} WHERE ${columns.map((col, idx) => `${col} = '${values[idx]}'`).join(' AND ')}`;
+              permissions.deleteQuery = deleteSqlWithValues; // CSV에는 실제 값이 포함된 쿼리 저장
+              console.log(`  └ DELETE Query: ${deleteSql}`);
+              console.log(`  └ DELETE Values: [${values.join(', ')}]`);
+              await this.pool.query(deleteSql, values);
               permissions.delete = true;
               console.log(`  └ DELETE: ✅ Success`);
             } catch (err) {
+              permissions.deleteError = err.message.substring(0, 500);
               console.log(`  └ DELETE: ❌ Failed - ${err.message.substring(0, 200)}...`);
             }
 
           } catch (err) {
+            permissions.insertError = err.message.substring(0, 500);
             console.log(`  └ INSERT: ❌ Failed - ${err.message.substring(0, 200)}...`);
           }
         }
