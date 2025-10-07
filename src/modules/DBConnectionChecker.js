@@ -54,13 +54,11 @@ class DBConnectionChecker {
   }
 
   generateCrudSqls(row, dbType) {
-    const { select_sql, crud_test_table, crud_test_columns, crud_test_values } = row;
+    const { crud_test_table, crud_test_columns, crud_test_values } = row;
     
     if (!crud_test_table || !crud_test_columns || !crud_test_values) {
       return {
-        selectSql: select_sql || 'SELECT 1 as test',
         insertSql: null,
-        updateSql: null,
         deleteSql: null
       };
     }
@@ -72,9 +70,7 @@ class DBConnectionChecker {
     if (columns.length !== values.length) {
       console.warn(`⚠️  Column count (${columns.length}) doesn't match value count (${values.length})`);
       return {
-        selectSql: select_sql || 'SELECT 1 as test',
         insertSql: null,
-        updateSql: null,
         deleteSql: null
       };
     }
@@ -91,17 +87,6 @@ class DBConnectionChecker {
       insertSql = `INSERT INTO ${crud_test_table} (${columns.join(', ')}) VALUES (${values.map(val => `'${val}'`).join(', ')})`;
     }
 
-    // Generate UPDATE SQL (using first column as WHERE condition)
-    let updateSql;
-    if (columns.length > 0) {
-      const whereCondition = `${columns[0]} = '${values[0]}'`;
-      const setClause = columns.slice(1).map((col, idx) => `${col} = '${values[idx + 1]}'`).join(', ');
-      
-      if (setClause) {
-        updateSql = `UPDATE ${crud_test_table} SET ${setClause} WHERE ${whereCondition}`;
-      }
-    }
-
     // Generate DELETE SQL (using first column as WHERE condition)
     let deleteSql;
     if (columns.length > 0) {
@@ -109,42 +94,19 @@ class DBConnectionChecker {
     }
 
     return {
-      selectSql: select_sql || 'SELECT 1 as test',
       insertSql,
-      updateSql,
       deleteSql
     };
   }
 
   async testCrudOperations(connection, crudSqls, dbType) {
     const results = {
-      select: { success: false, message: '', elapsed: 0 },
       insert: { success: false, message: '', elapsed: 0 },
-      update: { success: false, message: '', elapsed: 0 },
       delete: { success: false, message: '', elapsed: 0 }
     };
 
-    // Test SELECT (필수 - 항상 실행)
-    try {
-      const start = Date.now();
-      await connection.executeQuery(crudSqls.selectSql);
-      results.select = {
-        success: true,
-        message: 'SELECT executed successfully',
-        elapsed: ((Date.now() - start) / 1000).toFixed(3)
-      };
-      console.log(`  └ SELECT: ✅ Success (${results.select.elapsed}s)`);
-    } catch (error) {
-      results.select = {
-        success: false,
-        message: error.message.substring(0, 50),
-        elapsed: 0
-      };
-      console.log(`  └ SELECT: ❌ Failed - ${error.message.substring(0, 50)}...`);
-      // SELECT 실패 시 CRUD 테스트 중단
-      console.log(`  └ CRUD Test: ❌ Skipped - SELECT failed`);
-      return results;
-    }
+    // SELECT test is already done in checkPermissions and checkDbConnection
+    // Skip SELECT test in CRUD operations to avoid duplication
 
     // Test INSERT (SELECT 성공 시에만 실행)
     if (crudSqls.insertSql) {
@@ -164,41 +126,11 @@ class DBConnectionChecker {
           elapsed: 0
         };
         console.log(`  └ INSERT: ❌ Failed - ${error.message.substring(0, 50)}...`);
-        // INSERT 실패 시 UPDATE, DELETE 테스트 중단
-        console.log(`  └ UPDATE/DELETE Test: ❌ Skipped - INSERT failed`);
         return results;
       }
     } else {
       // INSERT SQL이 없으면 UPDATE, DELETE 테스트 중단
-      console.log(`  └ UPDATE/DELETE Test: ❌ Skipped - No INSERT SQL`);
-      return results;
-    }
-
-    // Test UPDATE (INSERT 성공 시에만 실행)
-    if (crudSqls.updateSql) {
-      try {
-        const start = Date.now();
-        await connection.executeQuery(crudSqls.updateSql);
-        results.update = {
-          success: true,
-          message: 'UPDATE executed successfully',
-          elapsed: ((Date.now() - start) / 1000).toFixed(3)
-        };
-        console.log(`  └ UPDATE: ✅ Success (${results.update.elapsed}s)`);
-      } catch (error) {
-        results.update = {
-          success: false,
-          message: error.message.substring(0, 50),
-          elapsed: 0
-        };
-        console.log(`  └ UPDATE: ❌ Failed - ${error.message.substring(0, 50)}...`);
-        // UPDATE 실패 시 DELETE 테스트 중단
-        console.log(`  └ DELETE Test: ❌ Skipped - UPDATE failed`);
-        return results;
-      }
-    } else {
-      // UPDATE SQL이 없으면 DELETE 테스트 중단
-      console.log(`  └ DELETE Test: ❌ Skipped - No UPDATE SQL`);
+      console.log(`  └ DELETE Test: ❌ Skipped - No INSERT SQL`);
       return results;
     }
 
@@ -260,7 +192,7 @@ class DBConnectionChecker {
     }
   }
 
-  async checkDbConnection({ ip, port, db_name, dbUser, dbPassword, timeout, dbType = 'mssql', row = null }) {
+  async checkDbConnection({ ip, port, db_name, dbUser, dbPassword, timeout, dbType, row = null }) {
     const config = {
       user: dbUser,
       password: dbPassword,
@@ -286,16 +218,32 @@ class DBConnectionChecker {
         permissions: {
           select: false,
           insert: false,
-          update: false,
-          delete: false,
-          create: false,
-          drop: false
+          delete: false
         }
       };
 
-      // Permission check
+      // Permission check (includes SELECT test using select_sql from CSV)
       try {
-        const permissions = await connection.checkPermissions();
+        // Prepare test table info from CSV if available
+        let testTableInfo = null;
+        if (row) {
+          testTableInfo = {
+            selectSql: row.select_sql || null
+          };
+          
+          if (row.crud_test_table && row.crud_test_columns && row.crud_test_values) {
+            const columns = row.crud_test_columns.split(',').map(col => col.trim());
+            const values = row.crud_test_values.split(',').map(val => val.trim());
+            
+            if (columns.length === values.length) {
+              testTableInfo.table = row.crud_test_table;
+              testTableInfo.columns = columns;
+              testTableInfo.values = values;
+            }
+          }
+        }
+        
+        const permissions = await connection.checkPermissions(testTableInfo);
         result.permissions = permissions;
       } catch (permErr) {
         console.log(`  └ Error during permission check: ${permErr.message.substring(0, 50)}...`);
@@ -328,10 +276,7 @@ class DBConnectionChecker {
         permissions: {
           select: false,
           insert: false,
-          update: false,
-          delete: false,
-          create: false,
-          drop: false
+          delete: false
         }
       };
     }
@@ -362,10 +307,7 @@ class DBConnectionChecker {
       const permArray = [];
       if (perms.select) permArray.push('SELECT');
       if (perms.insert) permArray.push('INSERT');
-      if (perms.update) permArray.push('UPDATE');
       if (perms.delete) permArray.push('DELETE');
-      if (perms.create) permArray.push('CREATE');
-      if (perms.drop) permArray.push('DROP');
       
       if (permArray.length > 0) {
         permissionStatus = ` [Permissions: ${permArray.join(', ')}]`;
@@ -375,6 +317,19 @@ class DBConnectionChecker {
     }
     
     console.log(`[${server_ip}:${port}][${dbType.toUpperCase()}][${dbUser}][${title}][${db_name}] \t→ [${result.success ? '✅ Success' : '❌ Failed'}]${permissionStatus} ${errMessage}`);
+
+    // CRUD 결과 처리
+    let crudData = {
+      insert_success: '',
+      delete_success: ''
+    };
+
+    // CRUD 결과 처리 (CRUD 테스트가 있는 경우)
+    if (result.success && result.crudResults) {
+      const crud = result.crudResults;
+      crudData.insert_success = crud.insert.success ? 'SUCCESS' : (crud.insert.message ? 'FAILED' : 'SKIPPED');
+      crudData.delete_success = crud.delete.success ? 'SUCCESS' : (crud.delete.message ? 'FAILED' : 'SKIPPED');
+    }
 
     // Return result for CSV saving
     return {
@@ -391,10 +346,8 @@ class DBConnectionChecker {
       collapsed_time: result.elapsed,
       perm_select: result.permissions.select ? 'Y' : 'N',
       perm_insert: result.permissions.insert ? 'Y' : 'N',
-      perm_update: result.permissions.update ? 'Y' : 'N',
       perm_delete: result.permissions.delete ? 'Y' : 'N',
-      perm_create: result.permissions.create ? 'Y' : 'N',
-      perm_drop: result.permissions.drop ? 'Y' : 'N'
+      ...crudData
     };
   }
 
@@ -496,7 +449,8 @@ class DBConnectionChecker {
     const headers = [
       'timestamp', 'pc_ip', 'server_ip', 'port', 'db_name', 'db_type', 'db_userid',
       'result_code', 'error_code', 'error_msg', 'collapsed_time',
-      'perm_select', 'perm_insert', 'perm_update', 'perm_delete', 'perm_create', 'perm_drop'
+      'perm_select', 'perm_insert', 'perm_delete',
+      'insert_success', 'delete_success'
     ];
 
     // CSV 내용 생성

@@ -13,6 +13,7 @@ class DatabaseFactory {
         return new MSSQLConnection(config);
       
       case 'mysql':
+      case 'mariaDB':
         return new MySQLConnection(config);
       
       case 'postgresql':

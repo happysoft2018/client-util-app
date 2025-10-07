@@ -86,51 +86,43 @@ class PostgreSQLConnection {
     }
   }
 
-  async checkPermissions() {
+  async checkPermissions(testTableInfo = null) {
     const permissions = {
       select: false,
       insert: false,
-      update: false,
-      delete: false,
-      create: false,
-      drop: false
+      delete: false
     };
 
     try {
-      await this.connect();
+      // Only connect if not already connected
+      const shouldDisconnect = !this.pool || this.pool.ended;
+      if (shouldDisconnect) {
+        await this.connect();
+      }
       
-      // SELECT permission check
+      // SELECT permission check using custom query if provided
       try {
-        await this.executeQuery('SELECT 1 FROM information_schema.tables LIMIT 1');
+        const selectQuery = testTableInfo?.selectSql || 'SELECT 1 FROM information_schema.tables LIMIT 1';
+        await this.executeQuery(selectQuery);
         permissions.select = true;
       } catch (err) {
         console.log(`  └ No SELECT permission: ${err.message.substring(0, 50)}...`);
       }
 
-      // Permission check through test table creation/deletion
-      const testTableName = `temp_permission_test_${Date.now()}`;
-      
-      try {
-        // CREATE TABLE permission check
-        await this.executeQuery(`CREATE TABLE ${testTableName} (id INTEGER, test_data VARCHAR(50))`);
-        permissions.create = true;
-
+      // INSERT/DELETE permission check using test table info if provided
+      if (testTableInfo && testTableInfo.table && testTableInfo.columns && testTableInfo.values) {
+        const { table, columns, values } = testTableInfo;
+        
         try {
           // INSERT permission check
-          await this.executeQuery(`INSERT INTO ${testTableName} (id, test_data) VALUES (1, 'test')`);
+          const insertSql = `INSERT INTO ${table} (${columns.join(', ')}) VALUES (${values.map((val, idx) => `$${idx + 1}`).join(', ')})`;
+          await this.pool.query(insertSql, values);
           permissions.insert = true;
 
-            // UPDATE permission check
+          // DELETE permission check
           try {
-            await this.executeQuery(`UPDATE ${testTableName} SET test_data = 'updated' WHERE id = 1`);
-            permissions.update = true;
-          } catch (err) {
-            console.log(`  └ No UPDATE permission: ${err.message.substring(0, 50)}...`);
-          }
-
-            // DELETE permission check
-          try {
-            await this.executeQuery(`DELETE FROM ${testTableName} WHERE id = 1`);
+            const deleteSql = `DELETE FROM ${table} WHERE ${columns[0]} = $1`;
+            await this.pool.query(deleteSql, [values[0]]);
             permissions.delete = true;
           } catch (err) {
             console.log(`  └ No DELETE permission: ${err.message.substring(0, 50)}...`);
@@ -139,20 +131,12 @@ class PostgreSQLConnection {
         } catch (err) {
           console.log(`  └ No INSERT permission: ${err.message.substring(0, 50)}...`);
         }
-
-        // DROP TABLE permission check
-        try {
-          await this.executeQuery(`DROP TABLE ${testTableName}`);
-          permissions.drop = true;
-        } catch (err) {
-          console.log(`  └ No DROP TABLE permission: ${err.message.substring(0, 50)}...`);
-        }
-
-      } catch (err) {
-        console.log(`  └ No CREATE TABLE permission: ${err.message.substring(0, 50)}...`);
       }
 
-      await this.disconnect();
+      // Only disconnect if we connected in this method
+      if (shouldDisconnect) {
+        await this.disconnect();
+      }
       return permissions;
 
     } catch (error) {

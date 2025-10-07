@@ -1,5 +1,5 @@
 db_name,username,password,server_ip,port,db_type,db_title,select_sql,crud_test_table,crud_test_columns,crud_test_values
-SampleDB,sahara,pass1111,localhost,1433,mssql,본사 ERP DB,SELECT TOP 1 username FROM test_table,test_table,"num, name,age","1,james,47"
-TestDB,sahara,pass1112,localhost,1433,oracle,테스트 Oracle DB,SELECT username FROM test_table WHERE rownum <= 2,test_table,"num, name,age","1,james,48"
-UserDB,sahara,pass1113,localhost,1433,mysql,사용자 MySQL DB,SELECT username FROM test_table LIMIT 3,test_table,"num, name,age","1,james,49"
-postgres,postgres,1111,localhost,5432,postgresql,주문 PostgreSQL DB,SELECT name FROM servers LIMIT 4,users,"id, email, name, password","111111,james@gmail.com,james,1111"
+SampleDB,sahara,1111,localhost,1433,mssql,SampleDB,SELECT top 3 customername from customers ,customers,"customercode, customername","test1111, 테스트고객"
+xe,c##scott,tiger,localhost,1521,oracle,테스트 Oracle DB,SELECT * FROM TEST_TABLE;,test_table,"id, name,age","3,joe,33"
+mydb,sahara,1111,localhost,3306,mysql,나의DB,SELECT title from boards ,boards,"title, content, userid","test, test content, sahara"
+postgres,postgres,1111,localhost,5432,postgresql,주문 PostgreSQL DB,SELECT name from servers ,users,"id, email, name, password","111111,james@gmail.com,james,1111"

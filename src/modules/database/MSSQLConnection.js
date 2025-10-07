@@ -58,51 +58,43 @@ class MSSQLConnection {
     }
   }
 
-  async checkPermissions() {
+  async checkPermissions(testTableInfo = null) {
     const permissions = {
       select: false,
       insert: false,
-      update: false,
-      delete: false,
-      create: false,
-      drop: false
+      delete: false
     };
 
     try {
-      await this.connect();
+      // Only connect if not already connected
+      const shouldDisconnect = !this.pool;
+      if (shouldDisconnect) {
+        await this.connect();
+      }
       
-      // SELECT permission check
+      // SELECT permission check using custom query if provided
       try {
-        await this.executeQuery('SELECT TOP 1 1 FROM INFORMATION_SCHEMA.TABLES');
+        const selectQuery = testTableInfo?.selectSql || 'SELECT TOP 1 1 FROM INFORMATION_SCHEMA.TABLES';
+        await this.executeQuery(selectQuery);
         permissions.select = true;
       } catch (err) {
         console.log(`  └ No SELECT permission: ${err.message.substring(0, 50)}...`);
       }
 
-      // Permission check through test table creation/deletion
-      const testTableName = `temp_permission_test_${Date.now()}`;
-      
-      try {
-        // CREATE TABLE permission check
-        await this.executeQuery(`CREATE TABLE ${testTableName} (id INT, test_data NVARCHAR(50))`);
-        permissions.create = true;
-
+      // INSERT/DELETE permission check using test table info if provided
+      if (testTableInfo && testTableInfo.table && testTableInfo.columns && testTableInfo.values) {
+        const { table, columns, values } = testTableInfo;
+        
         try {
           // INSERT permission check
-          await this.executeQuery(`INSERT INTO ${testTableName} (id, test_data) VALUES (1, 'test')`);
+          const insertSql = `INSERT INTO ${table} (${columns.join(', ')}) VALUES (${values.map(val => `'${val}'`).join(', ')})`;
+          await this.executeQuery(insertSql);
           permissions.insert = true;
-
-          // UPDATE permission check
-          try {
-            await this.executeQuery(`UPDATE ${testTableName} SET test_data = 'updated' WHERE id = 1`);
-            permissions.update = true;
-          } catch (err) {
-            console.log(`  └ No UPDATE permission: ${err.message.substring(0, 50)}...`);
-          }
 
           // DELETE permission check
           try {
-            await this.executeQuery(`DELETE FROM ${testTableName} WHERE id = 1`);
+            const deleteSql = `DELETE FROM ${table} WHERE ${columns[0]} = '${values[0]}'`;
+            await this.executeQuery(deleteSql);
             permissions.delete = true;
           } catch (err) {
             console.log(`  └ No DELETE permission: ${err.message.substring(0, 50)}...`);
@@ -111,20 +103,12 @@ class MSSQLConnection {
         } catch (err) {
           console.log(`  └ No INSERT permission: ${err.message.substring(0, 50)}...`);
         }
-
-        // DROP TABLE permission check
-        try {
-          await this.executeQuery(`DROP TABLE ${testTableName}`);
-          permissions.drop = true;
-        } catch (err) {
-          console.log(`  └ No DROP TABLE permission: ${err.message.substring(0, 50)}...`);
-        }
-
-      } catch (err) {
-        console.log(`  └ No CREATE TABLE permission: ${err.message.substring(0, 50)}...`);
       }
 
-      await this.disconnect();
+      // Only disconnect if we connected in this method
+      if (shouldDisconnect) {
+        await this.disconnect();
+      }
       return permissions;
 
     } catch (error) {
