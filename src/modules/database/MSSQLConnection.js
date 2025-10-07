@@ -41,8 +41,8 @@ class MSSQLConnection {
 
     const result = await request.query(query);
     return {
-      rows: result.recordset,
-      rowCount: result.recordset.length,
+      rows: result.recordset || [],
+      rowCount: result.recordset ? result.recordset.length : 0,
       affectedRows: result.rowsAffected?.[0] || 0
     };
   }

@@ -127,7 +127,7 @@ class DBConnectionChecker {
           elapsed: 0,
           query: crudSqls.insertSql
         };
-        console.log(`  └ INSERT: ❌ Failed - ${error.message.substring(0, 200)}...`);
+        console.log(`  └ INSERT: ❌ Failed (testCrudOperations) - ${error.message.substring(0, 200)}...`);
         return results;
       }
     } else {
@@ -242,13 +242,21 @@ class DBConnectionChecker {
           };
           
           if (row.crud_test_table && row.crud_test_columns && row.crud_test_values) {
-            const columns = row.crud_test_columns.split(',').map(col => col.trim());
-            const values = row.crud_test_values.split(',').map(val => val.trim());
+            // Safely parse columns and values
+            const columnsStr = (row.crud_test_columns || '').trim();
+            const valuesStr = (row.crud_test_values || '').trim();
             
-            if (columns.length === values.length) {
-              testTableInfo.table = row.crud_test_table;
-              testTableInfo.columns = columns;
-              testTableInfo.values = values;
+            if (columnsStr && valuesStr) {
+              const columns = columnsStr.split(',').map(col => col.trim()).filter(col => col);
+              const values = valuesStr.split(',').map(val => val.trim()).filter(val => val);
+              
+              if (columns.length > 0 && values.length > 0 && columns.length === values.length) {
+                testTableInfo.table = row.crud_test_table.trim();
+                testTableInfo.columns = columns;
+                testTableInfo.values = values;
+              } else {
+                console.log(`  └ Warning: Column/value count mismatch or empty (${columns.length} columns, ${values.length} values)`);
+              }
             }
           }
         }
@@ -256,7 +264,7 @@ class DBConnectionChecker {
         const permissions = await connection.checkPermissions(testTableInfo);
         result.permissions = permissions;
       } catch (permErr) {
-        console.log(`  └ Error during permission check: ${permerr.message.substring(0, 200)}...`);
+        console.log(`  └ Error during permission check: ${permErr.message.substring(0, 200)}...`);
       }
 
       // CRUD test is now integrated into checkPermissions()
