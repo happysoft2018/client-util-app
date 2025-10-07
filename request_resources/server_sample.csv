@@ -1,4 +1,4 @@
-server_ip,port,corp,proc,env_type,usage_type
-192.168.1.100,8080,본사,ERP,PRD,WEB
-192.168.1.101,3306,본사,WMS,DEV,DB
-192.168.1.102,22,지사,CRM,STG,SSH
+server_ip,port,server_name
+192.168.1.100,8080,본사 ERP 웹서버
+192.168.1.101,3306,본사 WMS DB서버
+192.168.1.102,22,지사 CRM SSH서버

@@ -134,12 +134,13 @@ class TelnetChecker {
   }
   
   async unitWorkByServer(row, timeout) {
-    const { server_ip, port, env_type, usage_type, corp, proc } = row;
+    const { server_ip, port, server_name } = row;
     
     const result = await this.checkPort(server_ip, port, timeout);
     const errMessage = result.isConnected ? '' : `[${result.error_code}] ${result.error_msg}`;
     
-    console.log(`[${server_ip}:${port}][${env_type}${usage_type}][${corp}_${proc}] \t→ [${result.isConnected ? '✅ Connected' : '❌ Failed'}] ${errMessage}`);
+    const serverDesc = server_name || 'Unknown';
+    console.log(`[${server_ip}:${port}][${serverDesc}] \t→ [${result.isConnected ? '✅ Connected' : '❌ Failed'}] ${errMessage}`);
 
     // Return result for CSV saving
     return {
@@ -147,10 +148,7 @@ class TelnetChecker {
       pc_ip: this.localPcIp,
       server_ip,
       port,
-      env_type,
-      usage_type,
-      corp,
-      proc,
+      server_name: server_name || '',
       result_code: result.isConnected ? 'SUCCESS' : 'FAILED',
       error_code: result.error_code || '',
       error_msg: result.error_msg || '',
@@ -247,7 +245,7 @@ class TelnetChecker {
 
     // CSV 헤더
     const headers = [
-      'timestamp', 'pc_ip', 'server_ip', 'port', 'env_type', 'usage_type', 'corp', 'proc',
+      'timestamp', 'pc_ip', 'server_ip', 'port', 'server_name',
       'result_code', 'error_code', 'error_msg', 'collapsed_time'
     ];
 
