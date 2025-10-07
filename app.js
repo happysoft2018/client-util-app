@@ -111,11 +111,11 @@ class NodeUtilApp {
     console.log('='.repeat(40));
     
     try {
-      // Get CSV file list from request_resources/db_check folder
-      const dbCheckDir = path.join(__dirname, 'request_resources', 'db_check');
+      // Get CSV file list from request_resources folder
+      const dbCheckDir = path.join(__dirname, 'request_resources');
       
       if (!fs.existsSync(dbCheckDir)) {
-        console.log('❌ DB check CSV directory not found: request_resources/db_check/');
+        console.log('❌ DB check CSV directory not found: request_resources/');
         console.log('Please create the directory and add CSV files.');
         await this.waitAndContinue();
         await this.showMainMenu();
@@ -123,11 +123,11 @@ class NodeUtilApp {
       }
 
       const csvFiles = fs.readdirSync(dbCheckDir)
-        .filter(file => file.endsWith('.csv'));
+        .filter(file => file.endsWith('.csv') && file.toLowerCase().startsWith('db'));
 
       if (csvFiles.length === 0) {
-        console.log('❌ No CSV files found in request_resources/db_check/ directory.');
-        console.log('Please add .csv files to the request_resources/db_check/ directory.');
+        console.log('❌ No DB CSV files found in request_resources/ directory.');
+        console.log('Please add .csv files starting with "DB" to the request_resources/ directory.');
         await this.waitAndContinue();
         await this.showMainMenu();
         return;
@@ -189,11 +189,11 @@ class NodeUtilApp {
     console.log('='.repeat(40));
     
     try {
-      // Get CSV file list from request_resources/telnet_check folder
-      const telnetCheckDir = path.join(__dirname, 'request_resources', 'telnet_check');
+      // Get CSV file list from request_resources folder
+      const telnetCheckDir = path.join(__dirname, 'request_resources');
       
       if (!fs.existsSync(telnetCheckDir)) {
-        console.log('❌ Telnet check CSV directory not found: request_resources/telnet_check/');
+        console.log('❌ Telnet check CSV directory not found: request_resources/');
         console.log('Please create the directory and add CSV files.');
         await this.waitAndContinue();
         await this.showMainMenu();
@@ -201,11 +201,11 @@ class NodeUtilApp {
       }
 
       const csvFiles = fs.readdirSync(telnetCheckDir)
-        .filter(file => file.endsWith('.csv'));
+        .filter(file => file.endsWith('.csv') && file.toLowerCase().startsWith('server'));
 
       if (csvFiles.length === 0) {
-        console.log('❌ No CSV files found in request_resources/telnet_check/ directory.');
-        console.log('Please add .csv files to the request_resources/telnet_check/ directory.');
+        console.log('❌ No Server CSV files found in request_resources/ directory.');
+        console.log('Please add .csv files starting with "server" to the request_resources/ directory.');
         await this.waitAndContinue();
         await this.showMainMenu();
         return;
