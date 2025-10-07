@@ -101,8 +101,8 @@ class DBConnectionChecker {
 
   async testCrudOperations(connection, crudSqls, dbType) {
     const results = {
-      insert: { success: false, message: '', elapsed: 0 },
-      delete: { success: false, message: '', elapsed: 0 }
+      insert: { success: false, message: '', elapsed: 0, query: '' },
+      delete: { success: false, message: '', elapsed: 0, query: '' }
     };
 
     // SELECT test is already done in checkPermissions and checkDbConnection
@@ -116,16 +116,18 @@ class DBConnectionChecker {
         results.insert = {
           success: true,
           message: 'INSERT executed successfully',
-          elapsed: ((Date.now() - start) / 1000).toFixed(3)
+          elapsed: ((Date.now() - start) / 1000).toFixed(3),
+          query: crudSqls.insertSql
         };
         console.log(`  └ INSERT: ✅ Success (${results.insert.elapsed}s)`);
       } catch (error) {
         results.insert = {
           success: false,
-          message: error.message.substring(0, 50),
-          elapsed: 0
+          message: error.message.substring(0, 200),
+          elapsed: 0,
+          query: crudSqls.insertSql
         };
-        console.log(`  └ INSERT: ❌ Failed - ${error.message.substring(0, 50)}...`);
+        console.log(`  └ INSERT: ❌ Failed - ${error.message.substring(0, 200)}...`);
         return results;
       }
     } else {
@@ -142,16 +144,18 @@ class DBConnectionChecker {
         results.delete = {
           success: true,
           message: 'DELETE executed successfully',
-          elapsed: ((Date.now() - start) / 1000).toFixed(3)
+          elapsed: ((Date.now() - start) / 1000).toFixed(3),
+          query: crudSqls.deleteSql
         };
         console.log(`  └ DELETE: ✅ Success (${results.delete.elapsed}s)`);
       } catch (error) {
         results.delete = {
           success: false,
-          message: error.message.substring(0, 50),
-          elapsed: 0
+          message: error.message.substring(0, 200),
+          elapsed: 0,
+          query: crudSqls.deleteSql
         };
-        console.log(`  └ DELETE: ❌ Failed - ${error.message.substring(0, 50)}...`);
+        console.log(`  └ DELETE: ❌ Failed - ${error.message.substring(0, 200)}...`);
       }
     } else {
       console.log(`  └ DELETE: ❌ Skipped - No DELETE SQL`);
@@ -227,8 +231,14 @@ class DBConnectionChecker {
         // Prepare test table info from CSV if available
         let testTableInfo = null;
         if (row) {
+          // Remove semicolon from select_sql if present
+          let cleanSelectSql = row.select_sql || null;
+          if (cleanSelectSql) {
+            cleanSelectSql = cleanSelectSql.trim().replace(/;+\s*$/, '');
+          }
+          
           testTableInfo = {
-            selectSql: row.select_sql || null
+            selectSql: cleanSelectSql
           };
           
           if (row.crud_test_table && row.crud_test_columns && row.crud_test_values) {
@@ -246,20 +256,11 @@ class DBConnectionChecker {
         const permissions = await connection.checkPermissions(testTableInfo);
         result.permissions = permissions;
       } catch (permErr) {
-        console.log(`  └ Error during permission check: ${permErr.message.substring(0, 50)}...`);
+        console.log(`  └ Error during permission check: ${permerr.message.substring(0, 200)}...`);
       }
 
-      // CRUD test if row data is provided
-      if (row) {
-        try {
-          const crudSqls = this.generateCrudSqls(row, dbType);
-          const crudResults = await this.testCrudOperations(connection, crudSqls, dbType);
-          result.crudResults = crudResults;
-        } catch (crudErr) {
-          console.log(`  └ Error during CRUD test: ${crudErr.message.substring(0, 50)}...`);
-          result.crudResults = null;
-        }
-      }
+      // CRUD test is now integrated into checkPermissions()
+      // No need for separate testCrudOperations() call to avoid duplicate INSERT/DELETE
 
       await connection.disconnect();
       result.elapsed = ((Date.now() - start) / 1000).toFixed(2);
@@ -319,17 +320,15 @@ class DBConnectionChecker {
     console.log(`[${server_ip}:${port}][${dbType.toUpperCase()}][${dbUser}][${title}][${db_name}] \t→ [${result.success ? '✅ Success' : '❌ Failed'}]${permissionStatus} ${errMessage}`);
 
     // CRUD 결과 처리
+    const insertQuery = result.permissions.insertQuery || '';
+    const deleteQuery = result.permissions.deleteQuery || '';
+    
     let crudData = {
-      insert_success: '',
-      delete_success: ''
+      insert_success: insertQuery ? (result.permissions.insert ? 'SUCCESS' : 'FAILED') : 'SKIPPED',
+      delete_success: deleteQuery ? (result.permissions.delete ? 'SUCCESS' : 'FAILED') : 'SKIPPED',
+      insert_query: insertQuery,
+      delete_query: deleteQuery
     };
-
-    // CRUD 결과 처리 (CRUD 테스트가 있는 경우)
-    if (result.success && result.crudResults) {
-      const crud = result.crudResults;
-      crudData.insert_success = crud.insert.success ? 'SUCCESS' : (crud.insert.message ? 'FAILED' : 'SKIPPED');
-      crudData.delete_success = crud.delete.success ? 'SUCCESS' : (crud.delete.message ? 'FAILED' : 'SKIPPED');
-    }
 
     // Return result for CSV saving
     return {
@@ -340,7 +339,7 @@ class DBConnectionChecker {
       db_name,
       db_type: dbType,
       db_userid: dbUser,
-      result_code: result.success ? 'SUCCESS' : 'FAILED',
+      result_code: result.success ? '✅ SUCCESS' : '❌ FAILED',
       error_code: result.success ? '' : result.error_code,
       error_msg: result.success ? '' : result.error_msg,
       collapsed_time: result.elapsed,
@@ -450,7 +449,7 @@ class DBConnectionChecker {
       'timestamp', 'pc_ip', 'server_ip', 'port', 'db_name', 'db_type', 'db_userid',
       'result_code', 'error_code', 'error_msg', 'collapsed_time',
       'perm_select', 'perm_insert', 'perm_delete',
-      'insert_success', 'delete_success'
+      'insert_success', 'delete_success', 'insert_query', 'delete_query'
     ];
 
     // CSV 내용 생성

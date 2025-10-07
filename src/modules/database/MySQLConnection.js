@@ -107,7 +107,9 @@ class MySQLConnection {
     const permissions = {
       select: false,
       insert: false,
-      delete: false
+      delete: false,
+      insertQuery: '',
+      deleteQuery: ''
     };
 
     try {
@@ -123,30 +125,39 @@ class MySQLConnection {
         await this.executeQuery(selectQuery);
         permissions.select = true;
       } catch (err) {
-        console.log(`  └ No SELECT permission: ${err.message.substring(0, 50)}...`);
+        console.log(`  └ No SELECT permission: ${err.message.substring(0, 200)}...`);
       }
 
       // INSERT/DELETE permission check using test table info if provided
       if (testTableInfo && testTableInfo.table && testTableInfo.columns && testTableInfo.values) {
         const { table, columns, values } = testTableInfo;
         
-        try {
-          // INSERT permission check
-          const insertSql = `INSERT INTO ${table} (${columns.join(', ')}) VALUES (${values.map(val => `'${val}'`).join(', ')})`;
-          await this.executeQuery(insertSql);
-          permissions.insert = true;
-
-          // DELETE permission check
+        // Validate columns and values arrays
+        if (!Array.isArray(columns) || !Array.isArray(values) || columns.length === 0 || values.length === 0) {
+          console.log(`  └ Warning: Invalid columns or values for INSERT/DELETE test`);
+        } else {
           try {
-            const deleteSql = `DELETE FROM ${table} WHERE ${columns[0]} = '${values[0]}'`;
-            await this.executeQuery(deleteSql);
-            permissions.delete = true;
-          } catch (err) {
-            console.log(`  └ No DELETE permission: ${err.message.substring(0, 50)}...`);
-          }
+            // INSERT permission check
+            const insertSql = `INSERT INTO ${table} (${columns.join(', ')}) VALUES (${values.map(val => `'${val}'`).join(', ')})`;
+            permissions.insertQuery = insertSql;
+            await this.executeQuery(insertSql);
+            permissions.insert = true;
+            console.log(`  └ INSERT: ✅ Success`);
 
-        } catch (err) {
-          console.log(`  └ No INSERT permission: ${err.message.substring(0, 50)}...`);
+            // DELETE permission check
+            try {
+              const deleteSql = `DELETE FROM ${table} WHERE ${columns[0]} = '${values[0]}'`;
+              permissions.deleteQuery = deleteSql;
+              await this.executeQuery(deleteSql);
+              permissions.delete = true;
+              console.log(`  └ DELETE: ✅ Success`);
+            } catch (err) {
+              console.log(`  └ DELETE: ❌ Failed - ${err.message.substring(0, 200)}...`);
+            }
+
+          } catch (err) {
+            console.log(`  └ INSERT: ❌ Failed - ${err.message.substring(0, 200)}...`);
+          }
         }
       }
 
@@ -157,7 +168,7 @@ class MySQLConnection {
       return permissions;
 
     } catch (error) {
-      console.log(`  └ Error during permission check: ${error.message.substring(0, 50)}...`);
+      console.log(`  └ Error during permission check: ${error.message.substring(0, 200)}...`);
       return permissions;
     }
   }

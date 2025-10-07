@@ -1,5 +1,5 @@
 db_name,username,password,server_ip,port,db_type,db_title,select_sql,crud_test_table,crud_test_columns,crud_test_values
-SampleDB,sahara,1111,localhost,1433,mssql,SampleDB,SELECT top 3 customername from customers ,customers,"customercode, customername","test1111, 테스트고객"
-xe,c##scott,tiger,localhost,1521,oracle,테스트 Oracle DB,SELECT * FROM TEST_TABLE;,test_table,"id, name,age","3,joe,33"
-mydb,sahara,1111,localhost,3306,mysql,나의DB,SELECT title from boards ,boards,"title, content, userid","test, test content, sahara"
-postgres,postgres,1111,localhost,5432,postgresql,주문 PostgreSQL DB,SELECT name from servers ,users,"id, email, name, password","111111,james@gmail.com,james,1111"
+xe,c##scott,tiger,localhost,1521,oracle,Oracle DB,SELECT * FROM test_table;,test_table,"id, name, age","3, joe, 33"
+mydb,sahara,1111,localhost,3306,mysql,MariaDB,SELECT title from boards ;,boards,"title, content, userid","test, test content, sahara"
+postgres,postgres,1111,localhost,5432,postgresql,PostgreSQL DB,SELECT name from servers ;,users,"id, email, name, password","111111,james@gmail.com,james,1111"
+SampleDB,sahara,1111,localhost,1433,mssql,SampleDB,SELECT top 3 customername from customers ;,customers,"customercode, customername","test3333, james"
