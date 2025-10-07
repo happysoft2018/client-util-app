@@ -1,4 +1,4 @@
-# Node.js Integrated Utility Tool
+# Node.js Integrated Utility Tool v1.2.0
 
 A comprehensive utility tool for managing various local environment utilities in a unified application.
 
@@ -21,11 +21,9 @@ my-node-client-util-app/
 │           └── OracleConnection.js # Oracle connection class
 ├── config/
 │   └── dbinfo.json                 # DB connection information settings
-├── request_resources/              # Resource files directory
-│   ├── db_check/                   # DB connection check CSV files
-│   │   └── DB_sample.csv           # Sample DB check CSV
-│   ├── telnet_check/               # Telnet connection check CSV files
-│   │   └── server_sample.csv       # Sample telnet check CSV
+├── request_resources/              # Resource files directory (v1.2.0+)
+│   ├── DB_sample.csv               # DB check CSV files (starts with DB_)
+│   ├── server_sample.csv           # Telnet check CSV files (starts with server_)
 │   └── sql_files/                  # SQL files directory
 │       ├── SQL_001.sql             # SQL query template
 │       └── SQL_001.csv             # SQL parameter template
@@ -36,6 +34,30 @@ my-node-client-util-app/
 ├── log/                            # Execution logs (auto-generated)
 └── run.bat                         # 🎯 Integrated execution tool
 ```
+
+## 🆕 v1.2.0 New Features
+
+### Enhanced Log Output
+- **Database-specific separators**: Clear visual separation between database checks
+- **Improved readability**: Better formatting with line breaks and emojis
+- **Real-time progress**: Enhanced console output during checks
+
+### Detailed Error Capture
+- **Operation-specific errors**: SELECT/INSERT/DELETE error messages saved to CSV
+- **Comprehensive logging**: Up to 500 characters of detailed error information
+- **Better troubleshooting**: Specific error details for problem diagnosis
+
+### Streamlined File Management
+- **Unified CSV location**: All CSV files now in `request_resources/` directly
+- **Smart filtering**: Automatic file filtering based on naming convention
+  - DB checks: Files starting with `DB_`
+  - Telnet checks: Files starting with `server_`
+- **Simplified structure**: No more subdirectories for CSV files
+
+### Enhanced DELETE Operations
+- **Multi-column conditions**: DELETE queries now use all specified columns
+- **Safer testing**: More precise data deletion for accurate permission checks
+- **Better query logging**: Actual executed queries saved to results
 
 ## 🚀 Usage
 

@@ -1,4 +1,4 @@
-# User Manual v1.1.0
+# User Manual v1.2.0
 
 ## 📖 Table of Contents
 
@@ -15,14 +15,17 @@
 
 ## Introduction
 
-This manual guides you through using the database connection and permission check features of the Node.js Integrated Utility Tool v1.1.0.
+This manual guides you through using the database connection and permission check features of the Node.js Integrated Utility Tool v1.2.0.
 
-### Key Features of v1.1.0
+### Key Features of v1.2.0
 
 - ✅ **Safe Permission Checking**: Uses actual tables instead of creating temporary tables
 - ✅ **Actual Query Testing**: Executes actual queries specified in CSV
 - ✅ **Enhanced Stability**: Fixed Oracle connection errors
 - ✅ **Simplified Results**: Checks only necessary permissions (SELECT, INSERT, DELETE)
+- ✅ **Enhanced Log Output**: Improved readability with database-specific separators and line breaks
+- ✅ **Error Message Capture**: Detailed error information for SELECT/INSERT/DELETE operations saved to CSV
+- ✅ **Improved File Structure**: Unified CSV file location and automatic filtering
 
 ---
 
@@ -30,14 +33,28 @@ This manual guides you through using the database connection and permission chec
 
 ### Permission Check Items
 
-| Permission | v1.0.0 | v1.1.0 | Description |
-|------------|:------:|:------:|-------------|
-| SELECT | ✅ | ✅ | Executes actual query from CSV |
-| INSERT | ✅ | ✅ | Inserts data into actual table |
-| DELETE | ✅ | ✅ | Deletes inserted data |
-| UPDATE | ✅ | ❌ | Removed (safety) |
-| CREATE | ✅ | ❌ | Removed (safety) |
-| DROP | ✅ | ❌ | Removed (safety) |
+| Permission | v1.0.0 | v1.1.0 | v1.2.0 | Description |
+|------------|:------:|:------:|:------:|-------------|
+| SELECT | ✅ | ✅ | ✅ | Executes actual query from CSV |
+| INSERT | ✅ | ✅ | ✅ | Inserts data into actual table |
+| DELETE | ✅ | ✅ | ✅ | Deletes inserted data |
+| UPDATE | ✅ | ❌ | ❌ | Removed (safety) |
+| CREATE | ✅ | ❌ | ❌ | Removed (safety) |
+| DROP | ✅ | ❌ | ❌ | Removed (safety) |
+
+### v1.2.0 New Features
+
+**Enhanced Log Output:**
+- Improved readability with database-specific separators and line breaks
+- Clear separation of each check result
+
+**Detailed Error Messages:**
+- Specific error messages for SELECT/INSERT/DELETE operations saved to CSV
+- Provides detailed information for problem diagnosis and resolution
+
+**Improved File Structure:**
+- Unified CSV file location under `request_resources/` directly
+- Automatic filtering based on filename (DB check: starts with `DB_`, Telnet check: starts with `server_`)
 
 ### Why Changed?
 
@@ -49,9 +66,31 @@ This manual guides you through using the database connection and permission chec
 - Test with actual queries and tables in use
 - Can verify conditions identical to production environment
 
+**Enhanced Usability:**
+- Cleaner and more readable log output
+- Simplified file management
+- More accurate error analysis
+
 ---
 
 ## CSV File Writing Guide
+
+### File Location and Naming Rules
+
+**Starting from v1.2.0, all CSV files are located directly under `request_resources/`:**
+
+```
+request_resources/
+├── DB_sample.csv          ← For DB check (starts with DB_)
+├── DB_production.csv      ← For DB check (starts with DB_)
+├── server_sample.csv      ← For Telnet check (starts with server_)
+└── server_production.csv  ← For Telnet check (starts with server_)
+```
+
+**File naming rules:**
+- **For DB check**: Files starting with `DB_`
+- **For Telnet check**: Files starting with `server_`
+- **Extension**: Must be `.csv`
 
 ### Required Columns
 
@@ -301,7 +340,7 @@ File name format: `[OriginalCSVFileName]__[Timestamp].csv`
 ### Result CSV Format
 
 ```csv
-timestamp,pc_ip,server_ip,port,db_name,db_type,db_userid,result_code,error_code,error_msg,collapsed_time,perm_select,perm_insert,perm_delete,insert_success,delete_success
+timestamp,pc_ip,server_ip,port,db_name,db_type,db_userid,result_code,error_code,error_msg,collapsed_time,perm_select,perm_insert,perm_delete,insert_success,delete_success,insert_query,delete_query,operation_errors
 ```
 
 ### Column Descriptions
@@ -324,12 +363,15 @@ timestamp,pc_ip,server_ip,port,db_name,db_type,db_userid,result_code,error_code,
 | `perm_delete` | DELETE permission | Y / N |
 | `insert_success` | INSERT execution result | SUCCESS / FAILED / SKIPPED |
 | `delete_success` | DELETE execution result | SUCCESS / FAILED / SKIPPED |
+| `insert_query` | Executed INSERT query | Actual executed query statement |
+| `delete_query` | Executed DELETE query | Actual executed query statement |
+| `operation_errors` | Operation-specific error messages | Detailed error information for SELECT/INSERT/DELETE |
 
 ### Result Example
 
 ```csv
-2025-10-07T14:30:22.123Z,192.168.1.50,localhost,1433,SampleDB,mssql,sa,SUCCESS,,,0.15,Y,Y,Y,SUCCESS,SUCCESS
-2025-10-07T14:30:23.456Z,192.168.1.50,localhost,3306,TestDB,mysql,root,FAILED,ER_ACCESS_DENIED_ERROR,Access denied for user 'root'@'localhost',0.05,N,N,N,SKIPPED,SKIPPED
+2025-10-07T14:30:22.123Z,192.168.1.50,localhost,1433,SampleDB,mssql,sa,SUCCESS,,,0.15,Y,Y,Y,SUCCESS,SUCCESS,"INSERT INTO users (id, name, email) VALUES ('TEST_001', 'Test User', 'test@example.com')","DELETE FROM users WHERE id = 'TEST_001' AND name = 'Test User' AND email = 'test@example.com'",
+2025-10-07T14:30:23.456Z,192.168.1.50,localhost,3306,TestDB,mysql,root,FAILED,ER_ACCESS_DENIED_ERROR,Access denied for user 'root'@'localhost',0.05,N,N,N,SKIPPED,SKIPPED,,"","SELECT: Access denied for user 'root'@'localhost'"
 ```
 
 ---
@@ -435,7 +477,3 @@ DevelopDB,dev_admin,DevPass123,dev.db.com,3306,mysql,Development DB,"SELECT * FR
 - **Full Documentation**: See `README.md`, `README_KR.md`
 
 ---
-
-**Version:** 1.1.0  
-**Last Updated:** 2025-10-07  
-**Author:** Development Team

@@ -1,4 +1,4 @@
-# 사용자 매뉴얼 v1.1.0
+# 사용자 매뉴얼 v1.2.0
 
 ## 📖 목차
 
@@ -15,14 +15,17 @@
 
 ## 소개
 
-이 매뉴얼은 Node.js 통합 유틸리티 도구 v1.1.0의 데이터베이스 연결 및 권한 체크 기능 사용법을 안내합니다.
+이 매뉴얼은 Node.js 통합 유틸리티 도구 v1.2.0의 데이터베이스 연결 및 권한 체크 기능 사용법을 안내합니다.
 
-### v1.1.0의 주요 특징
+### v1.2.0의 주요 특징
 
 - ✅ **안전한 권한 체크**: 임시 테이블 생성 대신 실제 테이블 사용
 - ✅ **실제 쿼리 테스트**: CSV에 지정한 실제 쿼리 실행
 - ✅ **향상된 안정성**: Oracle 연결 오류 수정
 - ✅ **간소화된 결과**: 필요한 권한만 체크 (SELECT, INSERT, DELETE)
+- ✅ **향상된 로그 출력**: 데이터베이스별 구분선과 줄바꿈으로 가독성 개선
+- ✅ **에러 메시지 캡처**: SELECT/INSERT/DELETE 작업의 상세 에러 정보 CSV 저장
+- ✅ **파일 구조 개선**: CSV 파일 위치 통합 및 자동 필터링
 
 ---
 
@@ -30,14 +33,28 @@
 
 ### 권한 체크 항목
 
-| 권한 | v1.0.0 | v1.1.0 | 설명 |
-|------|:------:|:------:|------|
-| SELECT | ✅ | ✅ | CSV의 실제 쿼리 실행 |
-| INSERT | ✅ | ✅ | 실제 테이블에 데이터 삽입 |
-| DELETE | ✅ | ✅ | 삽입한 데이터 삭제 |
-| UPDATE | ✅ | ❌ | 제거 (안전성) |
-| CREATE | ✅ | ❌ | 제거 (안전성) |
-| DROP | ✅ | ❌ | 제거 (안전성) |
+| 권한 | v1.0.0 | v1.1.0 | v1.2.0 | 설명 |
+|------|:------:|:------:|:------:|------|
+| SELECT | ✅ | ✅ | ✅ | CSV의 실제 쿼리 실행 |
+| INSERT | ✅ | ✅ | ✅ | 실제 테이블에 데이터 삽입 |
+| DELETE | ✅ | ✅ | ✅ | 삽입한 데이터 삭제 |
+| UPDATE | ✅ | ❌ | ❌ | 제거 (안전성) |
+| CREATE | ✅ | ❌ | ❌ | 제거 (안전성) |
+| DROP | ✅ | ❌ | ❌ | 제거 (안전성) |
+
+### v1.2.0의 새로운 기능
+
+**로그 출력 개선:**
+- 데이터베이스별 구분선과 줄바꿈으로 가독성 향상
+- 각 체크 결과가 명확하게 구분되어 표시
+
+**에러 메시지 상세화:**
+- SELECT/INSERT/DELETE 작업의 구체적인 에러 메시지 CSV 저장
+- 문제 진단 및 해결에 필요한 상세 정보 제공
+
+**파일 구조 개선:**
+- CSV 파일 위치를 `request_resources/` 바로 아래로 통합
+- 파일명 기반 자동 필터링 (DB 체크: `DB_`로 시작, Telnet 체크: `server_`로 시작)
 
 ### 왜 변경되었나요?
 
@@ -49,9 +66,31 @@
 - 실제 사용하는 쿼리와 테이블로 테스트
 - 운영 환경과 동일한 조건 확인 가능
 
+**사용성 향상:**
+- 로그 출력이 더 깔끔하고 읽기 쉬움
+- 파일 관리가 더 간편해짐
+- 에러 분석이 더 정확해짐
+
 ---
 
 ## CSV 파일 작성 가이드
+
+### 파일 위치 및 명명 규칙
+
+**v1.2.0부터 모든 CSV 파일은 `request_resources/` 바로 아래에 위치합니다:**
+
+```
+request_resources/
+├── DB_sample.csv          ← DB 체크용 (DB_로 시작)
+├── DB_production.csv      ← DB 체크용 (DB_로 시작)
+├── server_sample.csv      ← Telnet 체크용 (server_로 시작)
+└── server_production.csv  ← Telnet 체크용 (server_로 시작)
+```
+
+**파일명 규칙:**
+- **DB 체크용**: `DB_`로 시작하는 파일명
+- **Telnet 체크용**: `server_`로 시작하는 파일명
+- **확장자**: 반드시 `.csv`
 
 ### 필수 컬럼
 
@@ -301,7 +340,7 @@ results/
 ### 결과 CSV 형식
 
 ```csv
-timestamp,pc_ip,server_ip,port,db_name,db_type,db_userid,result_code,error_code,error_msg,collapsed_time,perm_select,perm_insert,perm_delete,insert_success,delete_success
+timestamp,pc_ip,server_ip,port,db_name,db_type,db_userid,result_code,error_code,error_msg,collapsed_time,perm_select,perm_insert,perm_delete,insert_success,delete_success,insert_query,delete_query,operation_errors
 ```
 
 ### 컬럼 설명
@@ -324,12 +363,15 @@ timestamp,pc_ip,server_ip,port,db_name,db_type,db_userid,result_code,error_code,
 | `perm_delete` | DELETE 권한 | Y / N |
 | `insert_success` | INSERT 실행 결과 | SUCCESS / FAILED / SKIPPED |
 | `delete_success` | DELETE 실행 결과 | SUCCESS / FAILED / SKIPPED |
+| `insert_query` | 실행된 INSERT 쿼리 | 실제 실행된 쿼리문 |
+| `delete_query` | 실행된 DELETE 쿼리 | 실제 실행된 쿼리문 |
+| `operation_errors` | 작업별 에러 메시지 | SELECT/INSERT/DELETE 에러 상세 정보 |
 
 ### 결과 예시
 
 ```csv
-2025-10-07T14:30:22.123Z,192.168.1.50,localhost,1433,SampleDB,mssql,sa,SUCCESS,,,0.15,Y,Y,Y,SUCCESS,SUCCESS
-2025-10-07T14:30:23.456Z,192.168.1.50,localhost,3306,TestDB,mysql,root,FAILED,ER_ACCESS_DENIED_ERROR,Access denied for user 'root'@'localhost',0.05,N,N,N,SKIPPED,SKIPPED
+2025-10-07T14:30:22.123Z,192.168.1.50,localhost,1433,SampleDB,mssql,sa,SUCCESS,,,0.15,Y,Y,Y,SUCCESS,SUCCESS,"INSERT INTO users (id, name, email) VALUES ('TEST_001', 'Test User', 'test@example.com')","DELETE FROM users WHERE id = 'TEST_001' AND name = 'Test User' AND email = 'test@example.com'",
+2025-10-07T14:30:23.456Z,192.168.1.50,localhost,3306,TestDB,mysql,root,FAILED,ER_ACCESS_DENIED_ERROR,Access denied for user 'root'@'localhost',0.05,N,N,N,SKIPPED,SKIPPED,,"","SELECT: Access denied for user 'root'@'localhost'"
 ```
 
 ### Excel에서 결과 분석
@@ -548,8 +590,3 @@ print(f"DELETE 권한: {df['perm_delete'].value_counts()}")
 - **영문 매뉴얼**: `USER_MANUAL.md` 참조
 
 ---
-
-**버전:** 1.1.0  
-**최종 수정:** 2025-10-07  
-**작성자:** Development Team
-

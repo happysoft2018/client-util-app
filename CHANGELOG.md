@@ -1,193 +1,234 @@
-# 변경 이력 (Changelog)
+# Changelog
 
-## [1.1.0] - 2025-10-07
+## [1.2.0] - 2025-01-07
 
-### 🎯 주요 변경사항
+### 🎯 Major Changes
 
-#### 데이터베이스 권한 체크 로직 개선
+#### Enhanced Log Output
+- **Database-specific separators**: Clear visual separation between database checks
+- **Improved readability**: Better formatting with line breaks and emojis
+- **Real-time progress**: Enhanced console output during checks
 
-**변경된 권한 체크 항목:**
-- ✅ **유지**: SELECT, INSERT, DELETE 권한 체크
-- ❌ **제거**: CREATE TABLE, DROP TABLE, UPDATE 권한 체크
+#### Detailed Error Capture
+- **Operation-specific errors**: SELECT/INSERT/DELETE error messages saved to CSV
+- **Comprehensive logging**: Up to 500 characters of detailed error information
+- **Better troubleshooting**: Specific error details for problem diagnosis
 
-**변경 이유:**
-- 실제 운영 환경에서 CREATE/DROP 권한을 테스트하는 것은 위험성이 높음
-- 임시 테이블 생성으로 인한 불필요한 리소스 사용 방지
-- UPDATE 권한은 INSERT/DELETE로 충분히 확인 가능
+#### Streamlined File Management
+- **Unified CSV location**: All CSV files now in `request_resources/` directly
+- **Smart filtering**: Automatic file filtering based on naming convention
+  - DB checks: Files starting with `DB_`
+  - Telnet checks: Files starting with `server_`
+- **Simplified structure**: No more subdirectories for CSV files
 
-### 🔧 기능 개선
+#### Enhanced DELETE Operations
+- **Multi-column conditions**: DELETE queries now use all specified columns
+- **Safer testing**: More precise data deletion for accurate permission checks
+- **Better query logging**: Actual executed queries saved to results
 
-#### 1. CSV 파일 형식 확장
-**새로운 컬럼 추가:**
-- `select_sql`: 실행할 SELECT 쿼리 지정
-- `crud_test_table`: 권한 테스트에 사용할 테이블명
-- `crud_test_columns`: 테스트에 사용할 컬럼명 (쉼표로 구분)
-- `crud_test_values`: 테스트에 사용할 값 (쉼표로 구분)
+### 🔧 Technical Improvements
 
-**CSV 형식 예시:**
+#### CSV Result Format Extension
+- **New columns added**:
+  - `insert_query`: Executed INSERT query statement
+  - `delete_query`: Executed DELETE query statement
+  - `operation_errors`: Operation-specific error messages (SELECT/INSERT/DELETE)
+
+#### Code Improvements
+- **Enhanced error handling**: Error message capture in all database connection classes
+- **Log formatting**: Consistent log output format applied
+- **File filtering**: Efficient CSV file selection logic
+
+### 🐛 Bug Fixes
+- **PostgreSQL parameter binding**: Fixed to save actual values in CSV for INSERT/DELETE queries
+- **Oracle connection reuse**: Improved connection reuse logic to prevent NJS-003 errors
+- **MSSQL DML queries**: Fixed recordset undefined error for INSERT/DELETE operations
+
+---
+
+## [1.1.0] - 2025-10-05
+
+### 🎯 Major Changes
+
+#### Database Permission Check Logic Improvements
+
+**Modified Permission Check Items:**
+- ✅ **Retained**: SELECT, INSERT, DELETE permission checks
+- ❌ **Removed**: CREATE TABLE, DROP TABLE, UPDATE permission checks
+
+**Reasons for Changes:**
+- Testing CREATE/DROP permissions in production environments poses high risks
+- Prevents unnecessary resource usage from temporary table creation
+- UPDATE permission can be sufficiently verified through INSERT/DELETE
+
+### 🔧 Feature Improvements
+
+#### 1. CSV File Format Extension
+**New Columns Added:**
+- `select_sql`: Specifies SELECT query to execute
+- `crud_test_table`: Table name to use for permission testing
+- `crud_test_columns`: Column names for testing (comma-separated)
+- `crud_test_values`: Values for testing (comma-separated)
+
+**CSV Format Example:**
 ```csv
 db_name,username,password,server_ip,port,db_type,db_title,select_sql,crud_test_table,crud_test_columns,crud_test_values
-SampleDB,user,pass,localhost,1433,mssql,샘플DB,"SELECT top 3 name from customers",customers,"customercode, customername","test001, 테스트고객"
+SampleDB,user,pass,localhost,1433,mssql,Sample DB,"SELECT top 3 name from customers",customers,"customercode, customername","test001, Test Customer"
 ```
 
-#### 2. 권한 체크 방식 변경
-**이전 방식:**
-- 임시 테이블(`temp_permission_test_[timestamp]`) 생성
-- 임시 테이블에 대해 INSERT/UPDATE/DELETE 테스트
-- 테이블 DROP으로 정리
+#### 2. Permission Check Method Changes
+**Previous Method:**
+- Created temporary table (`temp_permission_test_[timestamp]`)
+- Tested INSERT/UPDATE/DELETE on temporary table
+- Cleaned up with table DROP
 
-**현재 방식:**
-- CSV에 명시된 실제 테이블 사용
-- SELECT: CSV의 `select_sql` 쿼리 실행
-- INSERT: CSV의 테이블/컬럼/값을 사용하여 데이터 삽입
-- DELETE: 삽입한 데이터를 첫 번째 컬럼 기준으로 삭제
+**Current Method:**
+- Uses actual tables specified in CSV
+- SELECT: Executes `select_sql` query from CSV
+- INSERT: Inserts data using table/columns/values from CSV
+- DELETE: Deletes inserted data based on first column
 
-**장점:**
-- 실제 운영 테이블에 대한 권한 확인 가능
-- 임시 테이블 생성/삭제 불필요
-- 실제 쿼리 성능 측정 가능
+**Advantages:**
+- Can verify permissions on actual production tables
+- No need for temporary table creation/deletion
+- Can measure actual query performance
 
-### 🐛 버그 수정
+### 🐛 Bug Fixes
 
-#### 1. Oracle 데이터베이스 연결 오류 수정
-**문제:** `NJS-003: invalid or closed connection` 에러 발생
+#### 1. Oracle Database Connection Error Fix
+**Issue:** `NJS-003: invalid or closed connection` error occurred
 
-**원인:**
-- `checkPermissions()` 메서드가 이미 연결된 상태에서 재연결 시도
-- 메서드 종료 시 연결을 닫아버려 후속 작업 실패
+**Cause:**
+- `checkPermissions()` method attempted reconnection while already connected
+- Connection closed at method end, causing subsequent operations to fail
 
-**해결:**
-- 연결 상태 확인 로직 추가
-- 이미 연결되어 있으면 기존 연결 재사용
-- 메서드 내에서 연결한 경우에만 disconnect 수행
+**Solution:**
+- Added connection status check logic
+- Reuses existing connection if already connected
+- Only disconnects if connection was made within the method
 
-**적용 대상:**
+**Applied to:**
 - `MSSQLConnection.js`
 - `MySQLConnection.js`
 - `OracleConnection.js`
 - `PostgreSQLConnection.js`
 
-#### 2. SELECT 쿼리 중복 실행 문제 수정
-**문제:** SELECT 쿼리가 여러 번 실행되어 성공/실패 메시지 중복 출력
+#### 2. SELECT Query Duplicate Execution Fix
+**Issue:** SELECT query executed multiple times with duplicate success/failure messages
 
-**원인:**
-- `checkPermissions()`에서 1회 실행
-- `checkDbConnection()`에서 1회 실행
-- `testCrudOperations()`에서 1회 실행
+**Cause:**
+- Executed once in `checkPermissions()`
+- Executed once in `checkDbConnection()`
+- Executed once in `testCrudOperations()`
 
-**해결:**
-- `checkPermissions()`에서만 SELECT 쿼리 실행
-- 중복 실행 코드 제거
-- `testCrudOperations()`는 INSERT/DELETE만 담당
+**Solution:**
+- SELECT query now only executes in `checkPermissions()`
+- Removed duplicate execution code
+- `testCrudOperations()` now only handles INSERT/DELETE
 
-### 📊 결과 CSV 형식 변경
+### 📊 Result CSV Format Changes
 
-**이전 헤더:**
+**Previous Header:**
 ```csv
 timestamp,pc_ip,server_ip,port,db_name,db_type,db_userid,result_code,error_code,error_msg,collapsed_time,perm_select,perm_insert,perm_update,perm_delete,perm_create,perm_drop,select_result_data,select_elapsed,insert_success,insert_elapsed,update_success,update_elapsed,delete_success,delete_elapsed
 ```
 
-**현재 헤더:**
+**Current Header:**
 ```csv
 timestamp,pc_ip,server_ip,port,db_name,db_type,db_userid,result_code,error_code,error_msg,collapsed_time,perm_select,perm_insert,perm_delete,insert_success,delete_success
 ```
 
-**제거된 컬럼:**
-- `perm_update`, `perm_create`, `perm_drop`: 권한 체크 제거
-- `select_result_data`, `select_elapsed`: 권한 체크에 포함되어 중복
-- `insert_elapsed`, `update_success`, `update_elapsed`, `delete_elapsed`: 성공/실패만 표시
+**Removed Columns:**
+- `perm_update`, `perm_create`, `perm_drop`: Permission checks removed
+- `select_result_data`, `select_elapsed`: Duplicate as included in permission check
+- `insert_elapsed`, `update_success`, `update_elapsed`, `delete_elapsed`: Only showing success/failure
 
-### 🔄 마이그레이션 가이드
+### 🔄 Migration Guide
 
-#### CSV 파일 업데이트
-기존 CSV 파일에 새로운 컬럼 추가 필요:
+#### CSV File Update
+Existing CSV files need new columns added:
 
-**최소 구성 (권한 체크만):**
+**Minimum Configuration (Permission check only):**
 ```csv
 db_name,username,password,server_ip,port,db_type,db_title,select_sql,crud_test_table,crud_test_columns,crud_test_values
 ```
 
-**권한 체크 없이 연결만 확인:**
+**Connection Check Only (No permission check):**
 ```csv
 db_name,username,password,server_ip,port,db_type,db_title
-TestDB,user,pass,localhost,1433,mssql,테스트DB
+TestDB,user,pass,localhost,1433,mssql,Test DB
 ```
-- `select_sql`, `crud_test_table` 등이 없으면 기본 권한 체크만 수행
+- Performs basic permission check only if `select_sql`, `crud_test_table`, etc. are absent
 
-**전체 권한 체크:**
+**Full Permission Check:**
 ```csv
 db_name,username,password,server_ip,port,db_type,db_title,select_sql,crud_test_table,crud_test_columns,crud_test_values
-TestDB,user,pass,localhost,1433,mssql,테스트DB,"SELECT TOP 3 * FROM users",users,"id, name, email","test001, Test User, test@example.com"
+TestDB,user,pass,localhost,1433,mssql,Test DB,"SELECT TOP 3 * FROM users",users,"id, name, email","test001, Test User, test@example.com"
 ```
 
-#### 결과 CSV 해석 변경
-- `perm_select`, `perm_insert`, `perm_delete`: Y/N으로 권한 유무 표시
-- `insert_success`, `delete_success`: SUCCESS/FAILED/SKIPPED로 실행 결과 표시
+#### Result CSV Interpretation Changes
+- `perm_select`, `perm_insert`, `perm_delete`: Y/N indicates permission availability
+- `insert_success`, `delete_success`: SUCCESS/FAILED/SKIPPED indicates execution result
 
-### 📝 알려진 제한사항
+### 📝 Known Limitations
 
-1. **INSERT/DELETE 테스트**
-   - CSV에 테이블 정보가 없으면 권한 체크 스킵
-   - 테이블이 실제로 존재해야 함
-   - 컬럼 개수와 값 개수가 일치해야 함
+1. **INSERT/DELETE Testing**
+   - Permission check skipped if no table information in CSV
+   - Table must actually exist
+   - Number of columns and values must match
 
-2. **데이터 정리**
-   - INSERT 후 DELETE로 데이터 정리
-   - DELETE 실패 시 데이터가 남을 수 있음
-   - 테스트용 고유 ID 사용 권장
+2. **Data Cleanup**
+   - Data cleaned up with DELETE after INSERT
+   - Data may remain if DELETE fails
+   - Recommend using unique test IDs
 
-3. **권한 체크 정확도**
-   - SELECT: CSV의 쿼리 실행 성공 여부로 판단
-   - INSERT/DELETE: 실제 테이블에 대한 실행 성공 여부로 판단
-   - UPDATE 권한은 직접 확인하지 않음
+3. **Permission Check Accuracy**
+   - SELECT: Determined by success of CSV query execution
+   - INSERT/DELETE: Determined by success of execution on actual table
+   - UPDATE permission not directly verified
 
-### 🔜 향후 계획
+### 🔜 Future Plans
 
-- [ ] 트랜잭션 지원으로 테스트 데이터 자동 롤백
-- [ ] 결과 CSV에 상세 에러 메시지 포함
-- [ ] 권한 체크 실패 시 재시도 로직
-- [ ] 웹 대시보드를 통한 결과 시각화
+- [ ] Transaction support for automatic test data rollback
+- [ ] Include detailed error messages in result CSV
+- [ ] Retry logic for permission check failures
+- [ ] Result visualization through web dashboard
 
 ---
 
 ## [1.0.0] - 2025-08-27 (Initial Release)
 
-### ✨ 초기 릴리스
+### ✨ Initial Release
 
-#### 주요 기능
-- 다중 데이터베이스 지원 (MSSQL, MySQL, PostgreSQL, Oracle)
-- 데이터베이스 연결 및 권한 체크
-- 서버 Telnet 연결 체크
-- SQL 실행 및 결과 저장
-- 통합 메뉴 시스템
-- CSV 결과 자동 저장
+#### Key Features
+- Multi-database support (MSSQL, MySQL, PostgreSQL, Oracle)
+- Database connection and permission checking
+- Server Telnet connection checking
+- SQL execution and result storage
+- Integrated menu system
+- Automatic CSV result saving
 
-#### 지원 데이터베이스
+#### Supported Databases
 - Microsoft SQL Server (MSSQL)
 - MySQL
 - PostgreSQL
 - Oracle Database
 
-#### 핵심 모듈
-- `ConfigManager.js`: 설정 관리
-- `DBConnectionChecker.js`: DB 연결 및 권한 체크
-- `DBExecutor.js`: SQL 실행
-- `TelnetChecker.js`: Telnet 연결 체크
-- `DatabaseFactory.js`: DB 연결 팩토리 패턴
+#### Core Modules
+- `ConfigManager.js`: Configuration management
+- `DBConnectionChecker.js`: DB connection and permission checking
+- `DBExecutor.js`: SQL execution
+- `TelnetChecker.js`: Telnet connection checking
+- `DatabaseFactory.js`: DB connection factory pattern
 
 ---
 
-## 범례 (Legend)
+## Legend
 
-- ✨ **Added**: 새로운 기능
-- 🔧 **Changed**: 기존 기능 변경
-- 🐛 **Fixed**: 버그 수정
-- ❌ **Removed**: 제거된 기능
-- 📝 **Deprecated**: 향후 제거 예정
-- 🔒 **Security**: 보안 관련 수정
-
-
-**Version:** 1.1.0  
-**Date:** 2025-10-07  
-**Next Update:** TBD
+- ✨ **Added**: New features
+- 🔧 **Changed**: Changes to existing features
+- 🐛 **Fixed**: Bug fixes
+- ❌ **Removed**: Removed features
+- 📝 **Deprecated**: To be removed in future
+- 🔒 **Security**: Security-related fixes
 
