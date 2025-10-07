@@ -296,6 +296,10 @@ class DBConnectionChecker {
     const { db_name, server_ip, port, db_title } = row;
     const title = db_title || db_name;
 
+    console.log('\n' + '='.repeat(80));
+    console.log(`🔍 Checking: [${server_ip}:${port}] ${dbType.toUpperCase()} - ${title}`);
+    console.log('='.repeat(80));
+
     const result = await this.checkDbConnection({ 
       db_name, 
       ip: server_ip, 
@@ -325,7 +329,7 @@ class DBConnectionChecker {
       }
     }
     
-    console.log(`[${server_ip}:${port}][${dbType.toUpperCase()}][${dbUser}][${title}][${db_name}] \t→ [${result.success ? '✅ Success' : '❌ Failed'}]${permissionStatus} ${errMessage}`);
+    console.log(`\n📊 Result: [${result.success ? '✅ Success' : '❌ Failed'}]${permissionStatus} ${errMessage}`);
 
     // CRUD 결과 처리
     const insertQuery = result.permissions.insertQuery || '';
