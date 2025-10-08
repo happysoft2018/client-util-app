@@ -7,7 +7,16 @@ const DatabaseFactory = require('./database/DatabaseFactory');
 class DBExecutor {
   constructor(configManager, readlineInterface = null) {
     this.configManager = configManager;
-    this.sqlFilesDir = path.join(__dirname, '../../request_resources/sql_files');
+    
+    // Set sqlFilesDir based on environment (pkg or development)
+    if (process.pkg) {
+      // In pkg environment, use executable's directory
+      this.sqlFilesDir = path.join(path.dirname(process.execPath), 'request_resources', 'sql_files');
+    } else {
+      // In development, use project directory
+      this.sqlFilesDir = path.join(__dirname, '../../request_resources/sql_files');
+    }
+    
     this.rl = readlineInterface || require('readline').createInterface({
       input: process.stdin,
       output: process.stdout
@@ -71,19 +80,35 @@ class DBExecutor {
 
     // Logging functionality removed - all DB operations now use config/dbinfo.json
 
-    // Create log directory
+    // Create log directory (pkg compatible)
     const now = new Date();
     const yyyymmdd = now.getFullYear() + 
                     String(now.getMonth() + 1).padStart(2, '0') + 
                     String(now.getDate()).padStart(2, '0');
-    const logDir = path.join(__dirname, '../../log', yyyymmdd);
+    
+    let logDir;
+    if (process.pkg) {
+      // In pkg environment, use executable's directory
+      logDir = path.join(path.dirname(process.execPath), 'log', yyyymmdd);
+    } else {
+      // In development, use project directory
+      logDir = path.join(__dirname, '../../log', yyyymmdd);
+    }
 
     if (!fs.existsSync(logDir)) {
       fs.mkdirSync(logDir, { recursive: true });
     }
 
-    // Create results directory
-    const resultsDir = path.join(__dirname, '../../results/sql_files');
+    // Create results directory (pkg compatible)
+    let resultsDir;
+    if (process.pkg) {
+      // In pkg environment, use executable's directory
+      resultsDir = path.join(path.dirname(process.execPath), 'results', 'sql_files');
+    } else {
+      // In development, use project directory
+      resultsDir = path.join(__dirname, '../../results/sql_files');
+    }
+    
     if (!fs.existsSync(resultsDir)) {
       fs.mkdirSync(resultsDir, { recursive: true });
     }

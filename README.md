@@ -1,4 +1,4 @@
-# Node.js Integrated Utility Tool v1.2.0
+# Node.js Integrated Utility Tool v1.3.0
 
 A comprehensive utility tool for managing various local environment utilities in a unified application.
 
@@ -35,19 +35,46 @@ my-node-client-util-app/
 └── run.bat                         # 🎯 Integrated execution tool
 ```
 
-## 🆕 v1.2.0 New Features
+## 🆕 v1.3.0 New Features
 
-### Enhanced Log Output
+### Database SQL Executor Major Improvements ⭐
+- **CSV Result File Generation**: Automatically save SQL execution results to structured CSV
+  - Location: `results/sql_files/`
+  - Filename: `{SQL_name}_{DB_name}_{timestamp}.csv`
+  - DB info header and condition-based grouping
+
+- **Preprocessor Directive**: Specify database connection with `#DATABASE` or `#DB` in SQL files
+  ```sql
+  #DATABASE sampleDB
+  
+  SELECT * FROM users WHERE id = @user_id;
+  ```
+
+- **JSON Parameter Support**: Support JSON format parameter files alongside CSV
+  ```json
+  [
+      { "user_id": 1 },
+      { "user_id": 2 }
+  ]
+  ```
+
+### MariaDB Support Added
+- **MariaDB Database**: Support MariaDB with MySQL-compatible driver
+- **Supported DBs**: MSSQL, MySQL, **MariaDB** ⭐, PostgreSQL, Oracle
+
+### v1.2.0 Existing Features
+
+#### Enhanced Log Output
 - **Database-specific separators**: Clear visual separation between database checks
 - **Improved readability**: Better formatting with line breaks and emojis
 - **Real-time progress**: Enhanced console output during checks
 
-### Detailed Error Capture
+#### Detailed Error Capture
 - **Operation-specific errors**: SELECT/INSERT/DELETE error messages saved to CSV
 - **Comprehensive logging**: Up to 500 characters of detailed error information
 - **Better troubleshooting**: Specific error details for problem diagnosis
 
-### Streamlined File Management
+#### Streamlined File Management
 - **Unified CSV location**: All CSV files now in `request_resources/` directly
 - **Smart filtering**: Automatic file filtering based on naming convention
   - DB checks: Files starting with `DB_`
@@ -243,18 +270,105 @@ The application provides a **Configuration Management** menu for system informat
 
 ## 🏗️ Build and Deployment
 
-### Building Executable
-```bash
-# Build standalone executable
-npm run build
-# or use batch file
+### Build Script
+
+**`build.bat`** - Build executable only
+
+```batch
 build.bat
+```
+
+**Actions:**
+1. Check Node.js and npm environment
+2. Install dependencies (npm install)
+3. Build executable using pkg
+4. Output: `dist\my-node-client-util-app.exe`
+
+**When to use:** Quick build testing
+
+### Release Script (All-in-One)
+
+**`release.bat`** - Build + Deploy Package Automation ⭐
+
+```batch
+release.bat
+```
+
+**Actions:**
+1. Clean previous releases
+2. Build application (npm run build)
+3. Create release/my-node-client-util-app-v1.3.0/ folder
+4. Copy executable
+5. Copy configuration files (config/)
+6. Copy sample files (request_resources/)
+7. Create output folders (results/, log/)
+8. Copy documentation (README, manuals, changelog - 8 files)
+9. Create launcher script (run.bat)
+10. Generate version info file (VERSION_INFO.txt)
+11. Generate release notes (RELEASE_NOTES.txt)
+
+**Output:**
+- `release/my-node-client-util-app-v1.3.0/` - Deployment package
+- `release/my-node-client-util-app-v1.3.0.zip` - ZIP archive (optional)
+
+**When to use:** Creating complete deployment package (recommended)
+
+### Deployment Workflow
+
+#### For Developers:
+```batch
+# 1. Modify code and test
+node app.js
+
+# 2. Quick build test
+build.bat
+
+# 3. Create official release package (recommended)
+release.bat
+```
+
+#### For End Users:
+```
+1. Download release/my-node-client-util-app-v1.3.0.zip
+2. Extract the archive
+3. Edit config/dbinfo.json for your environment
+4. Run run.bat
+```
+
+### Deployment Package Structure
+
+```
+my-node-client-util-app-v1.3.0/
+├── my-node-client-util-app.exe    # Executable
+├── run.bat                         # Launcher script
+├── VERSION_INFO.txt                # Version information
+├── RELEASE_NOTES.txt               # Release notes
+├── config/
+│   └── dbinfo.json                 # DB configuration (user customizable)
+├── request_resources/
+│   ├── DB_sample.csv               # DB check sample
+│   ├── server_sample.csv           # Telnet check sample
+│   └── sql_files/
+│       ├── SQL_001.sql             # SQL sample (#DATABASE directive)
+│       └── SQL_001.csv             # Parameter sample
+├── results/
+│   └── sql_files/                  # SQL execution results location
+├── log/                            # Log files location
+└── Documentation/
+    ├── README.md
+    ├── README_KR.md
+    ├── USER_MANUAL.md
+    ├── USER_MANUAL_KR.md
+    ├── CHANGELOG.md
+    ├── CHANGELOG_KR.md
+    ├── MIGRATION_GUIDE.md
+    └── MIGRATION_GUIDE_KR.md
 ```
 
 ### Creating Deployment Package
 ```bash
 # Create complete deployment package
-deploy.bat
+release.bat
 ```
 
 The deployment package includes:
