@@ -645,15 +645,52 @@ results/
 
 ### SQL 파일 작성 (.sql)
 
+#### 기본 형식
+
 파라미터를 `@변수명` 형식으로 작성합니다:
 
 ```sql
--- SQL_001.sql 예시 (단일 쿼리)
+-- SQL_001.sql 예시
 SELECT p.*
 FROM product p
 WHERE price >= @min_price
   AND price <= @max_price;
 ```
+
+#### 접속 DB 명시 (선택사항)
+
+SQL 파일 상단에 전처리 지시자(preprocessor directive)로 접속할 DB를 명시할 수 있습니다:
+
+```sql
+#DATABASE sampleDB
+
+SELECT p.*
+FROM product p
+WHERE price >= @min_price
+  AND price <= @max_price;
+```
+
+또는
+
+```sql
+#DB mysqlDB
+
+SELECT * FROM users;
+```
+
+**규칙:**
+- SQL 파일 첫 부분에 `#DATABASE DB명` 또는 `#DB DB명` 형식으로 작성
+- `#` 기호로 시작 (C/C++ 스타일 전처리 지시자)
+- 대소문자 구분 없음 (#DB, #db, #Database, #database 모두 가능)
+- DB명은 `config/dbinfo.json`에 정의된 이름과 일치해야 함
+- DB명을 명시하지 않으면 실행 시 CLI에서 선택 가능
+
+**장점:**
+- ✅ `#` 기호로 명령어/지시자임을 명확히 표시 (주석이 아님)
+- ✅ 자주 사용하는 DB를 미리 지정하여 매번 선택할 필요 없음
+- ✅ 특정 DB 전용 쿼리를 명확히 구분
+- ✅ 잘못된 DB에 실행하는 실수 방지
+- ✅ 한눈에 특별한 기능임을 인지 가능
 
 ### 파라미터 파일 작성 (.csv 또는 .json)
 
@@ -710,8 +747,36 @@ min_price,max_price
 
 1. 메인 메뉴에서 `3. Database SQL Execution` 선택
 2. 실행할 SQL 파일 선택
-3. 접속할 데이터베이스 선택
+3. 접속할 데이터베이스 선택 (SQL 파일에 DB가 명시되어 있으면 자동 선택)
 4. 자동 실행
+
+**실행 시나리오:**
+
+**시나리오 1: DB가 SQL 파일에 명시된 경우**
+```
+📄 SQL file: SQL_001.sql
+📄 Parameter file (CSV): SQL_001.csv
+
+📌 Specified DB in SQL file: sampleDB
+✅ Using specified database: sampleDB
+
+🗄️ Database in use: sampleDB
+   DB type: mssql
+   ...
+```
+
+**시나리오 2: DB가 명시되지 않은 경우**
+```
+📄 SQL file: SQL_002.sql
+📄 Parameter file (JSON): SQL_002.json
+
+🗄️ Available Databases:
+  1. sampleDB (mssql) - localhost:1433/SampleDB
+  2. mysqlDB (mysql) - localhost:3306/mydb
+  3. mariaDB (mariadb) - localhost:3306/mariadb_testdb
+
+Select database to use (1-3): _
+```
 
 ### 결과 CSV 파일 형식
 
@@ -766,6 +831,8 @@ product_id,product_name,price,category
 
 **SQL_product_search.sql:**
 ```sql
+#DB mysqlDB
+
 SELECT 
     product_id,
     product_name,
@@ -799,6 +866,8 @@ min_price,max_price
 
 **SQL_order_search.sql:**
 ```sql
+#DATABASE sampleDB
+
 SELECT 
     order_id,
     customer_name,

@@ -265,35 +265,75 @@ class DBExecutor {
     console.log(`📄 Parameter file (${paramFileType}): ${paramFilePath}`);
 
     // Read SQL file
-    const query = fs.readFileSync(sqlFilePath, 'utf-8');
+    const rawQuery = fs.readFileSync(sqlFilePath, 'utf-8');
+    
+    // Extract DB name from SQL file directive and remove directive lines
+    let specifiedDbName = null;
+    const lines = rawQuery.split('\n');
+    const cleanedLines = [];
+    
+    for (const line of lines) {
+      const trimmedLine = line.trim();
+      // Check for #DB dbname or #DATABASE dbname format (preprocessor directive style)
+      const dbMatch = trimmedLine.match(/^#(?:DB|DATABASE)\s+(\w+)/i);
+      if (dbMatch) {
+        specifiedDbName = dbMatch[1];
+        console.log(`\n📌 Specified DB in SQL file: ${specifiedDbName}`);
+        // Skip this line (don't add to cleanedLines)
+      } else {
+        cleanedLines.push(line);
+      }
+    }
+    
+    // Cleaned query without directive lines
+    const query = cleanedLines.join('\n');
+    
     console.log(`\n🔍 SQL Query Content:`);
     console.log('-'.repeat(30));
     console.log(query);
     console.log('-'.repeat(30));
 
-    // Select database from available databases
+    // Get available databases
     const availableDbs = this.configManager.getAvailableDbs();
     if (availableDbs.length === 0) {
       throw new Error('No databases configured. Please add database configurations to config/dbinfo.json');
     }
 
-    console.log('\n🗄️  Available Databases:');
-    availableDbs.forEach((dbName, index) => {
-      const dbInfo = this.configManager.getDbConfig(dbName);
-      const dbType = this.configManager.getDbType(dbName);
-      console.log(`  ${index + 1}. ${dbName} (${dbType}) - ${dbInfo.server}:${dbInfo.port}/${dbInfo.database}`);
-    });
+    let selectedDbName;
 
-    const dbChoice = await this.askQuestion(
-      `Select database to use (1-${availableDbs.length}): `
-    );
-    
-    const selectedDbIndex = parseInt(dbChoice) - 1;
-    if (selectedDbIndex < 0 || selectedDbIndex >= availableDbs.length) {
-      throw new Error('Invalid database selection');
+    // Check if specified DB exists in config
+    if (specifiedDbName) {
+      if (availableDbs.includes(specifiedDbName)) {
+        selectedDbName = specifiedDbName;
+        console.log(`✅ Using specified database: ${selectedDbName}`);
+      } else {
+        console.log(`⚠️  Warning: Specified database '${specifiedDbName}' not found in config.`);
+        console.log('Available databases:');
+        availableDbs.forEach((dbName) => {
+          console.log(`  - ${dbName}`);
+        });
+        throw new Error(`Database '${specifiedDbName}' not found in config/dbinfo.json`);
+      }
+    } else {
+      // No DB specified in SQL file, prompt user to select
+      console.log('\n🗄️  Available Databases:');
+      availableDbs.forEach((dbName, index) => {
+        const dbInfo = this.configManager.getDbConfig(dbName);
+        const dbType = this.configManager.getDbType(dbName);
+        console.log(`  ${index + 1}. ${dbName} (${dbType}) - ${dbInfo.server}:${dbInfo.port}/${dbInfo.database}`);
+      });
+
+      const dbChoice = await this.askQuestion(
+        `Select database to use (1-${availableDbs.length}): `
+      );
+      
+      const selectedDbIndex = parseInt(dbChoice) - 1;
+      if (selectedDbIndex < 0 || selectedDbIndex >= availableDbs.length) {
+        throw new Error('Invalid database selection');
+      }
+      
+      selectedDbName = availableDbs[selectedDbIndex];
     }
-    
-    const selectedDbName = availableDbs[selectedDbIndex];
     const { remoteConnection } = await this.createConnections(selectedDbName);
     
     const dbConfig = this.configManager.getDbConfig(selectedDbName);

@@ -533,15 +533,52 @@ results/
 
 ### Writing SQL Files (.sql)
 
+#### Basic Format
+
 Write parameters in `@variable_name` format:
 
 ```sql
--- SQL_001.sql example (single query)
+-- SQL_001.sql example
 SELECT p.*
 FROM product p
 WHERE price >= @min_price
   AND price <= @max_price;
 ```
+
+#### Specifying Database Connection (Optional)
+
+You can specify the database to connect to using preprocessor directive at the top of the SQL file:
+
+```sql
+#DATABASE sampleDB
+
+SELECT p.*
+FROM product p
+WHERE price >= @min_price
+  AND price <= @max_price;
+```
+
+Or
+
+```sql
+#DB mysqlDB
+
+SELECT * FROM users;
+```
+
+**Rules:**
+- Write `#DATABASE dbname` or `#DB dbname` at the beginning of the SQL file
+- Starts with `#` symbol (C/C++ style preprocessor directive)
+- Case insensitive (#DB, #db, #Database, #database all work)
+- Database name must match the name defined in `config/dbinfo.json`
+- If no database is specified, you can select it from CLI during execution
+
+**Benefits:**
+- ✅ `#` symbol clearly indicates command/directive (not a comment)
+- ✅ No need to select frequently used databases every time
+- ✅ Clearly distinguish queries for specific databases
+- ✅ Prevent mistakes of running on wrong database
+- ✅ Immediately recognizable as special feature
 
 ### Writing Parameter Files (.csv or .json)
 
@@ -598,8 +635,36 @@ min_price,max_price
 
 1. Select `3. Database SQL Execution` from the main menu
 2. Select the SQL file to execute
-3. Select the database to connect to
+3. Select the database to connect to (automatically selected if specified in SQL file)
 4. Automatic execution
+
+**Execution Scenarios:**
+
+**Scenario 1: Database specified in SQL file**
+```
+📄 SQL file: SQL_001.sql
+📄 Parameter file (CSV): SQL_001.csv
+
+📌 Specified DB in SQL file: sampleDB
+✅ Using specified database: sampleDB
+
+🗄️ Database in use: sampleDB
+   DB type: mssql
+   ...
+```
+
+**Scenario 2: Database not specified**
+```
+📄 SQL file: SQL_002.sql
+📄 Parameter file (JSON): SQL_002.json
+
+🗄️ Available Databases:
+  1. sampleDB (mssql) - localhost:1433/SampleDB
+  2. mysqlDB (mysql) - localhost:3306/mydb
+  3. mariaDB (mariadb) - localhost:3306/mariadb_testdb
+
+Select database to use (1-3): _
+```
 
 ### Result CSV File Format
 
@@ -654,6 +719,8 @@ Examples:
 
 **SQL_product_search.sql:**
 ```sql
+#DB mysqlDB
+
 SELECT 
     product_id,
     product_name,
@@ -687,6 +754,8 @@ min_price,max_price
 
 **SQL_order_search.sql:**
 ```sql
+#DATABASE sampleDB
+
 SELECT 
     order_id,
     customer_name,
