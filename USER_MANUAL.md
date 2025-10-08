@@ -1,4 +1,4 @@
-# User Manual v1.2.0
+# User Manual v1.3.0
 
 ## 📖 Table of Contents
 
@@ -8,17 +8,28 @@
 4. [Database Permission Check](#database-permission-check)
 5. [Execution Method](#execution-method)
 6. [Checking Results](#checking-results)
-7. [Troubleshooting](#troubleshooting)
-8. [Best Practices](#best-practices)
+7. [Database SQL Execution Feature](#database-sql-execution-feature)
+8. [Troubleshooting](#troubleshooting)
+9. [Best Practices](#best-practices)
 
 ---
 
 ## Introduction
 
-This manual guides you through using the database connection and permission check features of the Node.js Integrated Utility Tool v1.2.0.
+This manual guides you through using the database connection, permission check, and SQL execution features of the Node.js Integrated Utility Tool v1.3.0.
 
-### Key Features of v1.2.0
+### Key Features of v1.3.0
 
+#### Database SQL Executor Improvements
+- ✅ **CSV Result File Generation**: Automatically save SQL execution results to structured CSV files
+- ✅ **Preprocessor Directive**: Specify database connection with `#DATABASE` or `#DB` in SQL files
+- ✅ **JSON Parameter Support**: Support JSON format parameter files alongside CSV
+- ✅ **Condition-based Result Grouping**: Clearly separate results for each parameter set
+
+#### Database Support Expansion
+- ✅ **MariaDB Support**: Added MariaDB database support with MySQL-compatible driver
+
+#### Existing Features (v1.2.0)
 - ✅ **Safe Permission Checking**: Uses actual tables instead of creating temporary tables
 - ✅ **Actual Query Testing**: Executes actual queries specified in CSV
 - ✅ **Enhanced Stability**: Fixed Oracle connection errors
