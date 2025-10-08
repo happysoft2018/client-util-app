@@ -107,7 +107,7 @@ db_name,username,password,server_ip,port,db_type,db_title
 | `password` | 비밀번호 | `password123` |
 | `server_ip` | 서버 IP 또는 호스트명 | `localhost`, `192.168.1.100` |
 | `port` | 포트 번호 | `1433`, `3306`, `5432`, `1521` |
-| `db_type` | DB 타입 | `mssql`, `mysql`, `postgresql`, `oracle` |
+| `db_type` | DB 타입 | `mssql`, `mysql`, `mariadb`, `postgresql`, `oracle` |
 | `db_title` | 설명 (선택) | `운영 데이터베이스` |
 
 ### 권한 체크 컬럼 (선택사항)
@@ -133,6 +133,7 @@ select_sql,crud_test_table,crud_test_columns,crud_test_values
 db_name,username,password,server_ip,port,db_type,db_title
 ProductionDB,readonly,ReadPass123,prod.company.com,1433,mssql,운영 데이터베이스
 DevelopDB,devuser,DevPass123,dev.company.com,3306,mysql,개발 데이터베이스
+MariaTestDB,devuser,DevPass123,dev.company.com,3306,mariadb,MariaDB 테스트 데이터베이스
 TestDB,testuser,TestPass123,test.company.com,5432,postgresql,테스트 데이터베이스
 ```
 
@@ -152,6 +153,12 @@ SampleDB,sa,Pass123,localhost,1433,mssql,샘플DB,"SELECT TOP 5 CustomerName FRO
 ```csv
 db_name,username,password,server_ip,port,db_type,db_title,select_sql,crud_test_table,crud_test_columns,crud_test_values
 TestDB,root,Pass123,localhost,3306,mysql,테스트DB,"SELECT * FROM users WHERE status = 'active' LIMIT 10",users,"user_id, username, email, status","test001, testuser, test@test.com, active"
+```
+
+**MariaDB:**
+```csv
+db_name,username,password,server_ip,port,db_type,db_title,select_sql,crud_test_table,crud_test_columns,crud_test_values
+MariaTestDB,root,Pass123,localhost,3306,mariadb,MariaDB테스트,"SELECT * FROM products WHERE price > 1000 LIMIT 10",products,"product_id, product_name, price","test001, 테스트상품, 5000"
 ```
 
 **PostgreSQL:**
@@ -511,7 +518,7 @@ ProductionDB,readonly_monitor,SecurePass123,prod.db.com,1433,mssql,운영DB,"SEL
 
 ```csv
 db_name,username,password,server_ip,port,db_type,db_title,select_sql,crud_test_table,crud_test_columns,crud_test_values
-DevelopDB,dev_admin,DevPass123,dev.db.com,3306,mysql,개발DB,"SELECT * FROM users WHERE created_at > DATE_SUB(NOW(), INTERVAL 7 DAY) LIMIT 100",test_users,"user_id, username, email, created_at","DEV_TEST_001, 테스트계정, devtest@test.com, NOW()"
+DevelopDB,dev_admin,DevPass123,dev.db.com,3306,mariadb,개발DB,"SELECT * FROM users WHERE created_at > DATE_SUB(NOW(), INTERVAL 7 DAY) LIMIT 100",test_users,"user_id, username, email, created_at","DEV_TEST_001, 테스트계정, devtest@test.com, NOW()"
 ```
 
 **특징:**
@@ -533,7 +540,7 @@ CREATE TABLE permission_test (
     created_at DATETIME DEFAULT GETDATE()
 );
 
--- MySQL
+-- MySQL / MariaDB
 CREATE TABLE permission_test (
     test_id VARCHAR(50) PRIMARY KEY,
     test_name VARCHAR(100),
@@ -599,6 +606,330 @@ print(failed[['server_ip', 'db_name', 'error_msg']])
 print(f"\nSELECT 권한: {df['perm_select'].value_counts()}")
 print(f"INSERT 권한: {df['perm_insert'].value_counts()}")
 print(f"DELETE 권한: {df['perm_delete'].value_counts()}")
+```
+
+---
+
+## 데이터베이스 SQL 실행 기능
+
+### 개요
+
+Database SQL Execution 기능을 사용하면 파라미터화된 SQL 쿼리를 여러 조건으로 반복 실행하고 결과를 CSV 파일로 저장할 수 있습니다.
+
+### 지원하는 데이터베이스
+
+- **Microsoft SQL Server** (mssql)
+- **MySQL** (mysql)
+- **MariaDB** (mariadb) ⭐ v1.2.0+
+- **PostgreSQL** (postgresql)
+- **Oracle** (oracle)
+
+### 파일 구조
+
+```
+request_resources/
+└── sql_files/
+    ├── SQL_001.sql      ← SQL 쿼리 파일
+    ├── SQL_001.csv      ← 파라미터 파일 (CSV)
+    ├── SQL_001.json     ← 파라미터 파일 (JSON)
+    ├── SQL_002.sql
+    └── SQL_002.json
+
+results/
+└── sql_files/
+    ├── SQL_001_sampleDB_20251008_143025.csv   ← 실행 결과
+    └── SQL_002_mysqlDB_20251008_150130.csv
+```
+
+**참고:** CSV 또는 JSON 중 하나만 있어도 됩니다. 둘 다 있으면 JSON이 우선 사용됩니다.
+
+### SQL 파일 작성 (.sql)
+
+파라미터를 `@변수명` 형식으로 작성합니다:
+
+```sql
+-- SQL_001.sql 예시 (단일 쿼리)
+SELECT p.*
+FROM product p
+WHERE price >= @min_price
+  AND price <= @max_price;
+```
+
+### 파라미터 파일 작성 (.csv 또는 .json)
+
+SQL 파일과 같은 이름의 CSV 또는 JSON 파일에 파라미터 값을 작성합니다.
+
+#### CSV 형식:
+
+```csv
+min_price,max_price
+1000000,2000000
+1000,100000
+5000,50000
+```
+
+**규칙:**
+- 첫 줄은 헤더 (파라미터명)
+- 각 행이 하나의 실행 단위
+- SQL의 `@변수명`과 CSV 헤더명이 일치해야 함
+
+#### JSON 형식:
+
+**배열 형식 (여러 조건):**
+```json
+[
+    {
+        "min_price": 1000000,
+        "max_price": 2000000
+    },
+    {
+        "min_price": 1000,
+        "max_price": 100000
+    },
+    {
+        "min_price": 5000,
+        "max_price": 50000
+    }
+]
+```
+
+**단일 객체 형식 (한 가지 조건):**
+```json
+{
+    "min_price": 1000000,
+    "max_price": 2000000
+}
+```
+
+**규칙:**
+- 배열 형식 또는 단일 객체 형식 지원
+- SQL의 `@변수명`과 JSON 키(key)가 일치해야 함
+- JSON과 CSV가 모두 있으면 JSON이 우선 사용됨
+
+### 실행 방법
+
+1. 메인 메뉴에서 `3. Database SQL Execution` 선택
+2. 실행할 SQL 파일 선택
+3. 접속할 데이터베이스 선택
+4. 자동 실행
+
+### 결과 CSV 파일 형식
+
+결과 파일은 `results/sql_files/` 폴더에 생성되며 다음 정보를 포함합니다:
+
+#### 1. 데이터베이스 정보 (상단)
+```csv
+Database Information
+DB Name,sampleDB
+DB Type,mssql
+Server,localhost:1433
+Database,SampleDB
+Execution Time,2025-10-08T14:30:25.123Z
+```
+
+#### 2. 조건별 결과 (구분되어 표시)
+```csv
+Parameters - Set 1
+min_price,1000000
+max_price,2000000
+Result Count,5
+
+product_id,product_name,price,category
+101,Product A,1500000,Electronics
+102,Product B,1800000,Electronics
+...
+
+==================================================
+
+Parameters - Set 2
+min_price,1000
+max_price,100000
+Result Count,3
+
+product_id,product_name,price,category
+201,Product X,50000,Books
+...
+```
+
+### 파일명 형식
+
+결과 파일명: `{SQL파일명}_{DB명}_{실행시간}.csv`
+
+예시:
+- `SQL_001_sampleDB_20251008_143025.csv`
+- `상품조회_mysqlDB_20251008_150130.csv`
+- `재고현황_mariaDB_20251008_153045.csv`
+
+### 사용 예시
+
+#### 예시 1: 가격대별 상품 조회
+
+**SQL_product_search.sql:**
+```sql
+SELECT 
+    product_id,
+    product_name,
+    price,
+    category
+FROM products
+WHERE price BETWEEN @min_price AND @max_price
+ORDER BY price DESC;
+```
+
+**SQL_product_search.csv:**
+```csv
+min_price,max_price
+0,10000
+10000,50000
+50000,100000
+100000,1000000
+```
+
+**또는 SQL_product_search.json:**
+```json
+[
+    { "min_price": 0, "max_price": 10000 },
+    { "min_price": 10000, "max_price": 50000 },
+    { "min_price": 50000, "max_price": 100000 },
+    { "min_price": 100000, "max_price": 1000000 }
+]
+```
+
+#### 예시 2: 기간별 주문 조회
+
+**SQL_order_search.sql:**
+```sql
+SELECT 
+    order_id,
+    customer_name,
+    order_date,
+    total_amount
+FROM orders
+WHERE order_date >= @start_date
+  AND order_date < @end_date
+ORDER BY order_date;
+```
+
+**SQL_order_search.csv:**
+```csv
+start_date,end_date
+2025-01-01,2025-02-01
+2025-02-01,2025-03-01
+2025-03-01,2025-04-01
+```
+
+**또는 SQL_order_search.json:**
+```json
+[
+    { "start_date": "2025-01-01", "end_date": "2025-02-01" },
+    { "start_date": "2025-02-01", "end_date": "2025-03-01" },
+    { "start_date": "2025-03-01", "end_date": "2025-04-01" }
+]
+```
+
+#### 예시 3: 다중 파라미터 복합 조회
+
+**SQL_complex_search.sql:**
+```sql
+SELECT 
+    c.customer_name,
+    o.order_id,
+    o.order_date,
+    o.total_amount
+FROM customers c
+JOIN orders o ON c.customer_id = o.customer_id
+WHERE c.region = @region
+  AND o.order_date >= @start_date
+  AND o.total_amount >= @min_amount
+ORDER BY o.order_date DESC;
+```
+
+**SQL_complex_search.csv:**
+```csv
+region,start_date,min_amount
+서울,2025-01-01,100000
+부산,2025-01-01,100000
+대구,2025-01-01,100000
+```
+
+**또는 SQL_complex_search.json:**
+```json
+[
+    { "region": "서울", "start_date": "2025-01-01", "min_amount": 100000 },
+    { "region": "부산", "start_date": "2025-01-01", "min_amount": 100000 },
+    { "region": "대구", "start_date": "2025-01-01", "min_amount": 100000 }
+]
+```
+
+### config/dbinfo.json 설정
+
+SQL Executor는 `config/dbinfo.json`에 정의된 데이터베이스를 사용합니다:
+
+```json
+{
+  "sampleDB": {
+    "type": "mssql",
+    "user": "sample",
+    "password": "sample1234!",
+    "server": "localhost",
+    "database": "SampleDB",
+    "port": 1433,
+    "options": { "encrypt": true, "trustServerCertificate": true }
+  },
+  "mysqlDB": {
+    "type": "mysql",
+    "user": "root",
+    "password": "password",
+    "server": "localhost",
+    "database": "mydb",
+    "port": 3306,
+    "options": {
+      "ssl": false,
+      "connectionTimeout": 30000
+    }
+  },
+  "mariaDB": {
+    "type": "mariadb",
+    "user": "root",
+    "password": "password",
+    "server": "localhost",
+    "database": "mariadb_testdb",
+    "port": 3306,
+    "options": {
+      "ssl": false,
+      "connectionTimeout": 30000
+    }
+  }
+}
+```
+
+### 주의사항
+
+⚠️ **대용량 결과 처리**
+- 결과가 너무 많으면 CSV 파일이 매우 커질 수 있음
+- LIMIT 절을 사용하여 결과 수 제한 권장
+
+⚠️ **파라미터명 일치**
+- SQL의 `@변수명`과 CSV 헤더명이 정확히 일치해야 함
+- 대소문자 구분
+
+⚠️ **SQL Injection 방지**
+- 파라미터는 자동으로 바인딩되어 안전함
+- CSV 파일 관리에 주의
+
+⚠️ **한글 파일명**
+- SQL 파일명에 한글 사용 가능
+- 예: `상품조회.sql`, `상품조회.csv`
+
+### 로그 파일
+
+SQL 실행 중 JSON 로그도 생성됩니다:
+
+```
+log/
+└── 20251008/
+    ├── SQL_001_143025.log
+    └── SQL_001_143026.log
 ```
 
 ---
