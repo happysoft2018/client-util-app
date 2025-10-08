@@ -1,5 +1,6 @@
-SELECT * 
-FROM my_pets
-WHERE name = @name
-AND kindof = @kindof 
-AND age = @age 
+
+SELECT p.*
+FROM products p
+WHERE price >= @min_price
+and price <= @max_price;
+
