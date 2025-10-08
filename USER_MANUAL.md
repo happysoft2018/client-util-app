@@ -107,7 +107,7 @@ db_name,username,password,server_ip,port,db_type,db_title
 | `password` | Password | `password123` |
 | `server_ip` | Server IP or hostname | `localhost`, `192.168.1.100` |
 | `port` | Port number | `1433`, `3306`, `5432`, `1521` |
-| `db_type` | DB type | `mssql`, `mysql`, `postgresql`, `oracle` |
+| `db_type` | DB type | `mssql`, `mysql`, `mariadb`, `postgresql`, `oracle` |
 | `db_title` | Description (optional) | `Production Database` |
 
 ### Permission Check Columns (Optional)
@@ -133,6 +133,7 @@ select_sql,crud_test_table,crud_test_columns,crud_test_values
 db_name,username,password,server_ip,port,db_type,db_title
 ProductionDB,readonly,ReadPass123,prod.company.com,1433,mssql,Production Database
 DevelopDB,devuser,DevPass123,dev.company.com,3306,mysql,Development Database
+MariaTestDB,devuser,DevPass123,dev.company.com,3306,mariadb,MariaDB Test Database
 TestDB,testuser,TestPass123,test.company.com,5432,postgresql,Test Database
 ```
 
@@ -152,6 +153,12 @@ SampleDB,sa,Pass123,localhost,1433,mssql,Sample DB,"SELECT TOP 5 CustomerName FR
 ```csv
 db_name,username,password,server_ip,port,db_type,db_title,select_sql,crud_test_table,crud_test_columns,crud_test_values
 TestDB,root,Pass123,localhost,3306,mysql,Test DB,"SELECT * FROM users WHERE status = 'active' LIMIT 10",users,"user_id, username, email, status","test001, testuser, test@test.com, active"
+```
+
+**MariaDB:**
+```csv
+db_name,username,password,server_ip,port,db_type,db_title,select_sql,crud_test_table,crud_test_columns,crud_test_values
+MariaTestDB,root,Pass123,localhost,3306,mariadb,MariaDB Test,"SELECT * FROM products WHERE price > 1000 LIMIT 10",products,"product_id, product_name, price","test001, Test Product, 5000"
 ```
 
 **PostgreSQL:**
@@ -480,7 +487,7 @@ ProductionDB,readonly_monitor,SecurePass123,prod.db.com,1433,mssql,Production DB
 
 ```csv
 db_name,username,password,server_ip,port,db_type,db_title,select_sql,crud_test_table,crud_test_columns,crud_test_values
-DevelopDB,dev_admin,DevPass123,dev.db.com,3306,mysql,Development DB,"SELECT * FROM users WHERE created_at > DATE_SUB(NOW(), INTERVAL 7 DAY) LIMIT 100",test_users,"user_id, username, email, created_at","DEV_TEST_001, Test Account, devtest@test.com, NOW()"
+DevelopDB,dev_admin,DevPass123,dev.db.com,3306,mariadb,Development DB,"SELECT * FROM users WHERE created_at > DATE_SUB(NOW(), INTERVAL 7 DAY) LIMIT 100",test_users,"user_id, username, email, created_at","DEV_TEST_001, Test Account, devtest@test.com, NOW()"
 ```
 
 **Features:**
@@ -488,6 +495,330 @@ DevelopDB,dev_admin,DevPass123,dev.db.com,3306,mysql,Development DB,"SELECT * FR
 - ✅ Similar to actual production queries
 - ✅ Check all permissions
 - ✅ Dedicated test table
+
+---
+
+## Database SQL Execution Feature
+
+### Overview
+
+The Database SQL Execution feature allows you to repeatedly execute parameterized SQL queries with multiple conditions and save results to CSV files.
+
+### Supported Databases
+
+- **Microsoft SQL Server** (mssql)
+- **MySQL** (mysql)
+- **MariaDB** (mariadb) ⭐ v1.2.0+
+- **PostgreSQL** (postgresql)
+- **Oracle** (oracle)
+
+### File Structure
+
+```
+request_resources/
+└── sql_files/
+    ├── SQL_001.sql      ← SQL query file
+    ├── SQL_001.csv      ← Parameter file (CSV)
+    ├── SQL_001.json     ← Parameter file (JSON)
+    ├── SQL_002.sql
+    └── SQL_002.json
+
+results/
+└── sql_files/
+    ├── SQL_001_sampleDB_20251008_143025.csv   ← Execution results
+    └── SQL_002_mysqlDB_20251008_150130.csv
+```
+
+**Note:** Only one of CSV or JSON is required. If both exist, JSON takes priority.
+
+### Writing SQL Files (.sql)
+
+Write parameters in `@variable_name` format:
+
+```sql
+-- SQL_001.sql example (single query)
+SELECT p.*
+FROM product p
+WHERE price >= @min_price
+  AND price <= @max_price;
+```
+
+### Writing Parameter Files (.csv or .json)
+
+Write parameter values in a CSV or JSON file with the same name as the SQL file.
+
+#### CSV Format:
+
+```csv
+min_price,max_price
+1000000,2000000
+1000,100000
+5000,50000
+```
+
+**Rules:**
+- First line is the header (parameter names)
+- Each row is one execution unit
+- CSV header names must match `@variable_name` in SQL
+
+#### JSON Format:
+
+**Array Format (multiple conditions):**
+```json
+[
+    {
+        "min_price": 1000000,
+        "max_price": 2000000
+    },
+    {
+        "min_price": 1000,
+        "max_price": 100000
+    },
+    {
+        "min_price": 5000,
+        "max_price": 50000
+    }
+]
+```
+
+**Single Object Format (one condition):**
+```json
+{
+    "min_price": 1000000,
+    "max_price": 2000000
+}
+```
+
+**Rules:**
+- Supports both array format and single object format
+- JSON keys must match `@variable_name` in SQL
+- If both JSON and CSV exist, JSON takes priority
+
+### Execution Method
+
+1. Select `3. Database SQL Execution` from the main menu
+2. Select the SQL file to execute
+3. Select the database to connect to
+4. Automatic execution
+
+### Result CSV File Format
+
+Result files are created in the `results/sql_files/` folder and include the following information:
+
+#### 1. Database Information (Top)
+```csv
+Database Information
+DB Name,sampleDB
+DB Type,mssql
+Server,localhost:1433
+Database,SampleDB
+Execution Time,2025-10-08T14:30:25.123Z
+```
+
+#### 2. Results by Condition (Separated)
+```csv
+Parameters - Set 1
+min_price,1000000
+max_price,2000000
+Result Count,5
+
+product_id,product_name,price,category
+101,Product A,1500000,Electronics
+102,Product B,1800000,Electronics
+...
+
+==================================================
+
+Parameters - Set 2
+min_price,1000
+max_price,100000
+Result Count,3
+
+product_id,product_name,price,category
+201,Product X,50000,Books
+...
+```
+
+### File Naming Format
+
+Result filename: `{SQL_filename}_{DB_name}_{execution_time}.csv`
+
+Examples:
+- `SQL_001_sampleDB_20251008_143025.csv`
+- `product_search_mysqlDB_20251008_150130.csv`
+- `inventory_status_mariaDB_20251008_153045.csv`
+
+### Usage Examples
+
+#### Example 1: Product Search by Price Range
+
+**SQL_product_search.sql:**
+```sql
+SELECT 
+    product_id,
+    product_name,
+    price,
+    category
+FROM products
+WHERE price BETWEEN @min_price AND @max_price
+ORDER BY price DESC;
+```
+
+**SQL_product_search.csv:**
+```csv
+min_price,max_price
+0,10000
+10000,50000
+50000,100000
+100000,1000000
+```
+
+**Or SQL_product_search.json:**
+```json
+[
+    { "min_price": 0, "max_price": 10000 },
+    { "min_price": 10000, "max_price": 50000 },
+    { "min_price": 50000, "max_price": 100000 },
+    { "min_price": 100000, "max_price": 1000000 }
+]
+```
+
+#### Example 2: Order Search by Period
+
+**SQL_order_search.sql:**
+```sql
+SELECT 
+    order_id,
+    customer_name,
+    order_date,
+    total_amount
+FROM orders
+WHERE order_date >= @start_date
+  AND order_date < @end_date
+ORDER BY order_date;
+```
+
+**SQL_order_search.csv:**
+```csv
+start_date,end_date
+2025-01-01,2025-02-01
+2025-02-01,2025-03-01
+2025-03-01,2025-04-01
+```
+
+**Or SQL_order_search.json:**
+```json
+[
+    { "start_date": "2025-01-01", "end_date": "2025-02-01" },
+    { "start_date": "2025-02-01", "end_date": "2025-03-01" },
+    { "start_date": "2025-03-01", "end_date": "2025-04-01" }
+]
+```
+
+#### Example 3: Complex Query with Multiple Parameters
+
+**SQL_complex_search.sql:**
+```sql
+SELECT 
+    c.customer_name,
+    o.order_id,
+    o.order_date,
+    o.total_amount
+FROM customers c
+JOIN orders o ON c.customer_id = o.customer_id
+WHERE c.region = @region
+  AND o.order_date >= @start_date
+  AND o.total_amount >= @min_amount
+ORDER BY o.order_date DESC;
+```
+
+**SQL_complex_search.csv:**
+```csv
+region,start_date,min_amount
+Seoul,2025-01-01,100000
+Busan,2025-01-01,100000
+Daegu,2025-01-01,100000
+```
+
+**Or SQL_complex_search.json:**
+```json
+[
+    { "region": "Seoul", "start_date": "2025-01-01", "min_amount": 100000 },
+    { "region": "Busan", "start_date": "2025-01-01", "min_amount": 100000 },
+    { "region": "Daegu", "start_date": "2025-01-01", "min_amount": 100000 }
+]
+```
+
+### config/dbinfo.json Configuration
+
+SQL Executor uses databases defined in `config/dbinfo.json`:
+
+```json
+{
+  "sampleDB": {
+    "type": "mssql",
+    "user": "sample",
+    "password": "sample1234!",
+    "server": "localhost",
+    "database": "SampleDB",
+    "port": 1433,
+    "options": { "encrypt": true, "trustServerCertificate": true }
+  },
+  "mysqlDB": {
+    "type": "mysql",
+    "user": "root",
+    "password": "password",
+    "server": "localhost",
+    "database": "mydb",
+    "port": 3306,
+    "options": {
+      "ssl": false,
+      "connectionTimeout": 30000
+    }
+  },
+  "mariaDB": {
+    "type": "mariadb",
+    "user": "root",
+    "password": "password",
+    "server": "localhost",
+    "database": "mariadb_testdb",
+    "port": 3306,
+    "options": {
+      "ssl": false,
+      "connectionTimeout": 30000
+    }
+  }
+}
+```
+
+### Precautions
+
+⚠️ **Large Result Processing**
+- CSV files can become very large if there are too many results
+- Recommend using LIMIT clause to restrict result count
+
+⚠️ **Parameter Name Matching**
+- SQL `@variable_name` must exactly match CSV header names
+- Case sensitive
+
+⚠️ **SQL Injection Prevention**
+- Parameters are automatically bound for safety
+- Be careful with CSV file management
+
+⚠️ **Korean Filenames**
+- Korean characters can be used in SQL filenames
+- Example: `상품조회.sql`, `상품조회.csv`
+
+### Log Files
+
+JSON logs are also generated during SQL execution:
+
+```
+log/
+└── 20251008/
+    ├── SQL_001_143025.log
+    └── SQL_001_143026.log
+```
 
 ---
 

@@ -39,7 +39,19 @@
     "user": "root",
     "password": "password",
     "server": "localhost",
-    "database": "testdb",
+    "database": "mydb",
+    "port": 3306,
+    "options": {
+      "ssl": false,
+      "connectionTimeout": 30000
+    }
+  },
+  "mariaDB": {
+    "type": "mariadb",
+    "user": "sahara",
+    "password": "1111",
+    "server": "localhost",
+    "database": "mydb",
     "port": 3306,
     "options": {
       "ssl": false,

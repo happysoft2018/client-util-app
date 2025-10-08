@@ -60,13 +60,14 @@ class DBExecutor {
     return { remoteConnection };
   }
 
-  async executeSql(remoteConnection, sqlName, query, rows) {
+  async executeSql(remoteConnection, sqlName, query, rows, selectedDbName, dbConfig, dbType) {
     const pcIp = this.getLocalIp();
     const startTime = Date.now();
     let totalCount = 0;
     let errorMsg = '';
     let resultCode = 'Success';
     let sqlId = null;
+    let groupedResults = []; // Array to store results grouped by parameters
 
     // Logging functionality removed - all DB operations now use config/dbinfo.json
 
@@ -81,6 +82,12 @@ class DBExecutor {
       fs.mkdirSync(logDir, { recursive: true });
     }
 
+    // Create results directory
+    const resultsDir = path.join(__dirname, '../../results/sql_files');
+    if (!fs.existsSync(resultsDir)) {
+      fs.mkdirSync(resultsDir, { recursive: true });
+    }
+
     console.log(`\n📊 Executing SQL with ${rows.length} parameters...`);
     console.log('-'.repeat(50));
 
@@ -89,6 +96,13 @@ class DBExecutor {
       try {
         const result = await remoteConnection.executeQuery(query, row);
         totalCount += result.rowCount;
+
+        // Store results grouped by parameters
+        groupedResults.push({
+          parameters: row,
+          results: result.rows || [],
+          rowCount: result.rowCount
+        });
 
         // Save result to log file
         const timestampNow = new Date();
@@ -107,12 +121,108 @@ class DBExecutor {
         errorMsg += err.message + '\n';
         resultCode = 'Failed';
         console.error(`❌ Error: ${JSON.stringify(row)} - ${err.message}`);
+        
+        // Store error result
+        groupedResults.push({
+          parameters: row,
+          results: [],
+          rowCount: 0,
+          error: err.message
+        });
       }
     }
 
     // Execution end time and processing duration
     const endTime = Date.now();
     const elapsed = ((endTime - startTime) / 1000).toFixed(2);
+
+    // Save results to CSV file
+    if (groupedResults.length > 0) {
+      try {
+        const timestampNow = new Date();
+        const timestamp = timestampNow.getFullYear() + 
+                         String(timestampNow.getMonth() + 1).padStart(2, '0') + 
+                         String(timestampNow.getDate()).padStart(2, '0') + '_' +
+                         String(timestampNow.getHours()).padStart(2, '0') + 
+                         String(timestampNow.getMinutes()).padStart(2, '0') + 
+                         String(timestampNow.getSeconds()).padStart(2, '0');
+        const csvFile = path.join(resultsDir, `${sqlName}_${selectedDbName}_${timestamp}.csv`);
+        
+        let csvContent = '';
+        
+        // Add database information header
+        csvContent += `Database Information\n`;
+        csvContent += `DB Name,${selectedDbName}\n`;
+        csvContent += `DB Type,${dbType}\n`;
+        csvContent += `Server,${dbConfig.server}:${dbConfig.port}\n`;
+        csvContent += `Database,${dbConfig.database}\n`;
+        csvContent += `Execution Time,${new Date().toISOString()}\n`;
+        csvContent += `\n`;
+        
+        // Process each parameter group
+        groupedResults.forEach((group, groupIndex) => {
+          // Add parameter section header
+          csvContent += `Parameters - Set ${groupIndex + 1}\n`;
+          
+          // Add parameter details
+          const paramKeys = Object.keys(group.parameters);
+          paramKeys.forEach(key => {
+            csvContent += `${key},${group.parameters[key]}\n`;
+          });
+          
+          // Check if there's an error
+          if (group.error) {
+            csvContent += `Error,${group.error}\n`;
+            csvContent += `\n`;
+            return;
+          }
+          
+          // Add result count
+          csvContent += `Result Count,${group.rowCount}\n`;
+          csvContent += `\n`;
+          
+          // Add results if any
+          if (group.results.length > 0) {
+            // Get all column names from results
+            const resultColumns = [...new Set(group.results.flatMap(obj => Object.keys(obj)))];
+            
+            // Create CSV header for results
+            csvContent += resultColumns.join(',') + '\n';
+            
+            // Create CSV rows for results
+            group.results.forEach(resultRow => {
+              const rowData = resultColumns.map(col => {
+                const value = resultRow[col];
+                // Handle null/undefined
+                if (value === null || value === undefined) return '';
+                // Escape commas and quotes in values
+                const stringValue = String(value);
+                if (stringValue.includes(',') || stringValue.includes('"') || stringValue.includes('\n')) {
+                  return `"${stringValue.replace(/"/g, '""')}"`;
+                }
+                return stringValue;
+              }).join(',');
+              csvContent += rowData + '\n';
+            });
+          } else {
+            csvContent += `No results returned\n`;
+          }
+          
+          // Add separator between groups
+          csvContent += `\n`;
+          csvContent += `${'='.repeat(50)}\n`;
+          csvContent += `\n`;
+        });
+        
+        // Write CSV file
+        fs.writeFileSync(csvFile, csvContent, 'utf-8');
+        console.log(`\n📄 CSV file saved: ${csvFile}`);
+        console.log(`   Total parameter sets: ${groupedResults.length}`);
+        console.log(`   Total result rows: ${totalCount}`);
+      } catch (csvError) {
+        console.error(`⚠️  Warning: Failed to save CSV file: ${csvError.message}`);
+      }
+    }
 
     // Logging functionality removed - results are shown in console and log files
 
@@ -132,18 +242,27 @@ class DBExecutor {
 
     const sqlFilePath = path.join(this.sqlFilesDir, `${sqlName}.sql`);
     const csvFilePath = path.join(this.sqlFilesDir, `${sqlName}.csv`);
+    const jsonFilePath = path.join(this.sqlFilesDir, `${sqlName}.json`);
 
     // Check file existence
     if (!fs.existsSync(sqlFilePath)) {
       throw new Error(`SQL file does not exist: ${sqlFilePath}`);
     }
     
-    if (!fs.existsSync(csvFilePath)) {
-      throw new Error(`Parameter CSV file does not exist: ${csvFilePath}`);
+    // Check if either CSV or JSON file exists
+    const hasCsv = fs.existsSync(csvFilePath);
+    const hasJson = fs.existsSync(jsonFilePath);
+    
+    if (!hasCsv && !hasJson) {
+      throw new Error(`Parameter file does not exist. Need either ${csvFilePath} or ${jsonFilePath}`);
     }
+    
+    // Determine which parameter file to use (prefer JSON if both exist)
+    const paramFilePath = hasJson ? jsonFilePath : csvFilePath;
+    const paramFileType = hasJson ? 'JSON' : 'CSV';
 
     console.log(`\n📄 SQL file: ${sqlFilePath}`);
-    console.log(`📄 Parameter file: ${csvFilePath}`);
+    console.log(`📄 Parameter file (${paramFileType}): ${paramFilePath}`);
 
     // Read SQL file
     const query = fs.readFileSync(sqlFilePath, 'utf-8');
@@ -186,20 +305,37 @@ class DBExecutor {
     console.log(`   Account: ${dbConfig.user}`);
 
     try {
-      // Parse CSV file
-      const rows = [];
-      await new Promise((resolve, reject) => {
-        fs.createReadStream(csvFilePath)
-          .pipe(csv())
-          .on('data', (row) => {
-            rows.push(row);
-          })
-          .on('end', resolve)
-          .on('error', reject);
-      });
+      // Parse parameter file (CSV or JSON)
+      let rows = [];
+      
+      if (paramFileType === 'JSON') {
+        // Parse JSON file
+        const jsonContent = fs.readFileSync(paramFilePath, 'utf-8');
+        const jsonData = JSON.parse(jsonContent);
+        
+        // Support both single object and array of objects
+        if (Array.isArray(jsonData)) {
+          rows = jsonData;
+        } else if (typeof jsonData === 'object' && jsonData !== null) {
+          rows = [jsonData];
+        } else {
+          throw new Error('JSON file must contain an object or an array of objects.');
+        }
+      } else {
+        // Parse CSV file
+        await new Promise((resolve, reject) => {
+          fs.createReadStream(paramFilePath)
+            .pipe(csv())
+            .on('data', (row) => {
+              rows.push(row);
+            })
+            .on('end', resolve)
+            .on('error', reject);
+        });
+      }
 
       if (rows.length === 0) {
-        throw new Error('CSV file is empty.');
+        throw new Error(`Parameter file is empty: ${paramFilePath}`);
       }
 
       console.log(`\n📋 Parameter Data (${rows.length} entries):`);
@@ -208,7 +344,7 @@ class DBExecutor {
       });
 
       // Execute SQL
-      const result = await this.executeSql(remoteConnection, sqlName, query, rows);
+      const result = await this.executeSql(remoteConnection, sqlName, query, rows, selectedDbName, dbConfig, dbType);
       
       console.log('\n🎉 All tasks completed successfully!');
       
