@@ -1,5 +1,65 @@
 # Changelog
 
+## [1.3.0] - 2025-10-08
+
+### 🎯 Major Changes
+
+#### Database SQL Executor Major Improvements
+- **CSV Result File Generation**: Automatically save SQL execution results to structured CSV files
+  - Location: `results/sql_files/`
+  - Filename format: `{SQL_name}_{DB_name}_{timestamp}.csv`
+  - Example: `SQL_001_sampleDB_20251008_143025.csv`
+
+- **Result File Structure**:
+  - **Database Info Header**: Display DB name, type, server, execution time and other metadata
+  - **Condition-based Grouping**: Clearly separate results for each parameter set
+  - **Parameter Information**: Show parameter values for each execution condition
+  - **Result Count**: Display number of result rows for each condition
+
+- **Preprocessor Directive Introduction**: Specify database connection in SQL files
+  - Format: `#DATABASE dbname` or `#DB dbname`
+  - Directive lines are automatically removed before execution (DB engine compatibility)
+  - If not specified, can be selected from CLI
+
+#### Parameter File Extension
+- **JSON File Support**: Support JSON format parameter files alongside CSV
+  - Array format: `[{...}, {...}]` (multiple conditions)
+  - Single object: `{...}` (one condition)
+  - JSON takes priority if both JSON and CSV exist
+
+#### Database Support Expansion
+- **MariaDB Added**: Support MariaDB using MySQL-compatible driver
+  - Added mariadb type to DatabaseFactory
+  - Added example to config/dbinfo.json
+  - Updated user manuals
+
+### 🔧 Technical Improvements
+
+#### DBExecutor Enhancements
+- **Unified Parameter Parsing**: Can process both CSV and JSON files
+- **DB Info Propagation**: Include DB metadata in execution results
+- **Preprocessor Parsing**: Logic for extracting and removing SQL directives
+
+#### User Experience Improvements
+- **Automatic DB Selection**: Auto-select when DB is specified in SQL file
+- **Structured Output**: CSV with clearly separated parameters and results
+- **Error Handling**: Display available DB list when invalid DB name is specified
+
+### 🐛 Bug Fixes
+- **CSV Parameter Format**: Fixed JSON array format to standard CSV format
+  - Before: `[{min_price:1000000, max_price:2000000}]`
+  - After: `min_price,max_price\n1000000,2000000`
+
+### 📚 Documentation Updates
+- **USER_MANUAL_KR.md / USER_MANUAL.md**:
+  - Greatly expanded Database SQL Execution section
+  - Added JSON parameter file writing guide
+  - Added #DATABASE directive usage
+  - Added 3 usage examples (product search by price range, order search by period, complex query)
+  - Added MariaDB-related content
+
+---
+
 ## [1.2.0] - 2025-01-07
 
 ### 🎯 Major Changes
