@@ -13,7 +13,7 @@ class DatabaseFactory {
         return new MSSQLConnection(config);
       
       case 'mysql':
-      case 'mariaDB':
+      case 'mariadb':
         return new MySQLConnection(config);
       
       case 'postgresql':
@@ -32,6 +32,7 @@ class DatabaseFactory {
     return [
       { type: 'mssql', name: 'Microsoft SQL Server', port: 1433 },
       { type: 'mysql', name: 'MySQL', port: 3306 },
+      { type: 'mariadb', name: 'MariaDB', port: 3306 },
       { type: 'postgresql', name: 'PostgreSQL', port: 5432 },
       { type: 'oracle', name: 'Oracle Database', port: 1521 }
     ];
