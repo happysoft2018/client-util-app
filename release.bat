@@ -11,7 +11,7 @@ echo.
 
 set "VERSION=1.3.0"
 set "RELEASE_DIR=release"
-set "PACKAGE_NAME=client-util-app-v%VERSION%"
+set "PACKAGE_NAME=ClientUtilApp-v%VERSION%"
 set "RELEASE_DIR=%RELEASE_DIR%\%PACKAGE_NAME%"
 set "TIMESTAMP=%date:~0,4%%date:~5,2%%date:~8,2%_%time:~0,2%%time:~3,2%%time:~6,2%"
 set "TIMESTAMP=%TIMESTAMP: =0%"
