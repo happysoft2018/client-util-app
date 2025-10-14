@@ -69,11 +69,11 @@ class NodeUtilApp {
     console.log('3. Database SQL Execution');
     console.log('4. Configuration Management');
     console.log('5. Run All Checks (Batch Processing)');
-    console.log('6. Exit');
+    console.log('0. Exit');
     console.log('------------------------------------------------');
     console.log();
 
-    const choice = await this.askQuestion('Select function to execute (1-6): ');
+    const choice = await this.askQuestion('Select function to execute (0-5): ');
     
     switch(choice.trim()) {
       case '1':
@@ -91,7 +91,7 @@ class NodeUtilApp {
       case '5':
         await this.runAllChecks();
         break;
-      case '6':
+      case '0':
         await this.exitApp();
         break;
       default:
