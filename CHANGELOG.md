@@ -1,6 +1,6 @@
 # Changelog
 
-## [1.3.1] - 2025-01-XX
+## [1.3.1] - 2025-10-14
 
 ### 🔧 Technical Improvements
 

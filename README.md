@@ -401,16 +401,3 @@ If you're migrating from the previous separate utility scripts:
 3. Configuration management has been centralized for better user experience
 4. Multi-database support has been added beyond just MSSQL
 
-## 📞 Support
-
-For issues or questions:
-1. Check the configuration files (`config/dbinfo.json`, `.env`)
-2. Verify Node.js and dependency package installation
-3. Ensure database servers are accessible from your network
-4. Check CSV file formats and required columns
-
----
-
-**Version**: 1.0.0  
-**Last Updated**: 2024  
-**Compatibility**: Node.js 14.0.0+
