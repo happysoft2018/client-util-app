@@ -1,5 +1,30 @@
 # Changelog
 
+## [1.3.1] - 2025-01-XX
+
+### 🔧 Technical Improvements
+
+#### Improved pkg Environment File Path Handling
+- **Added APP_ROOT constant**: Use correct file paths in both pkg and development environments
+  - `app.js`: Added APP_ROOT constant and changed __dirname → APP_ROOT
+  - `DBExecutor.js`: Modified sqlFilesDir path to use APP_ROOT
+  - `ConfigManager.js`: Modified dbConfigFile and resultsDir paths to use APP_ROOT
+
+#### Improved dbinfo.json Structure
+- **Removed dbs wrapper**: DB settings placed directly in root
+  - Before: `{"dbs": {"sampleDB": {...}}}`
+  - After: `{"sampleDB": {...}}`
+  - More concise structure for better readability
+
+#### Improved pkg Configuration
+- **Extended assets**: Include all JSON files in config directory
+- **Added documentation files**: Include USER_MANUAL, CHANGELOG, etc.
+- **Added app.js script**: Include app.js in pkg build
+
+### 🐛 Bug Fixes
+- **Fixed request_resources access error in exe**: Resolved by using APP_ROOT instead of __dirname in pkg environment
+- **Fixed config file access error in exe**: Use correct path in pkg environment
+
 ## [1.3.0] - 2025-10-08
 
 ### 🎯 Major Changes

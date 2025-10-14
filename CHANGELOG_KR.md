@@ -1,5 +1,30 @@
 # 변경 이력 (Changelog)
 
+## [1.3.1] - 2025-01-XX
+
+### 🔧 기술적 개선
+
+#### pkg 환경 파일 경로 처리 개선
+- **APP_ROOT 상수 추가**: pkg 환경과 개발 환경 모두에서 올바른 파일 경로 사용
+  - `app.js`: APP_ROOT 상수 추가 및 __dirname → APP_ROOT 변경
+  - `DBExecutor.js`: sqlFilesDir 경로를 APP_ROOT 사용하도록 수정
+  - `ConfigManager.js`: dbConfigFile 및 resultsDir 경로를 APP_ROOT 사용하도록 수정
+
+#### dbinfo.json 구조 개선
+- **dbs 래퍼 제거**: DB 설정을 직접 루트에 배치
+  - 변경 전: `{"dbs": {"sampleDB": {...}}}`
+  - 변경 후: `{"sampleDB": {...}}`
+  - 더 간결한 구조로 가독성 향상
+
+#### pkg 설정 개선
+- **assets 확장**: config 디렉토리의 모든 JSON 파일 포함
+- **문서 파일 추가**: USER_MANUAL, CHANGELOG 등 문서 파일 포함
+- **app.js 스크립트 추가**: pkg 빌드 시 app.js 포함
+
+### 🐛 버그 수정
+- **exe 파일에서 request_resources 접근 오류**: pkg 환경에서 __dirname 대신 APP_ROOT 사용으로 해결
+- **exe 파일에서 config 파일 접근 오류**: pkg 환경에서 올바른 경로 사용
+
 ## [1.3.0] - 2025-10-08
 
 ### 🎯 주요 변경사항
