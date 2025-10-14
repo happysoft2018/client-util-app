@@ -14,9 +14,9 @@ class DBConnectionChecker {
   }
 
   getResultsDir() {
-    // pkg 환경에서는 실행 파일과 같은 디렉토리에 results 폴더 생성
+    // pkg 환경에서는 현재 작업 디렉토리에 results 폴더 생성
     if (process.pkg) {
-      return path.join(path.dirname(process.execPath), 'results');
+      return path.join(process.cwd(), 'results');
     } else {
       return path.join(__dirname, '../../results');
     }

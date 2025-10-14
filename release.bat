@@ -5,11 +5,11 @@ setlocal
 echo.
 echo ========================================
 echo   Node.js Utility App release Script
-echo   Version 1.3.1
+echo   Version 1.3.2
 echo ========================================
 echo.
 
-set "VERSION=1.3.1"
+set "VERSION=1.3.2"
 set "RELEASE_DIR=release"
 set "PACKAGE_NAME=ClientUtilApp-v%VERSION%-win-x64"
 set "RELEASE_DIR=%RELEASE_DIR%\%PACKAGE_NAME%"

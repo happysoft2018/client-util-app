@@ -1,5 +1,23 @@
 # Changelog
 
+## [1.3.2] - 2025-10-14
+
+### 🐛 Bug Fixes
+
+#### Fixed Executable Path Issue
+- **Use Current Working Directory**: Use `process.cwd()` instead of `process.execPath` in pkg executable
+  - Executable now correctly recognizes `request_resources/` folder in current directory
+  - Executable now correctly recognizes `config/` folder in current directory
+  - Executable now saves results to `results/` folder in current directory
+  - Executable now saves logs to `log/` folder in current directory
+
+#### Affected Files
+- `app.js`: Changed APP_ROOT to use process.cwd()
+- `DBExecutor.js`: Changed APP_ROOT, logDir, resultsDir to be based on process.cwd()
+- `ConfigManager.js`: Changed APP_ROOT to use process.cwd()
+- `DBConnectionChecker.js`: Changed getResultsDir() to be based on process.cwd()
+- `TelnetChecker.js`: Changed getResultsDir() to be based on process.cwd()
+
 ## [1.3.1] - 2025-10-14
 
 ### 🔧 Technical Improvements

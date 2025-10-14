@@ -1,5 +1,23 @@
 # 변경 이력 (Changelog)
 
+## [1.3.2] - 2025-10-14
+
+### 🐛 버그 수정
+
+#### 실행파일 경로 문제 해결
+- **현재 작업 디렉토리 사용**: pkg 실행파일에서 `process.execPath` 대신 `process.cwd()` 사용
+  - 실행파일이 현재 디렉토리의 `request_resources/` 폴더를 올바르게 인식
+  - 실행파일이 현재 디렉토리의 `config/` 폴더를 올바르게 인식
+  - 실행파일이 현재 디렉토리의 `results/` 폴더에 결과 저장
+  - 실행파일이 현재 디렉토리의 `log/` 폴더에 로그 저장
+
+#### 영향받는 파일
+- `app.js`: APP_ROOT를 process.cwd()로 변경
+- `DBExecutor.js`: APP_ROOT, logDir, resultsDir을 process.cwd() 기반으로 변경
+- `ConfigManager.js`: APP_ROOT를 process.cwd()로 변경
+- `DBConnectionChecker.js`: getResultsDir()를 process.cwd() 기반으로 변경
+- `TelnetChecker.js`: getResultsDir()를 process.cwd() 기반으로 변경
+
 ## [1.3.1] - 2025-10-14
 
 ### 🔧 기술적 개선
