@@ -4,18 +4,15 @@ const os = require('os');
 const path = require('path');
 const DatabaseFactory = require('./database/DatabaseFactory');
 
+// pkg 실행 파일 경로 처리
+const APP_ROOT = process.pkg ? path.dirname(process.execPath) : path.join(__dirname, '../..');
+
 class DBExecutor {
   constructor(configManager, readlineInterface = null) {
     this.configManager = configManager;
     
     // Set sqlFilesDir based on environment (pkg or development)
-    if (process.pkg) {
-      // In pkg environment, use executable's directory
-      this.sqlFilesDir = path.join(path.dirname(process.execPath), 'request_resources', 'sql_files');
-    } else {
-      // In development, use project directory
-      this.sqlFilesDir = path.join(__dirname, '../../request_resources/sql_files');
-    }
+    this.sqlFilesDir = path.join(APP_ROOT, 'request_resources', 'sql_files');
     
     this.rl = readlineInterface || require('readline').createInterface({
       input: process.stdin,

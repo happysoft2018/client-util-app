@@ -13,13 +13,18 @@
   },
   "pkg": {
     "scripts": [
+      "app.js",
       "src/**/*.js"
     ],
     "assets": [
-      "config/dbinfo.json",
+      "config/**/*.json",
       "request_resources/**/*",
       "README.md",
-      "README_KR.md"
+      "README_KR.md",
+      "USER_MANUAL.md",
+      "USER_MANUAL_KR.md",
+      "CHANGELOG.md",
+      "CHANGELOG_KR.md"
     ],
     "targets": [
       "node18-win-x64"

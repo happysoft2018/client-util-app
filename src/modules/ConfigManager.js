@@ -2,9 +2,12 @@ const fs = require('fs');
 const path = require('path');
 const DatabaseFactory = require('./database/DatabaseFactory');
 
+// pkg 실행 파일 경로 처리
+const APP_ROOT = process.pkg ? path.dirname(process.execPath) : path.join(__dirname, '../..');
+
 class ConfigManager {
   constructor() {
-    this.dbConfigFile = path.join(__dirname, '../../config/dbinfo.json');
+    this.dbConfigFile = path.join(APP_ROOT, 'config', 'dbinfo.json');
     
     this.loadDbConfig();
   }
@@ -89,7 +92,7 @@ class ConfigManager {
     console.log(`  DB Config Status: ${fs.existsSync(this.dbConfigFile) ? '✅ Found' : '❌ Not found'}`);
     
     console.log('\n📁 Results Directory:');
-    const resultsDir = path.join(__dirname, '../../results');
+    const resultsDir = path.join(APP_ROOT, 'results');
     console.log(`  Results Dir: ${resultsDir}`);
     console.log(`  Results Status: ${fs.existsSync(resultsDir) ? '✅ Found' : '❌ Not found'}`);
   }

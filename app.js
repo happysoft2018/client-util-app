@@ -3,6 +3,9 @@ const fs = require('fs');
 const path = require('path');
 const os = require('os');
 
+// pkg 실행 파일 경로 처리
+const APP_ROOT = process.pkg ? path.dirname(process.execPath) : __dirname;
+
 // Module imports
 const DBConnectionChecker = require('./src/modules/DBConnectionChecker');
 const TelnetChecker = require('./src/modules/TelnetChecker');
@@ -27,14 +30,7 @@ class NodeUtilApp {
 
   ensureResultsDirectory() {
     try {
-      let resultsDir;
-      
-      // pkg 환경에서는 실행 파일과 같은 디렉토리에 results 폴더 생성
-      if (process.pkg) {
-        resultsDir = path.join(path.dirname(process.execPath), 'results');
-      } else {
-        resultsDir = path.join(__dirname, 'results');
-      }
+      const resultsDir = path.join(APP_ROOT, 'results');
       
       if (!fs.existsSync(resultsDir)) {
         fs.mkdirSync(resultsDir, { recursive: true });
@@ -112,7 +108,7 @@ class NodeUtilApp {
     
     try {
       // Get CSV file list from request_resources folder
-      const dbCheckDir = path.join(__dirname, 'request_resources');
+      const dbCheckDir = path.join(APP_ROOT, 'request_resources');
       
       if (!fs.existsSync(dbCheckDir)) {
         console.log('❌ DB check CSV directory not found: request_resources/');
@@ -190,7 +186,7 @@ class NodeUtilApp {
     
     try {
       // Get CSV file list from request_resources folder
-      const telnetCheckDir = path.join(__dirname, 'request_resources');
+      const telnetCheckDir = path.join(APP_ROOT, 'request_resources');
       
       if (!fs.existsSync(telnetCheckDir)) {
         console.log('❌ Telnet check CSV directory not found: request_resources/');
@@ -264,7 +260,7 @@ class NodeUtilApp {
     
     try {
       // Get SQL file list from request_resources/sql_files folder
-      const sqlFilesDir = path.join(__dirname, 'request_resources', 'sql_files');
+      const sqlFilesDir = path.join(APP_ROOT, 'request_resources', 'sql_files');
       
       if (!fs.existsSync(sqlFilesDir)) {
         console.log('❌ SQL files directory not found: request_resources/sql_files/');
