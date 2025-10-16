@@ -4,21 +4,15 @@ const os = require('os');
 const net = require('net');
 const path = require('path');
 
+// pkg 실행 파일 경로 처리
+const APP_ROOT = process.pkg ? path.dirname(process.execPath) : path.join(__dirname, '../..');
+
 class TelnetChecker {
   constructor() {
     this.localPcIp = this.getLocalIp();
     this.regexIpPattern = /^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/;
     this.regexPortPattern = /^[0-9]+$/; // Port range is 1-65535, so removed 4-digit limit
-    this.resultsDir = this.getResultsDir();
-  }
-
-  getResultsDir() {
-    // pkg 환경에서는 현재 작업 디렉토리에 results 폴더 생성
-    if (process.pkg) {
-      return path.join(process.cwd(), 'results');
-    } else {
-      return path.join(__dirname, '../../results');
-    }
+    this.resultsDir = path.join(APP_ROOT, 'results');
   }
 
   ensureResultsDir() {
@@ -27,16 +21,7 @@ class TelnetChecker {
         fs.mkdirSync(this.resultsDir, { recursive: true });
       }
     } catch (error) {
-      console.warn('⚠️  Warning: Could not create results directory:', error.message);
-      // 대체 경로로 현재 작업 디렉토리 사용
-      this.resultsDir = path.join(process.cwd(), 'results');
-      try {
-        if (!fs.existsSync(this.resultsDir)) {
-          fs.mkdirSync(this.resultsDir, { recursive: true });
-        }
-      } catch (fallbackError) {
-        console.error('❌ Error: Could not create results directory even in fallback location');
-      }
+      console.error('❌ Error: Could not create results directory:', error.message);
     }
   }
 

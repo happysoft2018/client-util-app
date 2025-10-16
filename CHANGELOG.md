@@ -1,5 +1,28 @@
 # Changelog
 
+## [1.3.3] - 2025-10-16
+
+### 🐛 Critical Bug Fixes
+
+#### Fixed Release Package Path Resolution
+- **Fixed path resolution in pkg executable**: Changed from `process.cwd()` to `path.dirname(process.execPath)`
+  - **Root cause**: `process.cwd()` returns the directory where the command was executed, not where the executable is located
+  - **Solution**: Use `path.dirname(process.execPath)` to get the correct executable directory
+  - Release package now correctly reads `request_resources/` from the executable's directory
+  - Configuration files (`config/dbinfo.json`) now loaded from the correct location
+  - Results and logs now saved to the correct directories relative to the executable
+
+#### Impact
+- Before: Running the executable from a different directory would fail to find resources
+- After: Executable now works correctly regardless of where it's run from
+
+#### Affected Files
+- `app.js`: Changed `APP_ROOT = process.pkg ? process.cwd() : __dirname` → `APP_ROOT = process.pkg ? path.dirname(process.execPath) : __dirname`
+- `ConfigManager.js`: Same APP_ROOT fix
+- `DBExecutor.js`: Same APP_ROOT fix + simplified path logic
+- `DBConnectionChecker.js`: Added APP_ROOT constant and removed fallback logic
+- `TelnetChecker.js`: Added APP_ROOT constant and removed fallback logic
+
 ## [1.3.2] - 2025-10-14
 
 ### 🐛 Bug Fixes

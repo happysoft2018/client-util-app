@@ -2,8 +2,8 @@ const fs = require('fs');
 const path = require('path');
 const DatabaseFactory = require('./database/DatabaseFactory');
 
-// pkg 실행 파일에서는 현재 작업 디렉토리 사용
-const APP_ROOT = process.pkg ? process.cwd() : path.join(__dirname, '../..');
+// pkg 실행 파일 경로 처리
+const APP_ROOT = process.pkg ? path.dirname(process.execPath) : path.join(__dirname, '../..');
 
 class ConfigManager {
   constructor() {

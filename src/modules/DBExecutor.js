@@ -4,8 +4,8 @@ const os = require('os');
 const path = require('path');
 const DatabaseFactory = require('./database/DatabaseFactory');
 
-// pkg 실행 파일에서는 현재 작업 디렉토리 사용
-const APP_ROOT = process.pkg ? process.cwd() : path.join(__dirname, '../..');
+// pkg 실행 파일 경로 처리
+const APP_ROOT = process.pkg ? path.dirname(process.execPath) : path.join(__dirname, '../..');
 
 class DBExecutor {
   constructor(configManager, readlineInterface = null) {
@@ -83,28 +83,14 @@ class DBExecutor {
                     String(now.getMonth() + 1).padStart(2, '0') + 
                     String(now.getDate()).padStart(2, '0');
     
-    let logDir;
-    if (process.pkg) {
-      // In pkg environment, use current working directory
-      logDir = path.join(process.cwd(), 'log', yyyymmdd);
-    } else {
-      // In development, use project directory
-      logDir = path.join(__dirname, '../../log', yyyymmdd);
-    }
+    const logDir = path.join(APP_ROOT, 'log', yyyymmdd);
 
     if (!fs.existsSync(logDir)) {
       fs.mkdirSync(logDir, { recursive: true });
     }
 
     // Create results directory (pkg compatible)
-    let resultsDir;
-    if (process.pkg) {
-      // In pkg environment, use current working directory
-      resultsDir = path.join(process.cwd(), 'results', 'sql_files');
-    } else {
-      // In development, use project directory
-      resultsDir = path.join(__dirname, '../../results/sql_files');
-    }
+    const resultsDir = path.join(APP_ROOT, 'results', 'sql_files');
     
     if (!fs.existsSync(resultsDir)) {
       fs.mkdirSync(resultsDir, { recursive: true });

@@ -5,11 +5,10 @@ setlocal
 echo.
 echo ========================================
 echo   Node.js Utility App release Script
-echo   Version 1.3.2
 echo ========================================
 echo.
 
-set "VERSION=1.3.2"
+set "VERSION=1.3.3"
 set "RELEASE_DIR=release"
 set "PACKAGE_NAME=ClientUtilApp-v%VERSION%-win-x64"
 set "RELEASE_DIR=%RELEASE_DIR%\%PACKAGE_NAME%"
@@ -60,11 +59,11 @@ echo 📦 Step 4: Copying files...
 echo.
 
 REM Copy executable
-if exist "dist\my-node-client-util-app.exe" (
-    copy "dist\my-node-client-util-app.exe" "%RELEASE_DIR%\" >nul
+if exist "dist\client-util-app-v%VERSION%.exe" (
+    copy "dist\client-util-app-v%VERSION%.exe" "%RELEASE_DIR%\" >nul
     echo ✅ Executable copied
 ) else (
-    echo ❌ Executable not found in dist/ folder
+    echo ❌ Executable not found: dist\client-util-app-v%VERSION%.exe
     pause
     exit /b 1
 )
@@ -103,7 +102,7 @@ echo 📝 Creating launcher script...
     echo echo   Version %VERSION%
     echo echo ========================================
     echo echo.
-    echo my-node-client-util-app.exe
+    echo client-util-app-v%VERSION%.exe
     echo pause
 ) > "%RELEASE_DIR%\run.bat"
 echo ✅ run.bat created
@@ -117,7 +116,7 @@ echo 📄 Creating version info...
     echo Build Date: %date% %time%
     echo.
     echo Package Contents:
-    echo - my-node-client-util-app.exe : Main executable
+    echo - client-util-app.exe : Main executable
     echo - config/dbinfo.json : Database configuration
     echo - request_resources/ : Sample CSV and SQL files
     echo - results/ : Output directory for results

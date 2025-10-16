@@ -1,5 +1,28 @@
 # 변경 이력 (Changelog)
 
+## [1.3.3] - 2025-10-16
+
+### 🐛 중요 버그 수정
+
+#### 배포판 경로 해석 문제 해결
+- **pkg 실행파일 경로 해석 수정**: `process.cwd()`에서 `path.dirname(process.execPath)`로 변경
+  - **근본 원인**: `process.cwd()`는 명령이 실행된 디렉토리를 반환하며, 실행 파일이 위치한 디렉토리가 아님
+  - **해결 방법**: `path.dirname(process.execPath)`를 사용하여 실행 파일의 올바른 디렉토리 경로 획득
+  - 배포판이 이제 실행 파일 디렉토리의 `request_resources/`를 올바르게 읽음
+  - 설정 파일 (`config/dbinfo.json`)이 올바른 위치에서 로드됨
+  - 결과 및 로그가 실행 파일 기준 올바른 디렉토리에 저장됨
+
+#### 영향
+- 수정 전: 다른 디렉토리에서 실행 파일을 실행하면 리소스를 찾지 못함
+- 수정 후: 실행 파일이 어디서 실행되든 올바르게 작동
+
+#### 영향받는 파일
+- `app.js`: `APP_ROOT = process.pkg ? process.cwd() : __dirname` → `APP_ROOT = process.pkg ? path.dirname(process.execPath) : __dirname`으로 변경
+- `ConfigManager.js`: 동일한 APP_ROOT 수정
+- `DBExecutor.js`: 동일한 APP_ROOT 수정 + 경로 로직 간소화
+- `DBConnectionChecker.js`: APP_ROOT 상수 추가 및 fallback 로직 제거
+- `TelnetChecker.js`: APP_ROOT 상수 추가 및 fallback 로직 제거
+
 ## [1.3.2] - 2025-10-14
 
 ### 🐛 버그 수정

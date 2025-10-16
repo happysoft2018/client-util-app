@@ -3,8 +3,8 @@ const fs = require('fs');
 const path = require('path');
 const os = require('os');
 
-// pkg 실행 파일에서는 현재 작업 디렉토리 사용
-const APP_ROOT = process.pkg ? process.cwd() : __dirname;
+// pkg 실행 파일 경로 처리
+const APP_ROOT = process.pkg ? path.dirname(process.execPath) : __dirname;
 
 // Module imports
 const DBConnectionChecker = require('./src/modules/DBConnectionChecker');
@@ -37,17 +37,7 @@ class NodeUtilApp {
         console.log(`📁 Created results directory: ${resultsDir}`);
       }
     } catch (error) {
-      console.warn('⚠️  Warning: Could not create results directory:', error.message);
-      // 대체 경로로 현재 작업 디렉토리 사용
-      try {
-        const fallbackDir = path.join(process.cwd(), 'results');
-        if (!fs.existsSync(fallbackDir)) {
-          fs.mkdirSync(fallbackDir, { recursive: true });
-          console.log(`📁 Created fallback results directory: ${fallbackDir}`);
-        }
-      } catch (fallbackError) {
-        console.error('❌ Error: Could not create results directory even in fallback location');
-      }
+      console.error('❌ Error: Could not create results directory:', error.message);
     }
   }
 
@@ -56,6 +46,17 @@ class NodeUtilApp {
     console.log('='.repeat(50));
         console.log('    Node.js Integrated Utility Tool');
     console.log('='.repeat(50));
+    console.log();
+    
+    // 디버깅: 경로 정보 출력
+    console.log('🔍 [DEBUG] Path Information:');
+    console.log(`   process.pkg: ${process.pkg ? 'true' : 'false'}`);
+    console.log(`   process.execPath: ${process.execPath}`);
+    console.log(`   process.cwd(): ${process.cwd()}`);
+    console.log(`   __dirname: ${__dirname}`);
+    console.log(`   APP_ROOT: ${APP_ROOT}`);
+    console.log(`   Config Path: ${path.join(APP_ROOT, 'config', 'dbinfo.json')}`);
+    console.log(`   Request Resources: ${path.join(APP_ROOT, 'request_resources')}`);
     console.log();
     
     await this.showMainMenu();
@@ -68,12 +69,11 @@ class NodeUtilApp {
     console.log('2. Server Telnet Connection Check');
     console.log('3. Database SQL Execution');
     console.log('4. Configuration Management');
-    console.log('5. Run All Checks (Batch Processing)');
     console.log('0. Exit');
     console.log('------------------------------------------------');
     console.log();
 
-    const choice = await this.askQuestion('Select function to execute (0-5): ');
+    const choice = await this.askQuestion('Select function to execute (0-4): ');
     
     switch(choice.trim()) {
       case '1':
@@ -87,9 +87,6 @@ class NodeUtilApp {
         break;
       case '4':
         await this.showConfigMenu();
-        break;
-      case '5':
-        await this.runAllChecks();
         break;
       case '0':
         await this.exitApp();
@@ -354,22 +351,6 @@ class NodeUtilApp {
     
     await this.waitAndContinue();
     await this.showConfigMenu();
-  }
-
-  async runAllChecks() {
-    console.clear();
-    console.log('🔄 Run All Checks (Batch Processing)');
-    console.log('='.repeat(40));
-    
-    console.log('\n⚠️  Batch processing requires manual configuration.');
-    console.log('Please use individual check functions to configure each check separately.');
-    console.log('\nAvailable checks:');
-    console.log('1. Database Connection and Permission Check');
-    console.log('2. Server Telnet Connection Check');
-    console.log('3. Database SQL Execution');
-    
-    await this.waitAndContinue();
-    await this.showMainMenu();
   }
 
   async exitApp() {
