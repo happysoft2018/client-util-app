@@ -48,17 +48,6 @@ class NodeUtilApp {
     console.log('='.repeat(50));
     console.log();
     
-    // 디버깅: 경로 정보 출력
-    console.log('🔍 [DEBUG] Path Information:');
-    console.log(`   process.pkg: ${process.pkg ? 'true' : 'false'}`);
-    console.log(`   process.execPath: ${process.execPath}`);
-    console.log(`   process.cwd(): ${process.cwd()}`);
-    console.log(`   __dirname: ${__dirname}`);
-    console.log(`   APP_ROOT: ${APP_ROOT}`);
-    console.log(`   Config Path: ${path.join(APP_ROOT, 'config', 'dbinfo.json')}`);
-    console.log(`   Request Resources: ${path.join(APP_ROOT, 'request_resources')}`);
-    console.log();
-    
     await this.showMainMenu();
   }
 

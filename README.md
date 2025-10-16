@@ -1,4 +1,4 @@
-# Node.js Integrated Utility Tool v1.3.0
+# Node.js Integrated Utility Tool v1.3.3
 
 A comprehensive utility tool for managing various local environment utilities in a unified application.
 
@@ -35,9 +35,17 @@ my-node-client-util-app/
 └── run.bat                         # 🎯 Integrated execution tool
 ```
 
-## 🆕 v1.3.0 New Features
+## 🆕 Latest Updates
 
-### Database SQL Executor Major Improvements ⭐
+### v1.3.3 - Critical Bug Fix (2025-10-16) 🔧
+
+**Fixed Release Package Path Resolution:**
+- Fixed path resolution in pkg executable: Changed from `process.cwd()` to `path.dirname(process.execPath)`
+- **Root cause**: `process.cwd()` returns the directory where the command was executed, not where the executable is located
+- **Impact**: Release package now correctly reads resources from the executable's directory regardless of where it's run from
+- Affected: `request_resources/`, `config/dbinfo.json`, `results/`, `log/` directories
+
+### v1.3.0 - Database SQL Executor Major Improvements ⭐
 - **CSV Result File Generation**: Automatically save SQL execution results to structured CSV
   - Location: `results/sql_files/`
   - Filename: `{SQL_name}_{DB_name}_{timestamp}.csv`

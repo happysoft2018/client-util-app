@@ -1,4 +1,4 @@
-# User Manual v1.3.0
+# User Manual v1.3.3
 
 ## 📖 Table of Contents
 
@@ -16,7 +16,14 @@
 
 ## Introduction
 
-This manual guides you through using the database connection, permission check, and SQL execution features of the Node.js Integrated Utility Tool v1.3.0.
+This manual guides you through using the database connection, permission check, and SQL execution features of the Node.js Integrated Utility Tool v1.3.3.
+
+### Key Features of v1.3.3
+
+#### Critical Bug Fix
+- ✅ **Fixed Path Resolution**: Release package now correctly reads resources from executable's directory
+- ✅ **Improved Portability**: Executable works correctly regardless of where it's run from
+- ✅ **Root Cause Fixed**: Changed from `process.cwd()` to `path.dirname(process.execPath)`
 
 ### Key Features of v1.3.0
 

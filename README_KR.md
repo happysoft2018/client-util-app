@@ -1,4 +1,4 @@
-# Node.js 통합 유틸리티 도구 v1.3.0
+# Node.js 통합 유틸리티 도구 v1.3.3
 
 로컬환경에서 사용하는 각종 유틸리티를 통합 관리하는 도구입니다.
 
@@ -31,9 +31,17 @@ my-node-client-util-app/
 └── 프로그램실행하기.bat               # 🎯 통합 실행 도구
 ```
 
-## 🆕 v1.3.0 새로운 기능
+## 🆕 최신 업데이트
 
-### Database SQL Executor 대폭 개선 ⭐
+### v1.3.3 - 중요 버그 수정 (2025-10-16) 🔧
+
+**배포판 경로 해석 문제 해결:**
+- pkg 실행파일 경로 해석 수정: `process.cwd()`에서 `path.dirname(process.execPath)`로 변경
+- **근본 원인**: `process.cwd()`는 명령이 실행된 디렉토리를 반환하며, 실행 파일이 위치한 디렉토리가 아님
+- **영향**: 배포판이 이제 어디서 실행되든 실행 파일 디렉토리의 리소스를 올바르게 읽음
+- 영향 받는 디렉토리: `request_resources/`, `config/dbinfo.json`, `results/`, `log/`
+
+### v1.3.0 - Database SQL Executor 대폭 개선 ⭐
 - **CSV 결과 파일 생성**: SQL 실행 결과를 구조화된 CSV로 자동 저장
   - 파일 위치: `results/sql_files/`
   - 파일명: `{SQL명}_{DB명}_{타임스탬프}.csv`
