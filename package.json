@@ -29,7 +29,8 @@
       "node_modules/tedious/**/*",
       "node_modules/mysql2/**/*",
       "node_modules/pg/**/*",
-      "node_modules/oracledb/**/*"
+      "node_modules/oracledb/**/*",
+      "node_modules/iconv-lite/**/*"
     ],
     "targets": [
       "node18-win-x64"
@@ -41,6 +42,7 @@
   },
   "dependencies": {
     "csv-parser": "^3.0.0",
+    "iconv-lite": "^0.6.3",
     "mssql": "^9.0.1",
     "mysql2": "^3.4.0",
     "oracledb": "^6.0.5",

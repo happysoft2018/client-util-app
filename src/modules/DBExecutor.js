@@ -2,6 +2,7 @@ const fs = require('fs');
 const csv = require('csv-parser');
 const os = require('os');
 const path = require('path');
+const iconv = require('iconv-lite');
 const DatabaseFactory = require('./database/DatabaseFactory');
 
 // pkg 실행 파일 경로 처리
@@ -370,15 +371,28 @@ class DBExecutor {
           throw new Error('JSON file must contain an object or an array of objects.');
         }
       } else {
-        // Parse CSV file
+        // Parse CSV file with encoding detection
         await new Promise((resolve, reject) => {
-          fs.createReadStream(paramFilePath)
-            .pipe(csv())
-            .on('data', (row) => {
-              rows.push(row);
-            })
-            .on('end', resolve)
-            .on('error', reject);
+          const tryParse = (encoding) => {
+            rows.length = 0; // Clear rows
+            fs.createReadStream(paramFilePath)
+              .pipe(iconv.decodeStream(encoding))
+              .pipe(csv())
+              .on('data', (row) => {
+                rows.push(row);
+              })
+              .on('end', resolve)
+              .on('error', (error) => {
+                if (encoding === 'utf8') {
+                  // Try EUC-KR if UTF-8 fails
+                  console.log('⚠️  UTF-8 decoding failed, trying EUC-KR...');
+                  tryParse('euc-kr');
+                } else {
+                  reject(error);
+                }
+              });
+          };
+          tryParse('utf8');
         });
       }
 

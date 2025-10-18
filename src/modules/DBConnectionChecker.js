@@ -2,6 +2,7 @@ const fs = require('fs');
 const csv = require('csv-parser');
 const os = require('os');
 const path = require('path');
+const iconv = require('iconv-lite');
 const DatabaseFactory = require('./database/DatabaseFactory');
 
 // pkg 실행 파일 경로 처리
@@ -369,16 +370,26 @@ class DBConnectionChecker {
     let checkUnitId = 0;
 
     return new Promise((resolve, reject) => {
-      fs.createReadStream(csvPath)
-        .pipe(csv())
-        .on('data', (row) => {
-          Object.keys(row).forEach(k => row[k] = row[k].trim());
-          rows.push(row);
-        })
-        .on('error', (error) => {
-          reject(new Error(`CSV file read error: ${error.message}`));
-        })
-        .on('end', async () => {
+      // Try UTF-8 first, then EUC-KR if it fails
+      const tryParse = (encoding) => {
+        rows.length = 0; // Clear rows
+        const stream = fs.createReadStream(csvPath)
+          .pipe(iconv.decodeStream(encoding))
+          .pipe(csv())
+          .on('data', (row) => {
+            Object.keys(row).forEach(k => row[k] = row[k].trim());
+            rows.push(row);
+          })
+          .on('error', (error) => {
+            if (encoding === 'utf8') {
+              // Try EUC-KR if UTF-8 fails
+              console.log('⚠️  UTF-8 decoding failed, trying EUC-KR...');
+              tryParse('euc-kr');
+            } else {
+              reject(new Error(`CSV file read error: ${error.message}`));
+            }
+          })
+          .on('end', async () => {
           if (rows.length === 0) {
             reject(new Error('CSV file is empty.'));
             return;
@@ -434,6 +445,10 @@ class DBConnectionChecker {
           console.log('All DB checks completed');
           resolve();
         });
+      };
+      
+      // Start with UTF-8
+      tryParse('utf8');
     });
   }
 
