@@ -2,20 +2,21 @@
 chcp 65001 >nul
 setlocal
 
-echo.
-echo ========================================
-echo   Node.js Utility App release Script
-echo ========================================
-echo.
+REM Read version from package.json
+for /f "delims=" %%i in ('powershell -Command "(Get-Content package.json -Raw | ConvertFrom-Json).version"') do set "VERSION=%%i"
 
-set "VERSION=1.3.3"
-set "RELEASE_DIR=release"
+echo.
+echo ========================================
+echo   Node.js Utility App Release Script
+echo ========================================
+echo.
+set "RELEASE_BASE=release"
 set "PACKAGE_NAME=ClientUtilApp-v%VERSION%-win-x64"
-set "RELEASE_DIR=%RELEASE_DIR%\%PACKAGE_NAME%"
+set "RELEASE_DIR=%RELEASE_BASE%\%PACKAGE_NAME%"
 set "TIMESTAMP=%date:~0,4%%date:~5,2%%date:~8,2%_%time:~0,2%%time:~3,2%%time:~6,2%"
 set "TIMESTAMP=%TIMESTAMP: =0%"
 
-echo 📋 release Information:
+echo 📋 Release Information:
 echo    Version: %VERSION%
 echo    Package: %PACKAGE_NAME%
 echo    Build Time: %TIMESTAMP%
@@ -47,12 +48,11 @@ echo.
 
 REM Step 3: Create release directory structure
 echo 📁 Step 3: Creating release directory structure...
-if not exist "%RELEASE_DIR%" mkdir "%RELEASE_DIR%"
-mkdir "%RELEASE_DIR%"
-mkdir "%RELEASE_DIR%\results"
-mkdir "%RELEASE_DIR%\results\sql_files"
-mkdir "%RELEASE_DIR%\log"
-mkdir "%RELEASE_DIR%\user_manual"
+mkdir "%RELEASE_DIR%" 2>nul
+mkdir "%RELEASE_DIR%\results" 2>nul
+mkdir "%RELEASE_DIR%\results\sql_files" 2>nul
+mkdir "%RELEASE_DIR%\log" 2>nul
+mkdir "%RELEASE_DIR%\user_manual" 2>nul
 
 echo.
 echo 📦 Step 4: Copying files...
@@ -83,10 +83,10 @@ if exist "request_resources" (
 REM Copy documentation files
 echo.
 echo 📚 Copying documentation...
-copy "README*.md" "%RELEASE_DIR%\" >nul
-copy "USER_MANUAL*.md" "%RELEASE_DIR%\user_manual\" >nul
-copy "CHANGELOG*.md" "%RELEASE_DIR%\user_manual\" >nul
-copy "MIGRATION_GUIDE*.md" "%RELEASE_DIR%\user_manual\" >nul
+copy "README*.md" "%RELEASE_DIR%\" >nul 2>&1
+copy "USER_MANUAL*.md" "%RELEASE_DIR%\user_manual\" >nul 2>&1
+copy "CHANGELOG*.md" "%RELEASE_DIR%\user_manual\" >nul 2>&1
+copy "MIGRATION_GUIDE*.md" "%RELEASE_DIR%\user_manual\" >nul 2>&1
 echo ✅ Documentation copied
 
 REM Create launcher scripts
@@ -167,7 +167,7 @@ echo 📝 Step 5: Creating release notes...
 (
     echo ========================================
     echo   Node.js Integrated Utility Tool
-    echo   release v%VERSION%
+    echo   Release v%VERSION%
     echo ========================================
     echo.
     echo Build Date: %date% %time%
@@ -215,20 +215,28 @@ echo 📝 Step 5: Creating release notes...
     echo contact the development team.
     echo.
     echo ========================================
-) > "%RELEASE_DIR%\release_NOTES.txt"
-echo ✅ release_NOTES.txt created
+) > "%RELEASE_DIR%\RELEASE_NOTES.txt"
+echo ✅ RELEASE_NOTES.txt created
+
+REM Step 6: Create ZIP archive
+echo.
+echo 📦 Step 6: Creating ZIP archive...
+powershell -Command "Compress-Archive -Path '%RELEASE_DIR%' -DestinationPath '%RELEASE_BASE%\%PACKAGE_NAME%.zip' -Force"
+if %errorlevel% equ 0 (
+    echo ✅ ZIP archive created
+) else (
+    echo ⚠️  ZIP creation failed, but release folder is ready
+)
 
 echo.
 echo ========================================
-echo ✅ release Package Created Successfully!
+echo ✅ Release Package Created Successfully!
 echo ========================================
 echo.
 echo 📁 Location: %RELEASE_DIR%\
-if exist "%RELEASE_DIR%\%PACKAGE_NAME%.zip" (
-    echo 📦 ZIP Archive: %RELEASE_DIR%\%PACKAGE_NAME%.zip
+if exist "%RELEASE_BASE%\%PACKAGE_NAME%.zip" (
+    echo 📦 ZIP Archive: %RELEASE_BASE%\%PACKAGE_NAME%.zip
 )
-echo 📊 Size: 
-dir "%RELEASE_DIR%" | find "File(s)"
 echo.
 echo 📋 Package Contents:
 echo    • Executable ^(client-util-app.exe^)
