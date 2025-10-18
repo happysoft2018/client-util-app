@@ -1,4 +1,4 @@
-# User Manual v1.3.3
+# User Manual v1.3.4
 
 ## 📖 Table of Contents
 
@@ -16,7 +16,22 @@
 
 ## Introduction
 
-This manual guides you through using the database connection, permission check, and SQL execution features of the Node.js Integrated Utility Tool v1.3.3.
+This manual guides you through using the database connection, permission check, and SQL execution features of the Node.js Integrated Utility Tool v1.3.4.
+
+### Key Features of v1.3.4
+
+#### Multi-language Support 🌏
+- ✅ **Language Selection**: Choose UI language with `--lang` parameter
+  - English: Run `run.bat` or `node app.js --lang=en`
+  - Korean: Run `실행하기.bat` or `node app.js --lang=kr`
+- ✅ **Internationalized UI**: All menus, prompts, and messages available in both languages
+- ✅ **Seamless Experience**: Over 60 messages translated
+
+#### EUC-KR Encoding Support 📝
+- ✅ **Automatic Encoding Detection**: CSV files read with UTF-8 → EUC-KR fallback
+- ✅ **Korean Character Support**: No more character corruption in Korean CSV files
+- ✅ **Flexible Input**: Works with both UTF-8 and EUC-KR encoded files
+- ✅ **Wide Coverage**: Applies to DB check, Telnet check, and SQL parameter CSV files
 
 ### Key Features of v1.3.3
 
@@ -312,21 +327,41 @@ Passwords are stored in plain text in CSV files.
 
 ### Method 1: Using Batch File (Recommended)
 
+**English UI:**
 ```batch
 # Windows
 run.bat
+```
+
+**Korean UI (한국어):**
+```batch
+# Windows
+실행하기.bat
 ```
 
 Select `1. Database Connection and Permission Check` from menu
 
 ### Method 2: Direct Execution
 
+**English:**
 ```bash
-# Run Node.js directly
-node app.js
+# Run Node.js directly with English UI
+node app.js --lang=en
 
 # Or use npm
 npm start
+```
+
+**Korean:**
+```bash
+# Run Node.js directly with Korean UI
+node app.js --lang=kr
+```
+
+**Default (without language parameter):**
+```bash
+# Defaults to English
+node app.js
 ```
 
 ### Execution Screen

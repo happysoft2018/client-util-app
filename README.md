@@ -1,6 +1,8 @@
-# Node.js Integrated Utility Tool v1.3.3
+# Node.js Integrated Utility Tool v1.3.4
 
 A comprehensive utility tool for managing various local environment utilities in a unified application.
+
+🌏 **Multi-language Support**: English / Korean (한국어)
 
 ## 📁 Project Structure
 
@@ -32,10 +34,31 @@ my-node-client-util-app/
 │   ├── telnet_connection_check_*.csv # Telnet check results
 │   └── README.md                   # Results format documentation
 ├── log/                            # Execution logs (auto-generated)
-└── run.bat                         # 🎯 Integrated execution tool
+├── run.bat                         # 🎯 Launcher (English)
+└── 실행하기.bat                     # 🎯 Launcher (Korean)
 ```
 
 ## 🆕 Latest Updates
+
+### v1.3.4 - Multi-language & Encoding Support (2025-10-18) 🌏
+
+**Multi-language Support (English/Korean):**
+- Added `--lang` parameter to select UI language
+  - English: Run with `run.bat` or `node app.js --lang=en`
+  - Korean: Run with `실행하기.bat` or `node app.js --lang=kr`
+- All UI messages (menus, prompts, errors) available in both languages
+- Over 60 messages translated for seamless experience
+
+**EUC-KR Encoding Support:**
+- Automatic encoding detection for CSV files (UTF-8 → EUC-KR fallback)
+- Fixed Korean character corruption in CSV files
+- Works with both UTF-8 and EUC-KR encoded files
+- Applies to all CSV inputs: DB connection check, Telnet check, SQL parameters
+
+**Release Script Enhancement:**
+- Version automatically read from `package.json`
+- Dual launcher scripts (English/Korean) generated automatically
+- ZIP archive creation for easy distribution
 
 ### v1.3.3 - Critical Bug Fix (2025-10-16) 🔧
 

@@ -1,5 +1,43 @@
 # Changelog
 
+## [1.3.4] - 2025-10-18
+
+### ✨ New Features
+
+#### Multi-language Support (English/Korean)
+- **Language Selection**: Added `--lang` parameter to select UI language
+  - English: `node app.js --lang=en` or use `run.bat`
+  - Korean: `node app.js --lang=kr` or use `실행하기.bat`
+- **Dual Launcher Scripts**:
+  - `run.bat`: Launches application in English
+  - `실행하기.bat`: Launches application in Korean
+- **Internationalized UI**: All user interface messages support both languages
+  - Main menu, error messages, prompts, and status messages
+  - Over 60 messages translated for seamless experience
+
+#### EUC-KR Encoding Support
+- **Automatic Encoding Detection**: CSV files are now read with automatic encoding detection
+  - Primary: UTF-8
+  - Fallback: EUC-KR (if UTF-8 fails)
+- **Korean Character Support**: Fixed Korean character corruption in CSV files
+- **Added Dependency**: `iconv-lite` library for encoding conversion
+- **Affected Modules**:
+  - `DBConnectionChecker.js`: Database connection check CSV files
+  - `TelnetChecker.js`: Server connection check CSV files
+  - `DBExecutor.js`: SQL parameter CSV files
+
+### 🔧 Improvements
+
+#### Release Script Enhancement
+- **Automatic Version Reading**: `release.bat` now reads version from `package.json`
+- **Dual Launcher Generation**: Automatically creates both English and Korean launcher scripts
+- **ZIP Archive Creation**: Automatically creates compressed release package
+
+### 📝 Documentation Updates
+- Updated all documentation to reflect new multi-language feature
+- Added encoding support information in user manual
+- Enhanced release notes with language options
+
 ## [1.3.3] - 2025-10-16
 
 ### 🐛 Critical Bug Fixes
