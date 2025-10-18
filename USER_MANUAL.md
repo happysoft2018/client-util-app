@@ -27,11 +27,11 @@ This manual guides you through using the database connection, permission check, 
 - ✅ **Internationalized UI**: All menus, prompts, and messages available in both languages
 - ✅ **Seamless Experience**: Over 60 messages translated
 
-#### EUC-KR Encoding Support 📝
-- ✅ **Automatic Encoding Detection**: CSV files read with UTF-8 → EUC-KR fallback
-- ✅ **Korean Character Support**: No more character corruption in Korean CSV files
-- ✅ **Flexible Input**: Works with both UTF-8 and EUC-KR encoded files
-- ✅ **Wide Coverage**: Applies to DB check, Telnet check, and SQL parameter CSV files
+#### CSV Encoding Support 📝
+- ✅ **UTF-8 Encoding**: All CSV files must be saved in UTF-8 encoding
+- ✅ **Korean Character Support**: Proper display of Korean, Chinese, Japanese characters
+- ✅ **Universal Compatibility**: Works across all platforms and tools
+- ✅ **Reliable Processing**: Consistent behavior in both development and production environments
 
 ### Key Features of v1.3.3
 
