@@ -30,7 +30,8 @@
       "node_modules/mysql2/**/*",
       "node_modules/pg/**/*",
       "node_modules/oracledb/**/*",
-      "node_modules/iconv-lite/**/*"
+      "node_modules/iconv-lite/**/*",
+      "node_modules/safer-buffer/**/*"
     ],
     "targets": [
       "node18-win-x64"

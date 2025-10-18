@@ -375,22 +375,37 @@ class DBExecutor {
         await new Promise((resolve, reject) => {
           const tryParse = (encoding) => {
             rows.length = 0; // Clear rows
-            fs.createReadStream(paramFilePath)
-              .pipe(iconv.decodeStream(encoding))
-              .pipe(csv())
-              .on('data', (row) => {
-                rows.push(row);
-              })
-              .on('end', resolve)
-              .on('error', (error) => {
-                if (encoding === 'utf8') {
-                  // Try EUC-KR if UTF-8 fails
-                  console.log('⚠️  UTF-8 decoding failed, trying EUC-KR...');
-                  tryParse('euc-kr');
-                } else {
-                  reject(error);
-                }
-              });
+            
+            try {
+              const stream = fs.createReadStream(paramFilePath);
+              
+              // In pkg environment, iconv-lite might not work properly
+              let decoder;
+              try {
+                decoder = stream.pipe(iconv.decodeStream(encoding));
+              } catch (iconvError) {
+                console.log(`⚠️  iconv-lite not available, reading as ${encoding}...`);
+                decoder = stream;
+              }
+              
+              decoder
+                .pipe(csv())
+                .on('data', (row) => {
+                  rows.push(row);
+                })
+                .on('end', resolve)
+                .on('error', (error) => {
+                  if (encoding === 'utf8') {
+                    // Try EUC-KR if UTF-8 fails
+                    console.log('⚠️  UTF-8 decoding failed, trying EUC-KR...');
+                    tryParse('euc-kr');
+                  } else {
+                    reject(error);
+                  }
+                });
+            } catch (outerError) {
+              reject(new Error(`Error setting up CSV parser: ${outerError.message}`));
+            }
           };
           tryParse('utf8');
         });

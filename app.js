@@ -3,6 +3,16 @@ const fs = require('fs');
 const path = require('path');
 const os = require('os');
 
+// Set console encoding to UTF-8 for proper Korean character display
+if (process.platform === 'win32') {
+  try {
+    process.stdout.setDefaultEncoding('utf8');
+    process.stderr.setDefaultEncoding('utf8');
+  } catch (e) {
+    // Ignore if not supported
+  }
+}
+
 // pkg 실행 파일 경로 처리
 const APP_ROOT = process.pkg ? path.dirname(process.execPath) : __dirname;
 
