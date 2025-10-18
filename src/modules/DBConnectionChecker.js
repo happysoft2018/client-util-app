@@ -2,7 +2,6 @@ const fs = require('fs');
 const csv = require('csv-parser');
 const os = require('os');
 const path = require('path');
-const iconv = require('iconv-lite');
 const DatabaseFactory = require('./database/DatabaseFactory');
 
 // pkg 실행 파일 경로 처리
@@ -370,39 +369,16 @@ class DBConnectionChecker {
     let checkUnitId = 0;
 
     return new Promise((resolve, reject) => {
-      // Try UTF-8 first, then EUC-KR if it fails
-      const tryParse = (encoding) => {
-        rows.length = 0; // Clear rows
-        
-        try {
-          const stream = fs.createReadStream(csvPath);
-          
-          // In pkg environment, iconv-lite might not work properly
-          // So we add a fallback
-          let decoder;
-          try {
-            decoder = stream.pipe(iconv.decodeStream(encoding));
-          } catch (iconvError) {
-            console.log(`⚠️  iconv-lite not available, reading as ${encoding}...`);
-            decoder = stream;
-          }
-          
-          decoder
-            .pipe(csv())
-            .on('data', (row) => {
-              Object.keys(row).forEach(k => row[k] = row[k].trim());
-              rows.push(row);
-            })
-            .on('error', (error) => {
-              if (encoding === 'utf8') {
-                // Try EUC-KR if UTF-8 fails
-                console.log('⚠️  UTF-8 decoding failed, trying EUC-KR...');
-                tryParse('euc-kr');
-              } else {
-                reject(new Error(`CSV file read error: ${error.message}`));
-              }
-            })
-            .on('end', async () => {
+      fs.createReadStream(csvPath, { encoding: 'utf8' })
+        .pipe(csv())
+        .on('data', (row) => {
+          Object.keys(row).forEach(k => row[k] = row[k].trim());
+          rows.push(row);
+        })
+        .on('error', (error) => {
+          reject(new Error(`CSV file read error: ${error.message}`));
+        })
+        .on('end', async () => {
           if (rows.length === 0) {
             reject(new Error('CSV file is empty.'));
             return;
@@ -458,13 +434,6 @@ class DBConnectionChecker {
           console.log('All DB checks completed');
           resolve();
         });
-        } catch (outerError) {
-          reject(new Error(`Error setting up CSV parser: ${outerError.message}`));
-        }
-      };
-      
-      // Start with UTF-8
-      tryParse('utf8');
     });
   }
 

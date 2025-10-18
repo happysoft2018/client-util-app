@@ -2,7 +2,6 @@ const fs = require('fs');
 const csv = require('csv-parser');
 const os = require('os');
 const path = require('path');
-const iconv = require('iconv-lite');
 const DatabaseFactory = require('./database/DatabaseFactory');
 
 // pkg 실행 파일 경로 처리
@@ -371,43 +370,15 @@ class DBExecutor {
           throw new Error('JSON file must contain an object or an array of objects.');
         }
       } else {
-        // Parse CSV file with encoding detection
+        // Parse CSV file (UTF-8 only)
         await new Promise((resolve, reject) => {
-          const tryParse = (encoding) => {
-            rows.length = 0; // Clear rows
-            
-            try {
-              const stream = fs.createReadStream(paramFilePath);
-              
-              // In pkg environment, iconv-lite might not work properly
-              let decoder;
-              try {
-                decoder = stream.pipe(iconv.decodeStream(encoding));
-              } catch (iconvError) {
-                console.log(`⚠️  iconv-lite not available, reading as ${encoding}...`);
-                decoder = stream;
-              }
-              
-              decoder
-                .pipe(csv())
-                .on('data', (row) => {
-                  rows.push(row);
-                })
-                .on('end', resolve)
-                .on('error', (error) => {
-                  if (encoding === 'utf8') {
-                    // Try EUC-KR if UTF-8 fails
-                    console.log('⚠️  UTF-8 decoding failed, trying EUC-KR...');
-                    tryParse('euc-kr');
-                  } else {
-                    reject(error);
-                  }
-                });
-            } catch (outerError) {
-              reject(new Error(`Error setting up CSV parser: ${outerError.message}`));
-            }
-          };
-          tryParse('utf8');
+          fs.createReadStream(paramFilePath, { encoding: 'utf8' })
+            .pipe(csv())
+            .on('data', (row) => {
+              rows.push(row);
+            })
+            .on('end', resolve)
+            .on('error', reject);
         });
       }
 

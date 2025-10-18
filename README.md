@@ -49,11 +49,11 @@ my-node-client-util-app/
 - All UI messages (menus, prompts, errors) available in both languages
 - Over 60 messages translated for seamless experience
 
-**EUC-KR Encoding Support:**
-- Automatic encoding detection for CSV files (UTF-8 → EUC-KR fallback)
-- Fixed Korean character corruption in CSV files
-- Works with both UTF-8 and EUC-KR encoded files
+**CSV Encoding:**
+- **UTF-8 encoding required** for all CSV files
+- Fixed Korean character corruption issues
 - Applies to all CSV inputs: DB connection check, Telnet check, SQL parameters
+- 📝 **Important**: Save your CSV files with UTF-8 encoding (see User Manual for details)
 
 **Release Script Enhancement:**
 - Version automatically read from `package.json`

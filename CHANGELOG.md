@@ -15,12 +15,11 @@
   - Main menu, error messages, prompts, and status messages
   - Over 60 messages translated for seamless experience
 
-#### EUC-KR Encoding Support
-- **Automatic Encoding Detection**: CSV files are now read with automatic encoding detection
-  - Primary: UTF-8
-  - Fallback: EUC-KR (if UTF-8 fails)
+#### CSV Encoding Support
+- **UTF-8 Encoding Required**: All CSV files must be saved with UTF-8 encoding
 - **Korean Character Support**: Fixed Korean character corruption in CSV files
-- **Added Dependency**: `iconv-lite` library for encoding conversion
+- **Simplified Implementation**: Removed complex encoding detection for better reliability
+- **Note**: EUC-KR and other encodings are not supported
 - **Affected Modules**:
   - `DBConnectionChecker.js`: Database connection check CSV files
   - `TelnetChecker.js`: Server connection check CSV files

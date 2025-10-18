@@ -3,7 +3,6 @@ const csv = require('csv-parser');
 const os = require('os');
 const net = require('net');
 const path = require('path');
-const iconv = require('iconv-lite');
 
 // pkg 실행 파일 경로 처리
 const APP_ROOT = process.pkg ? path.dirname(process.execPath) : path.join(__dirname, '../..');
@@ -151,38 +150,16 @@ class TelnetChecker {
     let checkUnitId = 0;
 
     return new Promise((resolve, reject) => {
-      // Try UTF-8 first, then EUC-KR if it fails
-      const tryParse = (encoding) => {
-        rows.length = 0; // Clear rows
-        
-        try {
-          const stream = fs.createReadStream(csvPath);
-          
-          // In pkg environment, iconv-lite might not work properly
-          let decoder;
-          try {
-            decoder = stream.pipe(iconv.decodeStream(encoding));
-          } catch (iconvError) {
-            console.log(`⚠️  iconv-lite not available, reading as ${encoding}...`);
-            decoder = stream;
-          }
-          
-          decoder
-            .pipe(csv())
-            .on('data', (row) => {
-              Object.keys(row).forEach(k => row[k] = row[k].trim());
-              rows.push(row);
-            })
-            .on('error', (error) => {
-              if (encoding === 'utf8') {
-                // Try EUC-KR if UTF-8 fails
-                console.log('⚠️  UTF-8 decoding failed, trying EUC-KR...');
-                tryParse('euc-kr');
-              } else {
-                reject(new Error(`CSV file read error: ${error.message}`));
-              }
-            })
-            .on('end', async () => {
+      fs.createReadStream(csvPath, { encoding: 'utf8' })
+        .pipe(csv())
+        .on('data', (row) => {
+          Object.keys(row).forEach(k => row[k] = row[k].trim());
+          rows.push(row);
+        })
+        .on('error', (error) => {
+          reject(new Error(`CSV file read error: ${error.message}`));
+        })
+        .on('end', async () => {
           if (rows.length === 0) {
             reject(new Error('CSV file is empty.'));
             return;
@@ -231,13 +208,6 @@ class TelnetChecker {
           console.log('All server Telnet checks completed');
           resolve();
         });
-        } catch (outerError) {
-          reject(new Error(`Error setting up CSV parser: ${outerError.message}`));
-        }
-      };
-      
-      // Start with UTF-8
-      tryParse('utf8');
     });
   }
 

@@ -125,6 +125,41 @@ request_resources/
 - **For Telnet check**: Files starting with `server_`
 - **Extension**: Must be `.csv`
 
+### CSV File Encoding 📝
+
+**⚠️ IMPORTANT: UTF-8 Encoding Required**
+
+All CSV files **must** be saved with UTF-8 encoding. Other encodings (like EUC-KR, ANSI) are **not supported** and will cause Korean characters to display incorrectly.
+
+**Why UTF-8:**
+- 🌍 Universal compatibility across all platforms
+- 📊 Better support in modern tools (Excel, VS Code, etc.)
+- 🔄 Easier to share and collaborate internationally
+- 🚀 More reliable in package builds and CI/CD environments
+- ✅ No character corruption for Korean, Chinese, Japanese, and other languages
+
+**How to Save as UTF-8:**
+
+1. **Excel (Recommended Method)**:
+   - File → Save As → File type: "CSV UTF-8 (Comma delimited) (*.csv)"
+   - ⚠️ Do NOT use regular "CSV (Comma delimited)" - it uses ANSI encoding
+
+2. **Notepad / Notepad++**:
+   - File → Save As → Encoding: "UTF-8"
+
+3. **VS Code**:
+   - Click encoding indicator in status bar (bottom right)
+   - Select "Save with Encoding"
+   - Choose "UTF-8"
+
+4. **LibreOffice Calc**:
+   - File → Save As → Character set: "Unicode (UTF-8)"
+
+**Verification:**
+- Open the CSV file in Notepad or VS Code
+- Check the encoding in the status bar or file properties
+- If Korean characters look correct, the encoding is likely correct
+
 ### Required Columns
 
 All CSV files **must** have the following columns:
