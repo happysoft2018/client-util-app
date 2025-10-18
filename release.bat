@@ -89,23 +89,31 @@ copy "CHANGELOG*.md" "%RELEASE_DIR%\user_manual\" >nul
 copy "MIGRATION_GUIDE*.md" "%RELEASE_DIR%\user_manual\" >nul
 echo ✅ Documentation copied
 
-REM Create run script
+REM Create launcher scripts
 echo.
-echo 📝 Creating launcher script...
+echo 📝 Creating launcher scripts...
+
+REM run.bat (English version)
 (
     echo @echo off
     echo chcp 65001 ^>nul
     echo cls
     echo echo.
-    echo echo ========================================
-    echo echo   Node.js Integrated Utility Tool
-    echo echo   Version %VERSION%
-    echo echo ========================================
-    echo echo.
-    echo client-util-app-v%VERSION%.exe
+    echo client-util-app-v%VERSION%.exe --lang=en
     echo pause
 ) > "%RELEASE_DIR%\run.bat"
-echo ✅ run.bat created
+echo ✅ run.bat created (English)
+
+REM 실행하기.bat (Korean version)
+(
+    echo @echo off
+    echo chcp 65001 ^>nul
+    echo cls
+    echo echo.
+    echo client-util-app-v%VERSION%.exe --lang=kr
+    echo pause
+) > "%RELEASE_DIR%\실행하기.bat"
+echo ✅ 실행하기.bat created (Korean)
 
 REM Create version info file
 echo.
@@ -121,7 +129,8 @@ echo 📄 Creating version info...
     echo - request_resources/ : Sample CSV and SQL files
     echo - results/ : Output directory for results
     echo - log/ : Log directory
-    echo - run.bat : Launcher script
+    echo - run.bat : Launcher script ^(English^)
+    echo - 실행하기.bat : Launcher script ^(Korean^)
     echo.
     echo Documentation:
     echo - README.md / README_KR.md : Project overview
@@ -129,7 +138,7 @@ echo 📄 Creating version info...
     echo - CHANGELOG.md / CHANGELOG_KR.md : Version history
     echo - MIGRATION_GUIDE.md / MIGRATION_GUIDE_KR.md : Migration guide
     echo.
-    echo Features:
+    echo Key Features:
     echo 1. Database Connection and Permission Check
     echo    - Supports: MSSQL, MySQL, MariaDB, PostgreSQL, Oracle
     echo    - CSV file based batch processing
@@ -143,6 +152,10 @@ echo 📄 Creating version info...
     echo    - CSV/JSON parameter files
     echo    - Structured CSV result output
     echo    - #DATABASE directive support
+    echo.
+    echo 4. Multi-language Support
+    echo    - English ^(run.bat^)
+    echo    - Korean ^(실행하기.bat^)
     echo.
     echo For more information, see USER_MANUAL.md or USER_MANUAL_KR.md
 ) > "%RELEASE_DIR%\VERSION_INFO.txt"
@@ -182,7 +195,7 @@ echo 📝 Step 5: Creating release notes...
     echo 1. Extract the package to your desired location
     echo 2. Edit config/dbinfo.json with your database settings
     echo 3. Add your SQL files to request_resources/sql_files/
-    echo 4. Run run.bat to start the application
+    echo 4. Run run.bat ^(English^) or 실행하기.bat ^(Korean^)
     echo.
     echo [Quick Start]
     echo 1. Database Connection Check: Menu option 1
@@ -218,11 +231,12 @@ echo 📊 Size:
 dir "%RELEASE_DIR%" | find "File(s)"
 echo.
 echo 📋 Package Contents:
-echo    • Executable (my-node-client-util-app.exe)
+echo    • Executable ^(client-util-app.exe^)
 echo    • Configuration files
 echo    • Sample files and templates
-echo    • Complete documentation (8 files)
-echo    • release notes
+echo    • Complete documentation ^(8 files^)
+echo    • Launcher scripts ^(English ^& Korean^)
+echo    • Release notes
 echo.
 echo 🎉 Ready for distribution!
 echo.

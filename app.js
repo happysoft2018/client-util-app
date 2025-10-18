@@ -6,6 +6,166 @@ const os = require('os');
 // pkg 실행 파일 경로 처리
 const APP_ROOT = process.pkg ? path.dirname(process.execPath) : __dirname;
 
+// 언어 설정 (명령줄 인수에서 가져오기)
+const args = process.argv.slice(2);
+const langArg = args.find(arg => arg.startsWith('--lang='));
+const LANGUAGE = langArg ? langArg.split('=')[1] : 'en';
+
+// 다국어 메시지
+const messages = {
+  en: {
+    title: 'Node.js Integrated Utility Tool',
+    mainMenuTitle: 'Main Menu',
+    menu1: '1. Database Connection and Permission Check',
+    menu2: '2. Server Telnet Connection Check',
+    menu3: '3. Database SQL Execution',
+    menu4: '4. Configuration Management',
+    menu0: '0. Exit',
+    selectPrompt: 'Select function to execute (0-4): ',
+    invalidSelection: 'Invalid selection. Please select again.',
+    
+    // Database Connection Check
+    dbCheckTitle: 'Database Connection and Permission Check',
+    dbCheckDirNotFound: 'DB check CSV directory not found: request_resources/',
+    dbCheckCreateDir: 'Please create the directory and add CSV files.',
+    dbCheckNoFiles: 'No DB CSV files found in request_resources/ directory.',
+    dbCheckAddFiles: 'Please add .csv files starting with "DB" to the request_resources/ directory.',
+    dbCheckAvailableFiles: 'Available DB Check CSV Files:',
+    dbCheckSelectFile: 'Select CSV file number to use',
+    dbCheckInvalidFile: 'Invalid file selection.',
+    dbCheckSelectedFile: 'Selected CSV file:',
+    dbCheckAuthNote: 'Note: Authentication information will be read from CSV file (username, password columns)',
+    dbCheckTimeoutSettings: 'Timeout Settings:',
+    dbCheckTimeout: 'Timeout (seconds)',
+    dbCheckStarting: 'Starting database connection check...',
+    dbCheckTypeNote: 'Note: Each server in CSV can have different database types (mssql, mysql, postgresql, oracle)',
+    dbCheckAuthNote2: 'Note: Authentication credentials will be read from CSV file',
+    dbCheckCompleted: 'Database connection check completed.',
+    dbCheckError: 'Error occurred during database connection check:',
+    
+    // Telnet Check
+    telnetTitle: 'Server Telnet Connection Check',
+    telnetDirNotFound: 'Telnet check CSV directory not found: request_resources/',
+    telnetCreateDir: 'Please create the directory and add CSV files.',
+    telnetNoFiles: 'No Server CSV files found in request_resources/ directory.',
+    telnetAddFiles: 'Please add .csv files starting with "server" to the request_resources/ directory.',
+    telnetAvailableFiles: 'Available Telnet Check CSV Files:',
+    telnetSelectFile: 'Select CSV file number to use',
+    telnetInvalidFile: 'Invalid file selection.',
+    telnetSelectedFile: 'Selected CSV file:',
+    telnetTimeoutSettings: 'Timeout Settings:',
+    telnetTimeout: 'Timeout (seconds)',
+    telnetStarting: 'Starting Telnet connection check...',
+    telnetCompleted: 'Telnet connection check completed.',
+    telnetError: 'Error occurred during Telnet connection check:',
+    
+    // SQL Execution
+    sqlTitle: 'Database SQL Execution',
+    sqlDirNotFound: 'SQL files directory not found: request_resources/sql_files/',
+    sqlCreateDir: 'Please create the directory and add SQL files.',
+    sqlNoFiles: 'No SQL files found in request_resources/sql_files/ directory.',
+    sqlAddFiles: 'Please add .sql files to the request_resources/sql_files/ directory.',
+    sqlAvailableFiles: 'Available SQL Files:',
+    sqlSelectFile: 'Select SQL file number to execute',
+    sqlInvalidFile: 'Invalid file selection.',
+    sqlSelectedFile: 'Selected SQL file:',
+    sqlStarting: 'Starting SQL execution...',
+    sqlCompleted: 'SQL execution completed.',
+    sqlError: 'Error occurred during SQL execution:',
+    
+    // Configuration
+    configTitle: 'Configuration Management',
+    configMenu1: '1. Check System Information',
+    configMenu2: '2. View Available Databases',
+    configMenu3: '3. Return to Main Menu',
+    configSelect: 'Select (1-3): ',
+    configAvailableDbs: 'Available Databases:',
+    configNoDbs: 'No databases configured in config/dbinfo.json',
+    
+    // Common
+    exit: 'Exiting program.',
+    pressEnter: 'Press Enter to continue...',
+    createdResultsDir: 'Created results directory:'
+  },
+  kr: {
+    title: 'Node.js 통합 유틸리티 도구',
+    mainMenuTitle: '메인 메뉴',
+    menu1: '1. 데이터베이스 접속 및 권한 확인',
+    menu2: '2. 서버 텔넷 접속 확인',
+    menu3: '3. 데이터베이스 SQL 실행',
+    menu4: '4. 설정 관리',
+    menu0: '0. 종료',
+    selectPrompt: '실행할 기능을 선택하세요 (0-4): ',
+    invalidSelection: '잘못된 선택입니다. 다시 선택해주세요.',
+    
+    // Database Connection Check
+    dbCheckTitle: '데이터베이스 접속 및 권한 확인',
+    dbCheckDirNotFound: 'DB 확인용 CSV 디렉토리를 찾을 수 없습니다: request_resources/',
+    dbCheckCreateDir: '디렉토리를 생성하고 CSV 파일을 추가해주세요.',
+    dbCheckNoFiles: 'request_resources/ 디렉토리에 DB CSV 파일이 없습니다.',
+    dbCheckAddFiles: 'request_resources/ 디렉토리에 "DB"로 시작하는 .csv 파일을 추가해주세요.',
+    dbCheckAvailableFiles: '사용 가능한 DB 확인 CSV 파일:',
+    dbCheckSelectFile: '사용할 CSV 파일 번호를 선택하세요',
+    dbCheckInvalidFile: '잘못된 파일 선택입니다.',
+    dbCheckSelectedFile: '선택된 CSV 파일:',
+    dbCheckAuthNote: '참고: 인증 정보는 CSV 파일에서 읽어옵니다 (username, password 컬럼)',
+    dbCheckTimeoutSettings: '타임아웃 설정:',
+    dbCheckTimeout: '타임아웃 (초)',
+    dbCheckStarting: '데이터베이스 접속 확인을 시작합니다...',
+    dbCheckTypeNote: '참고: CSV의 각 서버는 서로 다른 데이터베이스 타입을 가질 수 있습니다 (mssql, mysql, postgresql, oracle)',
+    dbCheckAuthNote2: '참고: 인증 정보는 CSV 파일에서 읽어옵니다',
+    dbCheckCompleted: '데이터베이스 접속 확인이 완료되었습니다.',
+    dbCheckError: '데이터베이스 접속 확인 중 오류가 발생했습니다:',
+    
+    // Telnet Check
+    telnetTitle: '서버 텔넷 접속 확인',
+    telnetDirNotFound: '텔넷 확인용 CSV 디렉토리를 찾을 수 없습니다: request_resources/',
+    telnetCreateDir: '디렉토리를 생성하고 CSV 파일을 추가해주세요.',
+    telnetNoFiles: 'request_resources/ 디렉토리에 Server CSV 파일이 없습니다.',
+    telnetAddFiles: 'request_resources/ 디렉토리에 "server"로 시작하는 .csv 파일을 추가해주세요.',
+    telnetAvailableFiles: '사용 가능한 텔넷 확인 CSV 파일:',
+    telnetSelectFile: '사용할 CSV 파일 번호를 선택하세요',
+    telnetInvalidFile: '잘못된 파일 선택입니다.',
+    telnetSelectedFile: '선택된 CSV 파일:',
+    telnetTimeoutSettings: '타임아웃 설정:',
+    telnetTimeout: '타임아웃 (초)',
+    telnetStarting: '텔넷 접속 확인을 시작합니다...',
+    telnetCompleted: '텔넷 접속 확인이 완료되었습니다.',
+    telnetError: '텔넷 접속 확인 중 오류가 발생했습니다:',
+    
+    // SQL Execution
+    sqlTitle: '데이터베이스 SQL 실행',
+    sqlDirNotFound: 'SQL 파일 디렉토리를 찾을 수 없습니다: request_resources/sql_files/',
+    sqlCreateDir: '디렉토리를 생성하고 SQL 파일을 추가해주세요.',
+    sqlNoFiles: 'request_resources/sql_files/ 디렉토리에 SQL 파일이 없습니다.',
+    sqlAddFiles: 'request_resources/sql_files/ 디렉토리에 .sql 파일을 추가해주세요.',
+    sqlAvailableFiles: '사용 가능한 SQL 파일:',
+    sqlSelectFile: '실행할 SQL 파일 번호를 선택하세요',
+    sqlInvalidFile: '잘못된 파일 선택입니다.',
+    sqlSelectedFile: '선택된 SQL 파일:',
+    sqlStarting: 'SQL 실행을 시작합니다...',
+    sqlCompleted: 'SQL 실행이 완료되었습니다.',
+    sqlError: 'SQL 실행 중 오류가 발생했습니다:',
+    
+    // Configuration
+    configTitle: '설정 관리',
+    configMenu1: '1. 시스템 정보 확인',
+    configMenu2: '2. 사용 가능한 데이터베이스 보기',
+    configMenu3: '3. 메인 메뉴로 돌아가기',
+    configSelect: '선택 (1-3): ',
+    configAvailableDbs: '사용 가능한 데이터베이스:',
+    configNoDbs: 'config/dbinfo.json에 설정된 데이터베이스가 없습니다',
+    
+    // Common
+    exit: '프로그램을 종료합니다.',
+    pressEnter: 'Enter를 눌러 계속...',
+    createdResultsDir: 'results 디렉토리를 생성했습니다:'
+  }
+};
+
+// 현재 언어의 메시지 가져오기
+const msg = messages[LANGUAGE] || messages.en;
+
 // Module imports
 const DBConnectionChecker = require('./src/modules/DBConnectionChecker');
 const TelnetChecker = require('./src/modules/TelnetChecker');
@@ -34,7 +194,7 @@ class NodeUtilApp {
       
       if (!fs.existsSync(resultsDir)) {
         fs.mkdirSync(resultsDir, { recursive: true });
-        console.log(`📁 Created results directory: ${resultsDir}`);
+        console.log(`📁 ${msg.createdResultsDir} ${resultsDir}`);
       }
     } catch (error) {
       console.error('❌ Error: Could not create results directory:', error.message);
@@ -44,7 +204,7 @@ class NodeUtilApp {
   async start() {
     console.clear();
     console.log('='.repeat(50));
-        console.log('    Node.js Integrated Utility Tool');
+    console.log(`    ${msg.title}`);
     console.log('='.repeat(50));
     console.log();
     
@@ -52,17 +212,17 @@ class NodeUtilApp {
   }
 
   async showMainMenu() {
-    console.log('📋 Main Menu');
+    console.log(`📋 ${msg.mainMenuTitle}`);
     console.log('------------------------------------------------');
-    console.log('1. Database Connection and Permission Check');
-    console.log('2. Server Telnet Connection Check');
-    console.log('3. Database SQL Execution');
-    console.log('4. Configuration Management');
-    console.log('0. Exit');
+    console.log(msg.menu1);
+    console.log(msg.menu2);
+    console.log(msg.menu3);
+    console.log(msg.menu4);
+    console.log(msg.menu0);
     console.log('------------------------------------------------');
     console.log();
 
-    const choice = await this.askQuestion('Select function to execute (0-4): ');
+    const choice = await this.askQuestion(msg.selectPrompt);
     
     switch(choice.trim()) {
       case '1':
@@ -81,7 +241,7 @@ class NodeUtilApp {
         await this.exitApp();
         break;
       default:
-        console.log('❌ Invalid selection. Please select again.');
+        console.log(`❌ ${msg.invalidSelection}`);
         await this.waitAndContinue();
         await this.showMainMenu();
     }
@@ -89,7 +249,7 @@ class NodeUtilApp {
 
   async runDbConnectionCheck() {
     console.clear();
-        console.log('🔍 Database Connection and Permission Check');
+    console.log(`🔍 ${msg.dbCheckTitle}`);
     console.log('='.repeat(40));
     
     try {
@@ -97,8 +257,8 @@ class NodeUtilApp {
       const dbCheckDir = path.join(APP_ROOT, 'request_resources');
       
       if (!fs.existsSync(dbCheckDir)) {
-        console.log('❌ DB check CSV directory not found: request_resources/');
-        console.log('Please create the directory and add CSV files.');
+        console.log(`❌ ${msg.dbCheckDirNotFound}`);
+        console.log(msg.dbCheckCreateDir);
         await this.waitAndContinue();
         await this.showMainMenu();
         return;
@@ -108,26 +268,26 @@ class NodeUtilApp {
         .filter(file => file.endsWith('.csv') && file.toLowerCase().startsWith('db'));
 
       if (csvFiles.length === 0) {
-        console.log('❌ No DB CSV files found in request_resources/ directory.');
-        console.log('Please add .csv files starting with "DB" to the request_resources/ directory.');
+        console.log(`❌ ${msg.dbCheckNoFiles}`);
+        console.log(msg.dbCheckAddFiles);
         await this.waitAndContinue();
         await this.showMainMenu();
         return;
       }
 
-      console.log('\n📄 Available DB Check CSV Files:');
+      console.log(`\n📄 ${msg.dbCheckAvailableFiles}`);
       csvFiles.forEach((file, index) => {
         console.log(`  ${index + 1}. ${file}`);
       });
       console.log();
 
       const fileChoice = await this.askQuestion(
-        `Select CSV file number to use (1-${csvFiles.length}): `
+        `${msg.dbCheckSelectFile} (1-${csvFiles.length}): `
       );
       
       const selectedFileIndex = parseInt(fileChoice) - 1;
       if (selectedFileIndex < 0 || selectedFileIndex >= csvFiles.length) {
-        console.log('❌ Invalid file selection.');
+        console.log(`❌ ${msg.dbCheckInvalidFile}`);
         await this.waitAndContinue();
         await this.showMainMenu();
         return;
@@ -135,19 +295,19 @@ class NodeUtilApp {
 
       const selectedFile = csvFiles[selectedFileIndex];
       const csvPath = path.join(dbCheckDir, selectedFile);
-      console.log(`✅ Selected CSV file: ${selectedFile}`);
-      console.log('ℹ️  Note: Authentication information will be read from CSV file (username, password columns)');
+      console.log(`✅ ${msg.dbCheckSelectedFile} ${selectedFile}`);
+      console.log(`ℹ️  ${msg.dbCheckAuthNote}`);
       
-      console.log('\n⏱️  Timeout Settings:');
+      console.log(`\n⏱️  ${msg.dbCheckTimeoutSettings}`);
       const timeout = await this.askQuestion(
-        'Timeout (seconds)',
+        msg.dbCheckTimeout,
         5
       );
 
-      console.log('\n🚀 Starting database connection check...');
+      console.log(`\n🚀 ${msg.dbCheckStarting}`);
       console.log('-'.repeat(40));
-      console.log('ℹ️  Note: Each server in CSV can have different database types (mssql, mysql, postgresql, oracle)');
-      console.log('ℹ️  Note: Authentication credentials will be read from CSV file');
+      console.log(`ℹ️  ${msg.dbCheckTypeNote}`);
+      console.log(`ℹ️  ${msg.dbCheckAuthNote2}`);
       
       await this.dbConnectionChecker.run({
         csvPath: csvPath,
@@ -155,10 +315,10 @@ class NodeUtilApp {
         dbType: 'auto' // CSV에서 각 행의 db_type을 사용
       });
       
-      console.log('\n✅ Database connection check completed.');
+      console.log(`\n✅ ${msg.dbCheckCompleted}`);
       
     } catch (error) {
-      console.error('❌ Error occurred during database connection check:', error.message);
+      console.error(`❌ ${msg.dbCheckError}`, error.message);
     }
     
     await this.waitAndContinue();
@@ -167,7 +327,7 @@ class NodeUtilApp {
 
   async runTelnetCheck() {
     console.clear();
-        console.log('🌐 Server Telnet Connection Check');
+    console.log(`🌐 ${msg.telnetTitle}`);
     console.log('='.repeat(40));
     
     try {
@@ -175,8 +335,8 @@ class NodeUtilApp {
       const telnetCheckDir = path.join(APP_ROOT, 'request_resources');
       
       if (!fs.existsSync(telnetCheckDir)) {
-        console.log('❌ Telnet check CSV directory not found: request_resources/');
-        console.log('Please create the directory and add CSV files.');
+        console.log(`❌ ${msg.telnetDirNotFound}`);
+        console.log(msg.telnetCreateDir);
         await this.waitAndContinue();
         await this.showMainMenu();
         return;
@@ -186,26 +346,26 @@ class NodeUtilApp {
         .filter(file => file.endsWith('.csv') && file.toLowerCase().startsWith('server'));
 
       if (csvFiles.length === 0) {
-        console.log('❌ No Server CSV files found in request_resources/ directory.');
-        console.log('Please add .csv files starting with "server" to the request_resources/ directory.');
+        console.log(`❌ ${msg.telnetNoFiles}`);
+        console.log(msg.telnetAddFiles);
         await this.waitAndContinue();
         await this.showMainMenu();
         return;
       }
 
-      console.log('\n📄 Available Telnet Check CSV Files:');
+      console.log(`\n📄 ${msg.telnetAvailableFiles}`);
       csvFiles.forEach((file, index) => {
         console.log(`  ${index + 1}. ${file}`);
       });
       console.log();
 
       const fileChoice = await this.askQuestion(
-        `Select CSV file number to use (1-${csvFiles.length}): `
+        `${msg.telnetSelectFile} (1-${csvFiles.length}): `
       );
       
       const selectedFileIndex = parseInt(fileChoice) - 1;
       if (selectedFileIndex < 0 || selectedFileIndex >= csvFiles.length) {
-        console.log('❌ Invalid file selection.');
+        console.log(`❌ ${msg.telnetInvalidFile}`);
         await this.waitAndContinue();
         await this.showMainMenu();
         return;
@@ -213,15 +373,15 @@ class NodeUtilApp {
 
       const selectedFile = csvFiles[selectedFileIndex];
       const csvPath = path.join(telnetCheckDir, selectedFile);
-      console.log(`✅ Selected CSV file: ${selectedFile}`);
+      console.log(`✅ ${msg.telnetSelectedFile} ${selectedFile}`);
       
-      console.log('\n⏱️  Timeout Settings:');
+      console.log(`\n⏱️  ${msg.telnetTimeoutSettings}`);
       const timeout = await this.askQuestion(
-        'Timeout (seconds)',
+        msg.telnetTimeout,
         3
       );
 
-      console.log('\n🚀 Starting Telnet connection check...');
+      console.log(`\n🚀 ${msg.telnetStarting}`);
       console.log('-'.repeat(40));
       
       await this.telnetChecker.run({
@@ -229,10 +389,10 @@ class NodeUtilApp {
         timeout: parseInt(timeout) || 3
       });
       
-      console.log('\n✅ Telnet connection check completed.');
+      console.log(`\n✅ ${msg.telnetCompleted}`);
       
     } catch (error) {
-      console.error('❌ Error occurred during Telnet connection check:', error.message);
+      console.error(`❌ ${msg.telnetError}`, error.message);
     }
     
     await this.waitAndContinue();
@@ -241,7 +401,7 @@ class NodeUtilApp {
 
   async runSqlExecution() {
     console.clear();
-        console.log('⚙️  Database SQL Execution');
+    console.log(`⚙️  ${msg.sqlTitle}`);
     console.log('='.repeat(40));
     
     try {
@@ -249,8 +409,8 @@ class NodeUtilApp {
       const sqlFilesDir = path.join(APP_ROOT, 'request_resources', 'sql_files');
       
       if (!fs.existsSync(sqlFilesDir)) {
-        console.log('❌ SQL files directory not found: request_resources/sql_files/');
-        console.log('Please create the directory and add SQL files.');
+        console.log(`❌ ${msg.sqlDirNotFound}`);
+        console.log(msg.sqlCreateDir);
         await this.waitAndContinue();
         await this.showMainMenu();
         return;
@@ -261,42 +421,42 @@ class NodeUtilApp {
         .map(file => file.replace('.sql', ''));
 
       if (sqlFiles.length === 0) {
-        console.log('❌ No SQL files found in request_resources/sql_files/ directory.');
-        console.log('Please add .sql files to the request_resources/sql_files/ directory.');
+        console.log(`❌ ${msg.sqlNoFiles}`);
+        console.log(msg.sqlAddFiles);
         await this.waitAndContinue();
         await this.showMainMenu();
         return;
       }
 
-      console.log('\n📄 Available SQL Files:');
+      console.log(`\n📄 ${msg.sqlAvailableFiles}`);
       sqlFiles.forEach((file, index) => {
         console.log(`  ${index + 1}. ${file}.sql`);
       });
       console.log();
 
       const fileChoice = await this.askQuestion(
-        `Select SQL file number to execute (1-${sqlFiles.length}): `
+        `${msg.sqlSelectFile} (1-${sqlFiles.length}): `
       );
       
       const selectedFileIndex = parseInt(fileChoice) - 1;
       if (selectedFileIndex < 0 || selectedFileIndex >= sqlFiles.length) {
-        console.log('❌ Invalid file selection.');
+        console.log(`❌ ${msg.sqlInvalidFile}`);
         await this.waitAndContinue();
         await this.showMainMenu();
         return;
       }
 
       const selectedFile = sqlFiles[selectedFileIndex];
-      console.log(`✅ Selected SQL file: ${selectedFile}.sql`);
-      console.log(`\n🚀 Starting SQL execution...`);
+      console.log(`✅ ${msg.sqlSelectedFile} ${selectedFile}.sql`);
+      console.log(`\n🚀 ${msg.sqlStarting}`);
       console.log('-'.repeat(40));
       
       await this.dbExecutor.run(selectedFile);
       
-      console.log('\n✅ SQL execution completed.');
+      console.log(`\n✅ ${msg.sqlCompleted}`);
       
     } catch (error) {
-      console.error('❌ Error occurred during SQL execution:', error.message);
+      console.error(`❌ ${msg.sqlError}`, error.message);
     }
     
     await this.waitAndContinue();
@@ -305,14 +465,14 @@ class NodeUtilApp {
 
   async showConfigMenu() {
     console.clear();
-        console.log('⚙️  Configuration Management');
+    console.log(`⚙️  ${msg.configTitle}`);
     console.log('='.repeat(40));
-    console.log('1. Check System Information');
-    console.log('2. View Available Databases');
-    console.log('3. Return to Main Menu');
+    console.log(msg.configMenu1);
+    console.log(msg.configMenu2);
+    console.log(msg.configMenu3);
     console.log();
 
-    const choice = await this.askQuestion('Select (1-3): ');
+    const choice = await this.askQuestion(msg.configSelect);
     
     switch(choice.trim()) {
       case '1':
@@ -320,7 +480,7 @@ class NodeUtilApp {
         break;
       case '2':
         const availableDbs = this.configManager.getAvailableDbs();
-        console.log('\n🗄️  Available Databases:');
+        console.log(`\n🗄️  ${msg.configAvailableDbs}`);
         if (availableDbs.length > 0) {
           availableDbs.forEach((dbName, index) => {
             const dbInfo = this.configManager.getDbConfig(dbName);
@@ -328,14 +488,14 @@ class NodeUtilApp {
             console.log(`  ${index + 1}. ${dbName} (${dbType}) - ${dbInfo.server}:${dbInfo.port}/${dbInfo.database}`);
           });
         } else {
-          console.log('  No databases configured in config/dbinfo.json');
+          console.log(`  ${msg.configNoDbs}`);
         }
         break;
       case '3':
         await this.showMainMenu();
         return;
       default:
-        console.log('❌ Invalid selection.');
+        console.log(`❌ ${msg.invalidSelection}`);
     }
     
     await this.waitAndContinue();
@@ -343,7 +503,7 @@ class NodeUtilApp {
   }
 
   async exitApp() {
-    console.log('\n👋 Exiting program.');
+    console.log(`\n👋 ${msg.exit}`);
     this.rl.close();
     process.exit(0);
   }
@@ -358,7 +518,7 @@ class NodeUtilApp {
   }
 
   async waitAndContinue() {
-    console.log('\n⏳ Press Enter to continue...');
+    console.log(`\n⏳ ${msg.pressEnter}`);
     return new Promise((resolve) => {
       this.rl.once('line', () => resolve());
     });
