@@ -1,4 +1,4 @@
-# Node.js Integrated Utility Tool v1.3.4
+# Node.js Integrated Utility Tool v1.3.5
 
 A comprehensive utility tool for managing various local environment utilities in a unified application.
 
@@ -39,6 +39,19 @@ my-node-client-util-app/
 ```
 
 ## 🆕 Latest Updates
+
+### v1.3.5 - Extended Multi-language Support (2025-10-20) 🌏
+
+**Additional Module Localization:**
+- Added multi-language messages to DBConnectionChecker, DBExecutor, and TelnetChecker modules
+- All user messages unified in English/Korean
+- All error messages translated including database connection errors, SQL execution errors
+- Improved translation quality of user input prompts
+
+**Documentation Updates:**
+- Updated request documentation
+- Updated user manual
+- Synchronized version information
 
 ### v1.3.4 - Multi-language & Encoding Support (2025-10-18) 🌏
 

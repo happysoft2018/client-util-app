@@ -1,5 +1,20 @@
 # Changelog
 
+## [1.3.5] - 2025-10-20
+
+### 🔧 Improvements
+
+#### Extended Multi-language Support
+- **Additional Module Localization**: Added multi-language messages to DBConnectionChecker, DBExecutor, and TelnetChecker modules
+- **Consistency Improvement**: All user messages unified in English/Korean
+- **Error Message Translation**: All error messages translated including database connection errors, SQL execution errors
+- **Enhanced Prompt Messages**: Improved translation quality of user input prompts
+
+### 📝 Documentation Updates
+- Updated request documentation
+- Updated user manual
+- Synchronized version information
+
 ## [1.3.4] - 2025-10-18
 
 ### ✨ New Features
