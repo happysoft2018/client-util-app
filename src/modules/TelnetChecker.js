@@ -7,12 +7,78 @@ const path = require('path');
 // pkg 실행 파일 경로 처리
 const APP_ROOT = process.pkg ? path.dirname(process.execPath) : path.join(__dirname, '../..');
 
+// 언어 설정 (명령줄 인수에서 가져오기)
+const args = process.argv.slice(2);
+const langArg = args.find(arg => arg.startsWith('--lang='));
+const LANGUAGE = langArg ? langArg.split('=')[1] : 'en';
+
+// 다국어 메시지
+const messages = {
+    en: {
+        errorCreateDir: '❌ Error: Could not create results directory:',
+        csvPathRequired: 'CSV file path is required.',
+        csvNotFound: 'CSV file not found:',
+        csvNotFile: 'CSV path is not a file.',
+        onlyCsvSupported: 'Only CSV files (.csv extension) are supported.',
+        csvTooLarge: 'CSV file is too large.',
+        csvEmpty: 'CSV file is empty.',
+        connectionTimedOut: 'Connection timed out in',
+        unknownError: 'Unknown error',
+        unknownServer: 'Unknown',
+        connected: '✅ Connected',
+        failed: '❌ Failed',
+        csvReadError: 'CSV file read error:',
+        requiredColumnsMissing: 'Required columns are missing:',
+        csvTooManyRows: 'CSV file has too many data rows.',
+        readServerInfo: 'Read',
+        serverInfoEntries: 'server information entries.',
+        invalidIp: 'is not valid ip format',
+        invalidPort: 'is not valid port format',
+        resultsSaved: '\n✅ Results saved to CSV file:',
+        entries: 'entries',
+        allChecksComplete: 'All server Telnet checks completed',
+        csvFileSaved: '📁 CSV file saved:',
+        errorSavingCsv: '❌ Error saving CSV file:',
+        attemptedPath: '📁 Attempted path:'
+    },
+    kr: {
+        errorCreateDir: '❌ 오류: results 디렉토리 생성 실패:',
+        csvPathRequired: 'CSV 파일 경로가 필요합니다.',
+        csvNotFound: 'CSV 파일을 찾을 수 없습니다:',
+        csvNotFile: 'CSV 경로가 파일이 아닙니다.',
+        onlyCsvSupported: 'CSV 파일만 지원됩니다 (.csv 확장자).',
+        csvTooLarge: 'CSV 파일이 너무 큽니다.',
+        csvEmpty: 'CSV 파일이 비어있습니다.',
+        connectionTimedOut: '연결 시간 초과:',
+        unknownError: '알 수 없는 오류',
+        unknownServer: '알 수 없음',
+        connected: '✅ 연결 성공',
+        failed: '❌ 실패',
+        csvReadError: 'CSV 파일 읽기 오류:',
+        requiredColumnsMissing: '필수 컬럼이 누락되었습니다:',
+        csvTooManyRows: 'CSV 파일의 데이터 행이 너무 많습니다.',
+        readServerInfo: '서버 정보',
+        serverInfoEntries: '개를 읽었습니다.',
+        invalidIp: '는 유효한 IP 형식이 아닙니다',
+        invalidPort: '는 유효한 포트 형식이 아닙니다',
+        resultsSaved: '\n✅ 결과가 CSV 파일로 저장되었습니다:',
+        entries: '개',
+        allChecksComplete: '모든 서버 Telnet 점검 완료',
+        csvFileSaved: '📁 CSV 파일 저장됨:',
+        errorSavingCsv: '❌ CSV 파일 저장 오류:',
+        attemptedPath: '📁 시도한 경로:'
+    }
+};
+
+const msg = messages[LANGUAGE] || messages.en;
+
 class TelnetChecker {
   constructor() {
     this.localPcIp = this.getLocalIp();
     this.regexIpPattern = /^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/;
     this.regexPortPattern = /^[0-9]+$/; // Port range is 1-65535, so removed 4-digit limit
     this.resultsDir = path.join(APP_ROOT, 'results');
+    this.msg = msg;
   }
 
   ensureResultsDir() {
@@ -21,7 +87,7 @@ class TelnetChecker {
         fs.mkdirSync(this.resultsDir, { recursive: true });
       }
     } catch (error) {
-      console.error('❌ Error: Could not create results directory:', error.message);
+      console.error(this.msg.errorCreateDir, error.message);
     }
   }
 
@@ -41,19 +107,19 @@ class TelnetChecker {
     const { csvPath } = options;
     
     if (!csvPath) {
-      throw new Error('CSV file path is required.');
+      throw new Error(this.msg.csvPathRequired);
     }
 
     if (!fs.existsSync(csvPath)) {
-      throw new Error(`CSV file not found: ${csvPath}`);
+      throw new Error(`${this.msg.csvNotFound} ${csvPath}`);
     }
 
     if (!fs.statSync(csvPath).isFile()) {
-      throw new Error('CSV path is not a file.');
+      throw new Error(this.msg.csvNotFile);
     }
 
     if (!csvPath.toLowerCase().endsWith('.csv')) {
-      throw new Error('Only CSV files (.csv extension) are supported.');
+      throw new Error(this.msg.onlyCsvSupported);
     }
 
     const stats = fs.statSync(csvPath);
@@ -61,11 +127,11 @@ class TelnetChecker {
     const MAX_FILE_SIZE_KB = 200;
     
     if (fileSizeInKB > MAX_FILE_SIZE_KB) {
-      throw new Error(`CSV file is too large. (${fileSizeInKB.toFixed(2)}KB > ${MAX_FILE_SIZE_KB}KB)`);
+      throw new Error(`${this.msg.csvTooLarge} (${fileSizeInKB.toFixed(2)}KB > ${MAX_FILE_SIZE_KB}KB)`);
     }
 
     if (stats.size === 0) {
-      throw new Error('CSV file is empty.');
+      throw new Error(this.msg.csvEmpty);
     }
   }
 
@@ -92,7 +158,7 @@ class TelnetChecker {
       socket.on('timeout', () => {
         const elapsed = ((Date.now() - start) / 1000).toFixed(2);
         error_code = 'ETIMEDOUT';
-        error_msg = `Connection timed out in ${timeout * 1000}ms`;
+        error_msg = `${this.msg.connectionTimedOut} ${timeout * 1000}ms`;
         socket.destroy();
         resolve({
           isConnected: false,
@@ -105,7 +171,7 @@ class TelnetChecker {
       socket.on('error', (err) => {
         const elapsed = ((Date.now() - start) / 1000).toFixed(2);
         error_code = err.code || 'ERROR';
-        error_msg = err.message || 'Unknown error';
+        error_msg = err.message || this.msg.unknownError;
         resolve({
           isConnected: false,
           error_code,
@@ -124,8 +190,8 @@ class TelnetChecker {
     const result = await this.checkPort(server_ip, port, timeout);
     const errMessage = result.isConnected ? '' : `[${result.error_code}] ${result.error_msg}`;
     
-    const serverDesc = server_name || 'Unknown';
-    console.log(`[${server_ip}:${port}][${serverDesc}] \t→ [${result.isConnected ? '✅ Connected' : '❌ Failed'}] ${errMessage}`);
+    const serverDesc = server_name || this.msg.unknownServer;
+    console.log(`[${server_ip}:${port}][${serverDesc}] \t→ [${result.isConnected ? this.msg.connected : this.msg.failed}] ${errMessage}`);
 
     // Return result for CSV saving
     return {
@@ -157,11 +223,11 @@ class TelnetChecker {
           rows.push(row);
         })
         .on('error', (error) => {
-          reject(new Error(`CSV file read error: ${error.message}`));
+          reject(new Error(`${this.msg.csvReadError} ${error.message}`));
         })
         .on('end', async () => {
           if (rows.length === 0) {
-            reject(new Error('CSV file is empty.'));
+            reject(new Error(this.msg.csvEmpty));
             return;
           }
 
@@ -171,25 +237,25 @@ class TelnetChecker {
           const missingColumns = requiredColumns.filter(col => !firstRow.hasOwnProperty(col));
           
           if (missingColumns.length > 0) {
-            reject(new Error(`Required columns are missing: ${missingColumns.join(', ')}`));
+            reject(new Error(`${this.msg.requiredColumnsMissing} ${missingColumns.join(', ')}`));
             return;
           }
 
           const MAX_ROW_COUNT = 500;
           if (rows.length > MAX_ROW_COUNT) {
-            reject(new Error(`CSV file has too many data rows. (${rows.length} > ${MAX_ROW_COUNT})`));
+            reject(new Error(`${this.msg.csvTooManyRows} (${rows.length} > ${MAX_ROW_COUNT})`));
             return;
           }
 
-          console.log(`Read ${rows.length} server information entries.`);
+          console.log(`${this.msg.readServerInfo} ${rows.length}${LANGUAGE === 'kr' ? this.msg.serverInfoEntries : ' ' + this.msg.serverInfoEntries}`);
 
           // Execute check for each server and collect results
           const results = [];
           for (const row of rows) {
             if (!this.regexIpPattern.test(row.server_ip)) {
-              console.log(`[${row.server_ip}] is not valid ip format`);
+              console.log(`[${row.server_ip}] ${this.msg.invalidIp}`);
             } else if (!this.regexPortPattern.test(row.port)) {
-              console.log(`[${row.port}] is not valid port format`);
+              console.log(`[${row.port}] ${this.msg.invalidPort}`);
             } else {
               const result = await this.unitWorkByServer(row, timeout);
               if (result) {
@@ -202,10 +268,10 @@ class TelnetChecker {
           if (results.length > 0) {
             const sourceCsvName = path.basename(csvPath);
             await this.saveResultsToCSV(results, '', sourceCsvName);
-            console.log(`\n✅ Results saved to CSV file: ${results.length} entries`);
+            console.log(`${this.msg.resultsSaved} ${results.length} ${this.msg.entries}`);
           }
           
-          console.log('All server Telnet checks completed');
+          console.log(this.msg.allChecksComplete);
           resolve();
         });
     });
@@ -245,10 +311,10 @@ class TelnetChecker {
     try {
       // 파일 저장
       fs.writeFileSync(csvPath, csvContent, 'utf8');
-      console.log(`📁 CSV file saved: ${csvPath}`);
+      console.log(`${this.msg.csvFileSaved} ${csvPath}`);
     } catch (error) {
-      console.error(`❌ Error saving CSV file: ${error.message}`);
-      console.log(`📁 Attempted path: ${csvPath}`);
+      console.error(`${this.msg.errorSavingCsv} ${error.message}`);
+      console.log(`${this.msg.attemptedPath} ${csvPath}`);
     }
   }
 }

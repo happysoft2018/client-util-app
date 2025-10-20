@@ -7,9 +7,131 @@ const DatabaseFactory = require('./database/DatabaseFactory');
 // pkg 실행 파일 경로 처리
 const APP_ROOT = process.pkg ? path.dirname(process.execPath) : path.join(__dirname, '../..');
 
+// 언어 설정 (명령줄 인수에서 가져오기)
+const args = process.argv.slice(2);
+const langArg = args.find(arg => arg.startsWith('--lang='));
+const LANGUAGE = langArg ? langArg.split('=')[1] : 'en';
+
+// 다국어 메시지
+const messages = {
+    en: {
+        default: 'default:',
+        dbConfigRequired: 'DB configuration is required. Please select a DB in settings management.',
+        dbConfigNotFound: 'Selected DB configuration not found:',
+        executingSql: '📊 Executing SQL with',
+        parameters: 'parameters...',
+        completed: '✅ Completed:',
+        result: 'Result:',
+        rows: 'rows',
+        error: '❌ Error:',
+        csvFileSaved: '\n📄 CSV file saved:',
+        totalParameterSets: 'Total parameter sets:',
+        totalResultRows: 'Total result rows:',
+        csvSaveFailed: '⚠️  Warning: Failed to save CSV file:',
+        executionResultSummary: '\n📈 Execution Result Summary:',
+        totalProcessedParams: 'Total processed parameters:',
+        executionResult: 'Execution result:',
+        elapsedTime: 'Elapsed time:',
+        seconds: 'seconds',
+        sqlFileRequired: 'SQL file name is required.',
+        sqlFileNotExist: 'SQL file does not exist:',
+        paramFileNotExist: 'Parameter file does not exist. Need either',
+        or: 'or',
+        sqlFile: '📄 SQL file:',
+        paramFile: '📄 Parameter file',
+        specifiedDb: '\n📌 Specified DB in SQL file:',
+        sqlQueryContent: '\n🔍 SQL Query Content:',
+        noDatabasesConfigured: 'No databases configured. Please add database configurations to config/dbinfo.json',
+        usingSpecifiedDb: '✅ Using specified database:',
+        warningDbNotFound: '⚠️  Warning: Specified database',
+        dbNotFoundInConfig: 'not found in config.',
+        availableDbs: 'Available databases:',
+        dbNotFoundError: 'Database',
+        dbNotFoundErrorEnd: 'not found in config/dbinfo.json',
+        availableDbsPrompt: '\n🗄️  Available Databases:',
+        selectDbPrompt: 'Select database to use',
+        invalidDbSelection: 'Invalid database selection',
+        dbInUse: '\n🗄️  Database in use:',
+        dbType: 'DB type:',
+        server: 'Server:',
+        database: 'Database:',
+        account: 'Account:',
+        jsonMustBeObject: 'JSON file must contain an object or an array of objects.',
+        paramFileEmpty: 'Parameter file is empty:',
+        paramData: '\n📋 Parameter Data',
+        entries: 'entries',
+        allTasksComplete: '\n🎉 All tasks completed successfully!',
+        dbInfo: 'Database Information',
+        dbName: 'DB Name',
+        executionTime: 'Execution Time',
+        parametersSet: 'Parameters - Set',
+        errorLabel: 'Error',
+        resultCount: 'Result Count',
+        noResults: 'No results returned'
+    },
+    kr: {
+        default: '기본값:',
+        dbConfigRequired: 'DB 설정이 필요합니다. 설정 관리에서 DB를 선택하세요.',
+        dbConfigNotFound: '선택한 DB 설정을 찾을 수 없습니다:',
+        executingSql: '📊 SQL 실행 중, 파라미터 수:',
+        parameters: '개...',
+        completed: '✅ 완료:',
+        result: '결과:',
+        rows: '행',
+        error: '❌ 오류:',
+        csvFileSaved: '\n📄 CSV 파일 저장됨:',
+        totalParameterSets: '총 파라미터 세트 수:',
+        totalResultRows: '총 결과 행 수:',
+        csvSaveFailed: '⚠️  경고: CSV 파일 저장 실패:',
+        executionResultSummary: '\n📈 실행 결과 요약:',
+        totalProcessedParams: '처리된 총 파라미터 수:',
+        executionResult: '실행 결과:',
+        elapsedTime: '소요 시간:',
+        seconds: '초',
+        sqlFileRequired: 'SQL 파일명이 필요합니다.',
+        sqlFileNotExist: 'SQL 파일이 존재하지 않습니다:',
+        paramFileNotExist: '파라미터 파일이 존재하지 않습니다.',
+        or: '또는',
+        sqlFile: '📄 SQL 파일:',
+        paramFile: '📄 파라미터 파일',
+        specifiedDb: '\n📌 SQL 파일에 지정된 DB:',
+        sqlQueryContent: '\n🔍 SQL 쿼리 내용:',
+        noDatabasesConfigured: 'DB가 설정되지 않았습니다. config/dbinfo.json에 DB 설정을 추가하세요',
+        usingSpecifiedDb: '✅ 지정된 데이터베이스 사용:',
+        warningDbNotFound: '⚠️  경고: 지정된 데이터베이스',
+        dbNotFoundInConfig: '를 config에서 찾을 수 없습니다.',
+        availableDbs: '사용 가능한 데이터베이스:',
+        dbNotFoundError: '데이터베이스',
+        dbNotFoundErrorEnd: '를 config/dbinfo.json에서 찾을 수 없습니다',
+        availableDbsPrompt: '\n🗄️  사용 가능한 데이터베이스:',
+        selectDbPrompt: '사용할 데이터베이스 선택',
+        invalidDbSelection: '잘못된 데이터베이스 선택',
+        dbInUse: '\n🗄️  사용 중인 데이터베이스:',
+        dbType: 'DB 유형:',
+        server: '서버:',
+        database: '데이터베이스:',
+        account: '계정:',
+        jsonMustBeObject: 'JSON 파일은 객체 또는 객체 배열을 포함해야 합니다.',
+        paramFileEmpty: '파라미터 파일이 비어있습니다:',
+        paramData: '\n📋 파라미터 데이터',
+        entries: '개',
+        allTasksComplete: '\n🎉 모든 작업이 성공적으로 완료되었습니다!',
+        dbInfo: '데이터베이스 정보',
+        dbName: 'DB 이름',
+        executionTime: '실행 시각',
+        parametersSet: '파라미터 - 세트',
+        errorLabel: '오류',
+        resultCount: '결과 수',
+        noResults: '결과 없음'
+    }
+};
+
+const msg = messages[LANGUAGE] || messages.en;
+
 class DBExecutor {
   constructor(configManager, readlineInterface = null) {
     this.configManager = configManager;
+    this.msg = msg;
     
     // Set sqlFilesDir based on environment (pkg or development)
     this.sqlFilesDir = path.join(APP_ROOT, 'request_resources', 'sql_files');
@@ -22,7 +144,7 @@ class DBExecutor {
 
   async askQuestion(question, defaultValue = '') {
     return new Promise((resolve) => {
-      const prompt = defaultValue ? `${question} (default: ${defaultValue}): ` : `${question} `;
+      const prompt = defaultValue ? `${question} (${this.msg.default} ${defaultValue}): ` : `${question} `;
       this.rl.question(prompt, (answer) => {
         resolve(answer.trim() || defaultValue);
       });
@@ -51,12 +173,12 @@ class DBExecutor {
 
     // All DB connections now use config/dbinfo.json
     if (!selectedDbName) {
-      throw new Error('DB configuration is required. Please select a DB in settings management.');
+      throw new Error(this.msg.dbConfigRequired);
     }
 
     const dbConfig = this.configManager.getDbConfig(selectedDbName);
     if (!dbConfig) {
-      throw new Error(`Selected DB configuration not found: ${selectedDbName}`);
+      throw new Error(`${this.msg.dbConfigNotFound} ${selectedDbName}`);
     }
     
     const dbType = this.configManager.getDbType(selectedDbName);
@@ -96,7 +218,7 @@ class DBExecutor {
       fs.mkdirSync(resultsDir, { recursive: true });
     }
 
-    console.log(`\n📊 Executing SQL with ${rows.length} parameters...`);
+    console.log(`\n${this.msg.executingSql} ${rows.length} ${this.msg.parameters}`);
     console.log('-'.repeat(50));
 
     // Execute SQL for each row
@@ -123,12 +245,12 @@ class DBExecutor {
         const logFile = path.join(logDir, `${sqlName}_${timestamp}.log`);
         fs.appendFileSync(logFile, JSON.stringify({ row, result: result.rows }, null, 2) + '\n');
         
-        console.log(`✅ Completed: ${JSON.stringify(row)} (Result: ${result.rowCount} rows)`);
+        console.log(`${this.msg.completed} ${JSON.stringify(row)} (${this.msg.result} ${result.rowCount} ${this.msg.rows})`);
 
       } catch (err) {
         errorMsg += err.message + '\n';
         resultCode = 'Failed';
-        console.error(`❌ Error: ${JSON.stringify(row)} - ${err.message}`);
+        console.error(`${this.msg.error} ${JSON.stringify(row)} - ${err.message}`);
         
         // Store error result
         groupedResults.push({
@@ -224,28 +346,28 @@ class DBExecutor {
         
         // Write CSV file
         fs.writeFileSync(csvFile, csvContent, 'utf-8');
-        console.log(`\n📄 CSV file saved: ${csvFile}`);
-        console.log(`   Total parameter sets: ${groupedResults.length}`);
-        console.log(`   Total result rows: ${totalCount}`);
+        console.log(`${this.msg.csvFileSaved} ${csvFile}`);
+        console.log(`   ${this.msg.totalParameterSets} ${groupedResults.length}`);
+        console.log(`   ${this.msg.totalResultRows} ${totalCount}`);
       } catch (csvError) {
-        console.error(`⚠️  Warning: Failed to save CSV file: ${csvError.message}`);
+        console.error(`${this.msg.csvSaveFailed} ${csvError.message}`);
       }
     }
 
     // Logging functionality removed - results are shown in console and log files
 
-    console.log('\n📈 Execution Result Summary:');
-    console.log(`  Total processed parameters: ${rows.length}`);
-    console.log(`  Total result rows: ${totalCount}`);
-    console.log(`  Execution result: ${resultCode}`);
-    console.log(`  Elapsed time: ${elapsed} seconds`);
+    console.log(this.msg.executionResultSummary);
+    console.log(`  ${this.msg.totalProcessedParams} ${rows.length}`);
+    console.log(`  ${this.msg.totalResultRows} ${totalCount}`);
+    console.log(`  ${this.msg.executionResult} ${resultCode}`);
+    console.log(`  ${this.msg.elapsedTime} ${elapsed} ${this.msg.seconds}`);
 
     return { totalCount, resultCode, elapsed };
   }
 
   async run(sqlName) {
     if (!sqlName) {
-      throw new Error('SQL file name is required.');
+      throw new Error(this.msg.sqlFileRequired);
     }
 
     const sqlFilePath = path.join(this.sqlFilesDir, `${sqlName}.sql`);
@@ -254,7 +376,7 @@ class DBExecutor {
 
     // Check file existence
     if (!fs.existsSync(sqlFilePath)) {
-      throw new Error(`SQL file does not exist: ${sqlFilePath}`);
+      throw new Error(`${this.msg.sqlFileNotExist} ${sqlFilePath}`);
     }
     
     // Check if either CSV or JSON file exists
@@ -262,15 +384,15 @@ class DBExecutor {
     const hasJson = fs.existsSync(jsonFilePath);
     
     if (!hasCsv && !hasJson) {
-      throw new Error(`Parameter file does not exist. Need either ${csvFilePath} or ${jsonFilePath}`);
+      throw new Error(`${this.msg.paramFileNotExist} ${csvFilePath} ${this.msg.or} ${jsonFilePath}`);
     }
     
     // Determine which parameter file to use (prefer JSON if both exist)
     const paramFilePath = hasJson ? jsonFilePath : csvFilePath;
     const paramFileType = hasJson ? 'JSON' : 'CSV';
 
-    console.log(`\n📄 SQL file: ${sqlFilePath}`);
-    console.log(`📄 Parameter file (${paramFileType}): ${paramFilePath}`);
+    console.log(`\n${this.msg.sqlFile} ${sqlFilePath}`);
+    console.log(`${this.msg.paramFile} (${paramFileType}): ${paramFilePath}`);
 
     // Read SQL file
     const rawQuery = fs.readFileSync(sqlFilePath, 'utf-8');

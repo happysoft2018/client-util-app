@@ -7,6 +7,95 @@ const DatabaseFactory = require('./database/DatabaseFactory');
 // pkg 실행 파일 경로 처리
 const APP_ROOT = process.pkg ? path.dirname(process.execPath) : path.join(__dirname, '../..');
 
+// 언어 설정 (명령줄 인수에서 가져오기)
+const args = process.argv.slice(2);
+const langArg = args.find(arg => arg.startsWith('--lang='));
+const LANGUAGE = langArg ? langArg.split('=')[1] : 'en';
+
+// 다국어 메시지
+const messages = {
+    en: {
+        errorCreateDir: '❌ Error: Could not create results directory:',
+        columnCountMismatch: '⚠️  Column count',
+        doesntMatchValue: "doesn't match value count",
+        insertSuccess: '✅ Success',
+        insertFailed: '❌ Failed',
+        deleteSkipped: '❌ Skipped - No INSERT SQL',
+        deleteSuccess: '✅ Success',
+        deleteFailed: '❌ Failed',
+        insertExecuted: 'INSERT executed successfully',
+        deleteExecuted: 'DELETE executed successfully',
+        csvFileRequired: 'CSV file path is required.',
+        csvNotFound: 'CSV file not found:',
+        csvNotFile: 'CSV path is not a file.',
+        onlyCsvSupported: 'Only CSV files (.csv extension) are supported.',
+        csvTooLarge: 'CSV file is too large.',
+        csvEmpty: 'CSV file is empty.',
+        readEntries: 'Read',
+        dbInfoEntries: 'DB information entries.',
+        csvReadError: 'CSV file read error:',
+        requiredColumnsMissing: 'Required columns are missing:',
+        csvTooManyRows: 'CSV file has too many data rows.',
+        invalidIp: 'is not valid IP format',
+        invalidPort: 'is not valid port format',
+        invalidDbName: 'is not valid DB name format',
+        connecting: 'Connecting...',
+        connectionSuccess: '✅ Connection Success',
+        connectionFailed: '❌ Connection Failed',
+        permissionCheck: 'Permission Check...',
+        selectSuccess: 'SELECT: ✅ Success',
+        selectFailed: 'SELECT: ❌ Failed',
+        crudTest: 'CRUD Test...',
+        allChecksComplete: 'All DB connection checks completed',
+        resultsSaved: '\n✅ Results saved to CSV file:',
+        entries: 'entries',
+        csvFileSaved: '📁 CSV file saved:',
+        errorSavingCsv: '❌ Error saving CSV file:',
+        attemptedPath: '📁 Attempted path:'
+    },
+    kr: {
+        errorCreateDir: '❌ 오류: results 디렉토리 생성 실패:',
+        columnCountMismatch: '⚠️  컬럼 수',
+        doesntMatchValue: '가 값의 수와 일치하지 않습니다',
+        insertSuccess: '✅ 성공',
+        insertFailed: '❌ 실패',
+        deleteSkipped: '❌ 건너뜀 - INSERT SQL 없음',
+        deleteSuccess: '✅ 성공',
+        deleteFailed: '❌ 실패',
+        insertExecuted: 'INSERT 실행 성공',
+        deleteExecuted: 'DELETE 실행 성공',
+        csvFileRequired: 'CSV 파일 경로가 필요합니다.',
+        csvNotFound: 'CSV 파일을 찾을 수 없습니다:',
+        csvNotFile: 'CSV 경로가 파일이 아닙니다.',
+        onlyCsvSupported: 'CSV 파일만 지원됩니다 (.csv 확장자).',
+        csvTooLarge: 'CSV 파일이 너무 큽니다.',
+        csvEmpty: 'CSV 파일이 비어있습니다.',
+        readEntries: 'DB 정보',
+        dbInfoEntries: '개를 읽었습니다.',
+        csvReadError: 'CSV 파일 읽기 오류:',
+        requiredColumnsMissing: '필수 컬럼이 누락되었습니다:',
+        csvTooManyRows: 'CSV 파일의 데이터 행이 너무 많습니다.',
+        invalidIp: '는 유효한 IP 형식이 아닙니다',
+        invalidPort: '는 유효한 포트 형식이 아닙니다',
+        invalidDbName: '는 유효한 DB 이름 형식이 아닙니다',
+        connecting: '연결 중...',
+        connectionSuccess: '✅ 연결 성공',
+        connectionFailed: '❌ 연결 실패',
+        permissionCheck: '권한 확인 중...',
+        selectSuccess: 'SELECT: ✅ 성공',
+        selectFailed: 'SELECT: ❌ 실패',
+        crudTest: 'CRUD 테스트 중...',
+        allChecksComplete: '모든 DB 연결 점검 완료',
+        resultsSaved: '\n✅ 결과가 CSV 파일로 저장되었습니다:',
+        entries: '개',
+        csvFileSaved: '📁 CSV 파일 저장됨:',
+        errorSavingCsv: '❌ CSV 파일 저장 오류:',
+        attemptedPath: '📁 시도한 경로:'
+    }
+};
+
+const msg = messages[LANGUAGE] || messages.en;
+
 class DBConnectionChecker {
   constructor(configManager) {
     this.configManager = configManager;
@@ -14,6 +103,7 @@ class DBConnectionChecker {
     this.regexIpPattern = /^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$|^localhost$/i;
     this.regexPortPattern = /^[0-9]+$/; // Port range is 1-65535, so removed 4-digit limit
     this.resultsDir = path.join(APP_ROOT, 'results');
+    this.msg = msg;
   }
 
   ensureResultsDir() {
@@ -22,7 +112,7 @@ class DBConnectionChecker {
         fs.mkdirSync(this.resultsDir, { recursive: true });
       }
     } catch (error) {
-      console.error('❌ Error: Could not create results directory:', error.message);
+      console.error(this.msg.errorCreateDir, error.message);
     }
   }
 
@@ -53,7 +143,7 @@ class DBConnectionChecker {
     const values = crud_test_values.split(',').map(val => val.trim());
     
     if (columns.length !== values.length) {
-      console.warn(`⚠️  Column count (${columns.length}) doesn't match value count (${values.length})`);
+      console.warn(`${this.msg.columnCountMismatch} (${columns.length}) ${this.msg.doesntMatchValue} (${values.length})`);
       return {
         insertSql: null,
         deleteSql: null
@@ -100,11 +190,11 @@ class DBConnectionChecker {
         await connection.executeQuery(crudSqls.insertSql);
         results.insert = {
           success: true,
-          message: 'INSERT executed successfully',
+          message: this.msg.insertExecuted,
           elapsed: ((Date.now() - start) / 1000).toFixed(3),
           query: crudSqls.insertSql
         };
-        console.log(`  └ INSERT: ✅ Success (${results.insert.elapsed}s)`);
+        console.log(`  └ INSERT: ${this.msg.insertSuccess} (${results.insert.elapsed}s)`);
       } catch (error) {
         results.insert = {
           success: false,
@@ -112,12 +202,12 @@ class DBConnectionChecker {
           elapsed: 0,
           query: crudSqls.insertSql
         };
-        console.log(`  └ INSERT: ❌ Failed (testCrudOperations) - ${error.message.substring(0, 200)}...`);
+        console.log(`  └ INSERT: ${this.msg.insertFailed} (testCrudOperations) - ${error.message.substring(0, 200)}...`);
         return results;
       }
     } else {
       // INSERT SQL이 없으면 UPDATE, DELETE 테스트 중단
-      console.log(`  └ DELETE Test: ❌ Skipped - No INSERT SQL`);
+      console.log(`  └ DELETE Test: ${this.msg.deleteSkipped}`);
       return results;
     }
 
@@ -128,11 +218,11 @@ class DBConnectionChecker {
         await connection.executeQuery(crudSqls.deleteSql);
         results.delete = {
           success: true,
-          message: 'DELETE executed successfully',
+          message: this.msg.deleteExecuted,
           elapsed: ((Date.now() - start) / 1000).toFixed(3),
           query: crudSqls.deleteSql
         };
-        console.log(`  └ DELETE: ✅ Success (${results.delete.elapsed}s)`);
+        console.log(`  └ DELETE: ${this.msg.deleteSuccess} (${results.delete.elapsed}s)`);
       } catch (error) {
         results.delete = {
           success: false,
@@ -140,10 +230,10 @@ class DBConnectionChecker {
           elapsed: 0,
           query: crudSqls.deleteSql
         };
-        console.log(`  └ DELETE: ❌ Failed - ${error.message.substring(0, 200)}...`);
+        console.log(`  └ DELETE: ${this.msg.deleteFailed} - ${error.message.substring(0, 200)}...`);
       }
     } else {
-      console.log(`  └ DELETE: ❌ Skipped - No DELETE SQL`);
+      console.log(`  └ DELETE: ${this.msg.deleteSkipped}`);
     }
 
     return results;
@@ -153,19 +243,19 @@ class DBConnectionChecker {
     const { csvPath } = options;
     
     if (!csvPath) {
-      throw new Error('CSV file path is required.');
+      throw new Error(this.msg.csvFileRequired);
     }
 
     if (!fs.existsSync(csvPath)) {
-      throw new Error(`CSV file not found: ${csvPath}`);
+      throw new Error(`${this.msg.csvNotFound} ${csvPath}`);
     }
 
     if (!fs.statSync(csvPath).isFile()) {
-      throw new Error('CSV path is not a file.');
+      throw new Error(this.msg.csvNotFile);
     }
 
     if (!csvPath.toLowerCase().endsWith('.csv')) {
-      throw new Error('Only CSV files (.csv extension) are supported.');
+      throw new Error(this.msg.onlyCsvSupported);
     }
 
     const stats = fs.statSync(csvPath);
@@ -173,11 +263,11 @@ class DBConnectionChecker {
     const MAX_FILE_SIZE_KB = 200;
     
     if (fileSizeInKB > MAX_FILE_SIZE_KB) {
-      throw new Error(`CSV file is too large. (${fileSizeInKB.toFixed(2)}KB > ${MAX_FILE_SIZE_KB}KB)`);
+      throw new Error(`${this.msg.csvTooLarge} (${fileSizeInKB.toFixed(2)}KB > ${MAX_FILE_SIZE_KB}KB)`);
     }
 
     if (stats.size === 0) {
-      throw new Error('CSV file is empty.');
+      throw new Error(this.msg.csvEmpty);
     }
   }
 
@@ -376,11 +466,11 @@ class DBConnectionChecker {
           rows.push(row);
         })
         .on('error', (error) => {
-          reject(new Error(`CSV file read error: ${error.message}`));
+          reject(new Error(`${this.msg.csvReadError} ${error.message}`));
         })
         .on('end', async () => {
           if (rows.length === 0) {
-            reject(new Error('CSV file is empty.'));
+            reject(new Error(this.msg.csvEmpty));
             return;
           }
 
@@ -390,25 +480,25 @@ class DBConnectionChecker {
           const missingColumns = requiredColumns.filter(col => !firstRow.hasOwnProperty(col));
           
           if (missingColumns.length > 0) {
-            reject(new Error(`Required columns are missing: ${missingColumns.join(', ')}`));
+            reject(new Error(`${this.msg.requiredColumnsMissing} ${missingColumns.join(', ')}`));
             return;
           }
 
           const MAX_ROW_COUNT = 500;
           if (rows.length > MAX_ROW_COUNT) {
-            reject(new Error(`CSV file has too many data rows. (${rows.length} > ${MAX_ROW_COUNT})`));
+            reject(new Error(`${this.msg.csvTooManyRows} (${rows.length} > ${MAX_ROW_COUNT})`));
             return;
           }
 
-          console.log(`Read ${rows.length} DB information entries.`);
+          console.log(`${this.msg.readEntries} ${rows.length}${LANGUAGE === 'kr' ? this.msg.dbInfoEntries : ' ' + this.msg.dbInfoEntries}`);
 
           // Execute check for each server and collect results
           const results = [];
           for (const row of rows) {
             if (!this.regexIpPattern.test(row.server_ip)) {
-              console.log(`[${row.server_ip}] is not valid ip format`);
+              console.log(`[${row.server_ip}] ${this.msg.invalidIp}`);
             } else if (!this.regexPortPattern.test(row.port)) {
-              console.log(`[${row.port}] is not valid port format`);
+              console.log(`[${row.port}] ${this.msg.invalidPort}`);
             } else {
               // Use db_type from CSV if specified, otherwise use default
               const rowDbType = (dbType === 'auto') ? (row.db_type || 'mssql') : (row.db_type || dbType);
@@ -428,10 +518,10 @@ class DBConnectionChecker {
           if (results.length > 0) {
             const sourceCsvName = path.basename(csvPath);
             await this.saveResultsToCSV(results, '', sourceCsvName);
-            console.log(`\n✅ Results saved to CSV file: ${results.length} entries`);
+            console.log(`${this.msg.resultsSaved} ${results.length} ${this.msg.entries}`);
           }
           
-          console.log('All DB checks completed');
+          console.log(this.msg.allChecksComplete);
           resolve();
         });
     });
@@ -474,10 +564,10 @@ class DBConnectionChecker {
     try {
       // 파일 저장
       fs.writeFileSync(csvPath, csvContent, 'utf8');
-      console.log(`📁 CSV file saved: ${csvPath}`);
+      console.log(`${this.msg.csvFileSaved} ${csvPath}`);
     } catch (error) {
-      console.error(`❌ Error saving CSV file: ${error.message}`);
-      console.log(`📁 Attempted path: ${csvPath}`);
+      console.error(`${this.msg.errorSavingCsv} ${error.message}`);
+      console.log(`${this.msg.attemptedPath} ${csvPath}`);
     }
   }
 }
