@@ -6,6 +6,7 @@
     "server": "localhost",
     "database": "SampleDB",
     "port": 1433,
+    "isWritable": true,
     "options": { "encrypt": true, "trustServerCertificate": true }
   },
   "erpDB": {
@@ -15,6 +16,7 @@
     "server": "localhost",
     "database": "ERP_DB",
     "port": 1433,
+    "isWritable": false,
     "options": { "encrypt": true, "trustServerCertificate": true }
   },
   "sourceDB": {
@@ -34,6 +36,23 @@
       "connectionTimeout": 30000
     }
   },
+  "targetDB": {
+    "type": "mssql",
+    "user": "sample",
+    "password": "sample1234!",
+    "server": "localhost",
+    "database": "targetDB",
+    "port": 1433,
+    "isWritable": true,
+    "description": "개발 환경 소스 데이터베이스 (읽기/쓰기 가능)",
+    "options": { 
+      "encrypt": true, 
+      "trustServerCertificate": true,
+      "enableArithAbort": true,
+      "requestTimeout": 300000,
+      "connectionTimeout": 30000
+    }
+  },
   "mysqlDB": {
     "type": "mysql",
     "user": "root",
@@ -41,6 +60,7 @@
     "server": "localhost",
     "database": "mydb",
     "port": 3306,
+    "isWritable": true,
     "options": {
       "ssl": false,
       "connectionTimeout": 30000
@@ -53,6 +73,7 @@
     "server": "localhost",
     "database": "mydb",
     "port": 3306,
+    "isWritable": false,
     "options": {
       "ssl": false,
       "connectionTimeout": 30000
@@ -65,6 +86,7 @@
     "server": "localhost",
     "database": "testdb",
     "port": 5432,
+    "isWritable": false,
     "options": {
       "ssl": false,
       "connectionTimeout": 30000
@@ -77,6 +99,7 @@
     "server": "localhost",
     "database": "xe",
     "port": 1521,
+    "isWritable": false,
     "options": {
       "connectionTimeout": 30000
     }

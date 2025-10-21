@@ -29,9 +29,10 @@ const messages = {
     menu1: '1. Database Connection and Permission Check',
     menu2: '2. Server Telnet Connection Check',
     menu3: '3. Database SQL Execution',
-    menu4: '4. Configuration Management',
+    menu4: '4. CSV-based Batch Query Execution',
+    menu5: '5. Configuration Management',
     menu0: '0. Exit',
-    selectPrompt: 'Select function to execute (0-4): ',
+    selectPrompt: 'Select function to execute (0-5): ',
     invalidSelection: 'Invalid selection. Please select again.',
     
     // Database Connection Check
@@ -83,6 +84,20 @@ const messages = {
     sqlCompleted: 'SQL execution completed.',
     sqlError: 'Error occurred during SQL execution:',
     
+    // CSV Query Execution
+    csvQueryTitle: 'CSV-based Batch Query Execution',
+    csvQueryDirNotFound: 'CSV query directory not found: request_resources/',
+    csvQueryCreateDir: 'Please create the directory and add CSV files.',
+    csvQueryNoFiles: 'No CSV query files found in request_resources/ directory.',
+    csvQueryAddFiles: 'Please add .csv files starting with "SQL" to the request_resources/ directory.',
+    csvQueryAvailableFiles: 'Available CSV Query Files:',
+    csvQuerySelectFile: 'Select CSV file number to execute',
+    csvQueryInvalidFile: 'Invalid file selection.',
+    csvQuerySelectedFile: 'Selected CSV file:',
+    csvQueryStarting: 'Starting CSV query execution...',
+    csvQueryCompleted: 'CSV query execution completed.',
+    csvQueryError: 'Error occurred during CSV query execution:',
+    
     // Configuration
     configTitle: 'Configuration Management',
     configMenu1: '1. Check System Information',
@@ -103,9 +118,10 @@ const messages = {
     menu1: '1. 데이터베이스 접속 및 권한 확인',
     menu2: '2. 서버 텔넷 접속 확인',
     menu3: '3. 데이터베이스 SQL 실행',
-    menu4: '4. 설정 관리',
+    menu4: '4. CSV 기반 일괄 쿼리 실행',
+    menu5: '5. 설정 관리',
     menu0: '0. 종료',
-    selectPrompt: '실행할 기능을 선택하세요 (0-4): ',
+    selectPrompt: '실행할 기능을 선택하세요 (0-5): ',
     invalidSelection: '잘못된 선택입니다. 다시 선택해주세요.',
     
     // Database Connection Check
@@ -157,6 +173,20 @@ const messages = {
     sqlCompleted: 'SQL 실행이 완료되었습니다.',
     sqlError: 'SQL 실행 중 오류가 발생했습니다:',
     
+    // CSV Query Execution
+    csvQueryTitle: 'CSV 기반 일괄 쿼리 실행',
+    csvQueryDirNotFound: 'CSV 쿼리 디렉토리를 찾을 수 없습니다: request_resources/',
+    csvQueryCreateDir: '디렉토리를 생성하고 CSV 파일을 추가해주세요.',
+    csvQueryNoFiles: 'request_resources/ 디렉토리에 CSV 쿼리 파일이 없습니다.',
+    csvQueryAddFiles: 'request_resources/ 디렉토리에 "SQL"로 시작하는 .csv 파일을 추가해주세요.',
+    csvQueryAvailableFiles: '사용 가능한 CSV 쿼리 파일:',
+    csvQuerySelectFile: '실행할 CSV 파일 번호를 선택하세요',
+    csvQueryInvalidFile: '잘못된 파일 선택입니다.',
+    csvQuerySelectedFile: '선택된 CSV 파일:',
+    csvQueryStarting: 'CSV 쿼리 실행을 시작합니다...',
+    csvQueryCompleted: 'CSV 쿼리 실행이 완료되었습니다.',
+    csvQueryError: 'CSV 쿼리 실행 중 오류가 발생했습니다:',
+    
     // Configuration
     configTitle: '설정 관리',
     configMenu1: '1. 시스템 정보 확인',
@@ -180,6 +210,7 @@ const msg = messages[LANGUAGE] || messages.en;
 const DBConnectionChecker = require('./src/modules/DBConnectionChecker');
 const TelnetChecker = require('./src/modules/TelnetChecker');
 const DBExecutor = require('./src/modules/DBExecutor');
+const CSVQueryExecutor = require('./src/modules/CSVQueryExecutor');
 const ConfigManager = require('./src/modules/ConfigManager');
 
 class NodeUtilApp {
@@ -196,6 +227,7 @@ class NodeUtilApp {
     this.dbConnectionChecker = new DBConnectionChecker(this.configManager);
     this.telnetChecker = new TelnetChecker();
     this.dbExecutor = new DBExecutor(this.configManager, this.rl);
+    this.csvQueryExecutor = new CSVQueryExecutor(this.configManager, this.rl);
   }
 
   ensureResultsDirectory() {
@@ -228,6 +260,7 @@ class NodeUtilApp {
     console.log(msg.menu2);
     console.log(msg.menu3);
     console.log(msg.menu4);
+    console.log(msg.menu5);
     console.log(msg.menu0);
     console.log('------------------------------------------------');
     console.log();
@@ -245,6 +278,9 @@ class NodeUtilApp {
         await this.runSqlExecution();
         break;
       case '4':
+        await this.runCsvQueryExecution();
+        break;
+      case '5':
         await this.showConfigMenu();
         break;
       case '0':
@@ -467,6 +503,70 @@ class NodeUtilApp {
       
     } catch (error) {
       console.error(`❌ ${msg.sqlError}`, error.message);
+    }
+    
+    await this.waitAndContinue();
+    await this.showMainMenu();
+  }
+
+  async runCsvQueryExecution() {
+    console.clear();
+    console.log(`📊 ${msg.csvQueryTitle}`);
+    console.log('='.repeat(40));
+    
+    try {
+      // Get CSV file list from request_resources folder
+      const csvQueryDir = path.join(APP_ROOT, 'request_resources');
+      
+      if (!fs.existsSync(csvQueryDir)) {
+        console.log(`❌ ${msg.csvQueryDirNotFound}`);
+        console.log(msg.csvQueryCreateDir);
+        await this.waitAndContinue();
+        await this.showMainMenu();
+        return;
+      }
+
+      const csvFiles = fs.readdirSync(csvQueryDir)
+        .filter(file => file.endsWith('.csv') && file.toLowerCase().startsWith('sql'));
+
+      if (csvFiles.length === 0) {
+        console.log(`❌ ${msg.csvQueryNoFiles}`);
+        console.log(msg.csvQueryAddFiles);
+        await this.waitAndContinue();
+        await this.showMainMenu();
+        return;
+      }
+
+      console.log(`\n📄 ${msg.csvQueryAvailableFiles}`);
+      csvFiles.forEach((file, index) => {
+        console.log(`  ${index + 1}. ${file}`);
+      });
+      console.log();
+
+      const fileChoice = await this.askQuestion(
+        `${msg.csvQuerySelectFile} (1-${csvFiles.length}): `
+      );
+      
+      const selectedFileIndex = parseInt(fileChoice) - 1;
+      if (selectedFileIndex < 0 || selectedFileIndex >= csvFiles.length) {
+        console.log(`❌ ${msg.csvQueryInvalidFile}`);
+        await this.waitAndContinue();
+        await this.showMainMenu();
+        return;
+      }
+
+      const selectedFile = csvFiles[selectedFileIndex];
+      const csvPath = path.join(csvQueryDir, selectedFile);
+      console.log(`✅ ${msg.csvQuerySelectedFile} ${selectedFile}`);
+      console.log(`\n🚀 ${msg.csvQueryStarting}`);
+      console.log('-'.repeat(40));
+      
+      await this.csvQueryExecutor.run(csvPath);
+      
+      console.log(`\n✅ ${msg.csvQueryCompleted}`);
+      
+    } catch (error) {
+      console.error(`❌ ${msg.csvQueryError}`, error.message);
     }
     
     await this.waitAndContinue();
