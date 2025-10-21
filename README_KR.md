@@ -43,7 +43,7 @@ my-node-client-util-app/
 **새로운 모듈:**
 - **CSVQueryExecutor**: CSV 파일에서 여러 SQL 쿼리를 일괄 실행
   - CSV 형식으로 쿼리와 출력 파일 경로 정의
-  - 파일 경로에 날짜/시간 변수 지원: `${DATA:yyyyMMddHHmmss}` 또는 `${DATE:format}`
+  - 파일 경로에 날짜/시간 변수 지원: `${DATE:format}`
   - 출력 파일 디렉토리 자동 생성
   - 결과를 타임스탬프와 함께 CSV 파일로 저장
 
@@ -56,7 +56,7 @@ my-node-client-util-app/
 **CSV 형식:**
 ```csv
 SQL,result_filepath
-"select * from users;",results/csv_queries/users_${DATA:yyyyMMddHHmmss}.csv
+"select * from users;",results/csv_queries/users_${DATE:yyyyMMddHHmmss}.csv
 "exec sp_helptext 'dbo.MyProc';",results/csv_queries/proc_definition.txt
 ```
 

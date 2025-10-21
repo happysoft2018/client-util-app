@@ -11,9 +11,9 @@
   - 지정된 파일 경로에 결과 자동 저장
 
 - **파일 경로에 날짜/시간 변수 지원**:
-  - 형식: `${DATA:format}` 또는 `${DATE:format}`
+  - 형식: `${DATE:format}`
   - 대소문자 날짜 토큰 모두 지원
-  - 예시: `results/users_${DATA:yyyyMMddHHmmss}.csv`
+  - 예시: `results/users_${DATE:yyyyMMddHHmmss}.csv`
   - 토큰: `yyyy/YYYY`, `yy/YY`, `MM`, `M`, `dd/DD`, `d/D`, `HH`, `H`, `mm`, `m`, `ss`, `s`, `SSS`
 
 - **자동 디렉토리 생성**:
@@ -49,8 +49,8 @@
 **CSV 예시:**
 ```csv
 SQL,result_filepath
-"select * from users;",c:\Temp\csv_result\users_${DATA:yyyyMMddHHmmss}.csv
-"select * from products;",results/products_${DATA:yyyyMMdd}.txt
+"select * from users;",c:\Temp\csv_result\users_${DATE:yyyyMMddHHmmss}.csv
+"select * from products;",results/products_${DATE:yyyyMMdd}.txt
 "exec sp_helptext 'dbo.MyProcedure';",results/procedure_definition.txt
 ```
 

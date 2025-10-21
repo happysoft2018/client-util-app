@@ -23,7 +23,7 @@
 
 #### CSV 기반 일괄 쿼리 실행 📊
 - ✅ **일괄 SQL 실행**: 하나의 CSV 파일에서 여러 SQL 쿼리를 실행
-- ✅ **날짜/시간 변수**: `${DATA:format}` 또는 `${DATE:format}`로 동적 파일 경로 지원
+- ✅ **날짜/시간 변수**: `${DATE:format}`로 동적 파일 경로 지원
 - ✅ **보안 기능**: SELECT 쿼리와 안전한 시스템 프로시저만 허용
 - ✅ **자동 디렉토리 생성**: 출력 디렉토리가 없으면 자동 생성
 - ✅ **유연한 출력 경로**: 절대 경로와 상대 경로 모두 지원
@@ -1130,9 +1130,9 @@ CSV 기반 일괄 쿼리 실행 기능은 하나의 CSV 파일에서 여러 SQL 
 **CSV 예시 (SQL_daily_export.csv):**
 ```csv
 SQL,result_filepath
-"select * from users;","c:\Temp\csv_result\users_${DATA:yyyyMMddHHmmss}.csv"
-"select * from products;","c:\Temp\csv_result\products_${DATA:yyyyMMdd}.csv"
-"select * from orders where order_date >= dateadd(day, -7, getdate());","c:\Temp\csv_result\orders_last7days_${DATA:yyyyMMdd}.txt"
+"select * from users;","c:\Temp\csv_result\users_${DATE:yyyyMMddHHmmss}.csv"
+"select * from products;","c:\Temp\csv_result\products_${DATE:yyyyMMdd}.csv"
+"select * from orders where order_date >= dateadd(day, -7, getdate());","c:\Temp\csv_result\orders_last7days_${DATE:yyyyMMdd}.txt"
 "exec sp_helptext 'dbo.GetCustomerOrders';","c:\Temp\csv_result\proc_definition.txt"
 ```
 
@@ -1141,7 +1141,7 @@ SQL,result_filepath
 `result_filepath`에 날짜/시간 변수를 사용하여 타임스탬프가 포함된 출력 파일을 생성할 수 있습니다.
 
 **구문:**
-- `${DATA:format}` 또는 `${DATE:format}`
+- `${DATE:format}`
 - 대문자와 소문자 토큰 모두 지원
 
 **지원 토큰:**
@@ -1165,9 +1165,9 @@ SQL,result_filepath
 **예시:**
 ```csv
 result_filepath
-"results/export_${DATA:yyyyMMdd}.csv"
-"c:\Temp\backup_${DATA:yyyy-MM-dd_HHmmss}.txt"
-"reports/monthly_${DATA:yyyyMM}.csv"
+"results/export_${DATE:yyyyMMdd}.csv"
+"c:\Temp\backup_${DATE:yyyy-MM-dd_HHmmss}.txt"
+"reports/monthly_${DATE:yyyyMM}.csv"
 ```
 
 **출력 예시:**
@@ -1226,8 +1226,8 @@ exec sp_who2;
 `request_resources/SQL_daily_export.csv` 같은 파일을 생성합니다:
 ```csv
 SQL,result_filepath
-"select * from customers;","c:\Temp\csv_result\customers_${DATA:yyyyMMddHHmmss}.csv"
-"select * from orders;","c:\Temp\csv_result\orders_${DATA:yyyyMMddHHmmss}.csv"
+"select * from customers;","c:\Temp\csv_result\customers_${DATE:yyyyMMddHHmmss}.csv"
+"select * from orders;","c:\Temp\csv_result\orders_${DATE:yyyyMMddHHmmss}.csv"
 ```
 
 **2. 애플리케이션 실행**
@@ -1321,10 +1321,10 @@ CSV 파일 선택 (1-2): 1
 **SQL_daily_backup.csv:**
 ```csv
 SQL,result_filepath
-"select * from users;","c:\Backups\daily\users_${DATA:yyyyMMdd}.csv"
-"select * from products;","c:\Backups\daily\products_${DATA:yyyyMMdd}.csv"
-"select * from orders;","c:\Backups\daily\orders_${DATA:yyyyMMdd}.csv"
-"select * from customers;","c:\Backups\daily\customers_${DATA:yyyyMMdd}.csv"
+"select * from users;","c:\Backups\daily\users_${DATE:yyyyMMdd}.csv"
+"select * from products;","c:\Backups\daily\products_${DATE:yyyyMMdd}.csv"
+"select * from orders;","c:\Backups\daily\orders_${DATE:yyyyMMdd}.csv"
+"select * from customers;","c:\Backups\daily\customers_${DATE:yyyyMMdd}.csv"
 ```
 
 **스케줄 실행:**
@@ -1339,10 +1339,10 @@ SQL,result_filepath
 **SQL_object_definitions.csv:**
 ```csv
 SQL,result_filepath
-"exec sp_helptext 'dbo.GetCustomerOrders';","c:\Definitions\GetCustomerOrders_${DATA:yyyyMMdd}.sql"
-"exec sp_helptext 'dbo.UpdateInventory';","c:\Definitions\UpdateInventory_${DATA:yyyyMMdd}.sql"
-"exec sp_help 'dbo.Orders';","c:\Definitions\Orders_table_${DATA:yyyyMMdd}.txt"
-"exec sp_help 'dbo.Customers';","c:\Definitions\Customers_table_${DATA:yyyyMMdd}.txt"
+"exec sp_helptext 'dbo.GetCustomerOrders';","c:\Definitions\GetCustomerOrders_${DATE:yyyyMMdd}.sql"
+"exec sp_helptext 'dbo.UpdateInventory';","c:\Definitions\UpdateInventory_${DATE:yyyyMMdd}.sql"
+"exec sp_help 'dbo.Orders';","c:\Definitions\Orders_table_${DATE:yyyyMMdd}.txt"
+"exec sp_help 'dbo.Customers';","c:\Definitions\Customers_table_${DATE:yyyyMMdd}.txt"
 ```
 
 #### 예시 3: 주간 보고서
@@ -1352,8 +1352,8 @@ SQL,result_filepath
 **SQL_weekly_reports.csv:**
 ```csv
 SQL,result_filepath
-"select datepart(week, order_date) as week_num, count(*) as total_orders, sum(total_amount) as total_sales from orders where order_date >= dateadd(week, -4, getdate()) group by datepart(week, order_date) order by week_num;","c:\Reports\weekly_sales_${DATA:yyyyMMdd}.csv"
-"select top 10 product_name, sum(quantity) as total_sold from order_items oi join products p on oi.product_id = p.product_id where order_date >= dateadd(week, -1, getdate()) group by product_name order by total_sold desc;","c:\Reports\top_products_${DATA:yyyyMMdd}.csv"
+"select datepart(week, order_date) as week_num, count(*) as total_orders, sum(total_amount) as total_sales from orders where order_date >= dateadd(week, -4, getdate()) group by datepart(week, order_date) order by week_num;","c:\Reports\weekly_sales_${DATE:yyyyMMdd}.csv"
+"select top 10 product_name, sum(quantity) as total_sold from order_items oi join products p on oi.product_id = p.product_id where order_date >= dateadd(week, -1, getdate()) group by product_name order by total_sold desc;","c:\Reports\top_products_${DATE:yyyyMMdd}.csv"
 ```
 
 ### 파일 경로 옵션
@@ -1362,14 +1362,14 @@ SQL,result_filepath
 ```csv
 result_filepath
 "c:\Temp\export.csv"
-"d:\Backups\data_${DATA:yyyyMMdd}.txt"
+"d:\Backups\data_${DATE:yyyyMMdd}.txt"
 ```
 
 **상대 경로 (애플리케이션 디렉토리 기준):**
 ```csv
 result_filepath
 "results/csv_queries/users.csv"
-"results/export_${DATA:yyyyMMdd}.csv"
+"results/export_${DATE:yyyyMMdd}.csv"
 ```
 
 ### 문제 해결
@@ -1388,7 +1388,7 @@ result_filepath
 
 **문제: 날짜 변수가 치환되지 않음**
 - **원인:** 잘못된 변수 형식 또는 지원되지 않는 토큰
-- **해결:** 올바른 형식 사용: `${DATA:yyyyMMddHHmmss}` 또는 `${DATE:format}`
+- **해결:** 올바른 형식 사용: `${DATE:yyyyMMddHHmmss}`
 
 ### 모범 사례
 

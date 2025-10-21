@@ -11,9 +11,9 @@
   - Save results to specified file paths automatically
 
 - **Date/Time Variable Support in File Paths**:
-  - Format: `${DATA:format}` or `${DATE:format}`
+  - Format: `${DATE:format}`
   - Supports both uppercase and lowercase date tokens
-  - Example: `results/users_${DATA:yyyyMMddHHmmss}.csv`
+  - Example: `results/users_${DATE:yyyyMMddHHmmss}.csv`
   - Tokens: `yyyy/YYYY`, `yy/YY`, `MM`, `M`, `dd/DD`, `d/D`, `HH`, `H`, `mm`, `m`, `ss`, `s`, `SSS`
 
 - **Automatic Directory Creation**:
@@ -49,8 +49,8 @@
 **Example CSV:**
 ```csv
 SQL,result_filepath
-"select * from users;",c:\Temp\csv_result\users_${DATA:yyyyMMddHHmmss}.csv
-"select * from products;",results/products_${DATA:yyyyMMdd}.txt
+"select * from users;",c:\Temp\csv_result\users_${DATE:yyyyMMddHHmmss}.csv
+"select * from products;",results/products_${DATE:yyyyMMdd}.txt
 "exec sp_helptext 'dbo.MyProcedure';",results/procedure_definition.txt
 ```
 

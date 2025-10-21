@@ -23,7 +23,7 @@ This manual guides you through using the database connection, permission check, 
 
 #### CSV-based Batch Query Execution 📊
 - ✅ **Batch SQL Execution**: Execute multiple SQL queries from a single CSV file
-- ✅ **Date/Time Variables**: Support dynamic file paths with `${DATA:format}` or `${DATE:format}`
+- ✅ **Date/Time Variables**: Support dynamic file paths with `${DATE:format}`
 - ✅ **Security Features**: Only SELECT queries and safe system procedures allowed
 - ✅ **Auto Directory Creation**: Automatically creates output directories if they don't exist
 - ✅ **Flexible Output Paths**: Support both absolute and relative file paths
@@ -1018,9 +1018,9 @@ Create a CSV file in `request_resources/` directory with filename starting with 
 **Example CSV (SQL_daily_export.csv):**
 ```csv
 SQL,result_filepath
-"select * from users;","c:\Temp\csv_result\users_${DATA:yyyyMMddHHmmss}.csv"
-"select * from products;","c:\Temp\csv_result\products_${DATA:yyyyMMdd}.csv"
-"select * from orders where order_date >= dateadd(day, -7, getdate());","c:\Temp\csv_result\orders_last7days_${DATA:yyyyMMdd}.txt"
+"select * from users;","c:\Temp\csv_result\users_${DATE:yyyyMMddHHmmss}.csv"
+"select * from products;","c:\Temp\csv_result\products_${DATE:yyyyMMdd}.csv"
+"select * from orders where order_date >= dateadd(day, -7, getdate());","c:\Temp\csv_result\orders_last7days_${DATE:yyyyMMdd}.txt"
 "exec sp_helptext 'dbo.GetCustomerOrders';","c:\Temp\csv_result\proc_definition.txt"
 ```
 
@@ -1029,7 +1029,7 @@ SQL,result_filepath
 You can use date/time variables in `result_filepath` to create timestamped output files.
 
 **Syntax:**
-- `${DATA:format}` or `${DATE:format}`
+- `${DATE:format}`
 - Both uppercase and lowercase tokens are supported
 
 **Supported Tokens:**
@@ -1053,9 +1053,9 @@ You can use date/time variables in `result_filepath` to create timestamped outpu
 **Examples:**
 ```csv
 result_filepath
-"results/export_${DATA:yyyyMMdd}.csv"
-"c:\Temp\backup_${DATA:yyyy-MM-dd_HHmmss}.txt"
-"reports/monthly_${DATA:yyyyMM}.csv"
+"results/export_${DATE:yyyyMMdd}.csv"
+"c:\Temp\backup_${DATE:yyyy-MM-dd_HHmmss}.txt"
+"reports/monthly_${DATE:yyyyMM}.csv"
 ```
 
 **Output Examples:**
@@ -1114,8 +1114,8 @@ exec sp_who2;
 Create a file like `request_resources/SQL_daily_export.csv`:
 ```csv
 SQL,result_filepath
-"select * from customers;","c:\Temp\csv_result\customers_${DATA:yyyyMMddHHmmss}.csv"
-"select * from orders;","c:\Temp\csv_result\orders_${DATA:yyyyMMddHHmmss}.csv"
+"select * from customers;","c:\Temp\csv_result\customers_${DATE:yyyyMMddHHmmss}.csv"
+"select * from orders;","c:\Temp\csv_result\orders_${DATE:yyyyMMddHHmmss}.csv"
 ```
 
 **2. Run Application**
@@ -1209,10 +1209,10 @@ Query 2/2
 **SQL_daily_backup.csv:**
 ```csv
 SQL,result_filepath
-"select * from users;","c:\Backups\daily\users_${DATA:yyyyMMdd}.csv"
-"select * from products;","c:\Backups\daily\products_${DATA:yyyyMMdd}.csv"
-"select * from orders;","c:\Backups\daily\orders_${DATA:yyyyMMdd}.csv"
-"select * from customers;","c:\Backups\daily\customers_${DATA:yyyyMMdd}.csv"
+"select * from users;","c:\Backups\daily\users_${DATE:yyyyMMdd}.csv"
+"select * from products;","c:\Backups\daily\products_${DATE:yyyyMMdd}.csv"
+"select * from orders;","c:\Backups\daily\orders_${DATE:yyyyMMdd}.csv"
+"select * from customers;","c:\Backups\daily\customers_${DATE:yyyyMMdd}.csv"
 ```
 
 **Scheduled Execution:**
@@ -1227,10 +1227,10 @@ SQL,result_filepath
 **SQL_object_definitions.csv:**
 ```csv
 SQL,result_filepath
-"exec sp_helptext 'dbo.GetCustomerOrders';","c:\Definitions\GetCustomerOrders_${DATA:yyyyMMdd}.sql"
-"exec sp_helptext 'dbo.UpdateInventory';","c:\Definitions\UpdateInventory_${DATA:yyyyMMdd}.sql"
-"exec sp_help 'dbo.Orders';","c:\Definitions\Orders_table_${DATA:yyyyMMdd}.txt"
-"exec sp_help 'dbo.Customers';","c:\Definitions\Customers_table_${DATA:yyyyMMdd}.txt"
+"exec sp_helptext 'dbo.GetCustomerOrders';","c:\Definitions\GetCustomerOrders_${DATE:yyyyMMdd}.sql"
+"exec sp_helptext 'dbo.UpdateInventory';","c:\Definitions\UpdateInventory_${DATE:yyyyMMdd}.sql"
+"exec sp_help 'dbo.Orders';","c:\Definitions\Orders_table_${DATE:yyyyMMdd}.txt"
+"exec sp_help 'dbo.Customers';","c:\Definitions\Customers_table_${DATE:yyyyMMdd}.txt"
 ```
 
 #### Example 3: Weekly Reports
@@ -1240,8 +1240,8 @@ SQL,result_filepath
 **SQL_weekly_reports.csv:**
 ```csv
 SQL,result_filepath
-"select datepart(week, order_date) as week_num, count(*) as total_orders, sum(total_amount) as total_sales from orders where order_date >= dateadd(week, -4, getdate()) group by datepart(week, order_date) order by week_num;","c:\Reports\weekly_sales_${DATA:yyyyMMdd}.csv"
-"select top 10 product_name, sum(quantity) as total_sold from order_items oi join products p on oi.product_id = p.product_id where order_date >= dateadd(week, -1, getdate()) group by product_name order by total_sold desc;","c:\Reports\top_products_${DATA:yyyyMMdd}.csv"
+"select datepart(week, order_date) as week_num, count(*) as total_orders, sum(total_amount) as total_sales from orders where order_date >= dateadd(week, -4, getdate()) group by datepart(week, order_date) order by week_num;","c:\Reports\weekly_sales_${DATE:yyyyMMdd}.csv"
+"select top 10 product_name, sum(quantity) as total_sold from order_items oi join products p on oi.product_id = p.product_id where order_date >= dateadd(week, -1, getdate()) group by product_name order by total_sold desc;","c:\Reports\top_products_${DATE:yyyyMMdd}.csv"
 ```
 
 ### File Path Options
@@ -1250,14 +1250,14 @@ SQL,result_filepath
 ```csv
 result_filepath
 "c:\Temp\export.csv"
-"d:\Backups\data_${DATA:yyyyMMdd}.txt"
+"d:\Backups\data_${DATE:yyyyMMdd}.txt"
 ```
 
 **Relative Path (from application directory):**
 ```csv
 result_filepath
 "results/csv_queries/users.csv"
-"results/export_${DATA:yyyyMMdd}.csv"
+"results/export_${DATE:yyyyMMdd}.csv"
 ```
 
 ### Troubleshooting
@@ -1276,7 +1276,7 @@ result_filepath
 
 **Problem: Date variable not substituted**
 - **Cause:** Incorrect variable format or unsupported token
-- **Solution:** Use correct format: `${DATA:yyyyMMddHHmmss}` or `${DATE:format}`
+- **Solution:** Use correct format: `${DATE:yyyyMMddHHmmss}`
 
 ### Best Practices
 

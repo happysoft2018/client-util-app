@@ -48,7 +48,7 @@ my-node-client-util-app/
 **New Module:**
 - **CSVQueryExecutor**: Execute multiple SQL queries from a CSV file in batch
   - Define queries and output file paths in CSV format
-  - Supports date/time variables in file paths: `${DATA:yyyyMMddHHmmss}` or `${DATE:format}`
+  - Supports date/time variables in file paths: `${DATE:format}`
   - Automatic directory creation for output files
   - Results saved as CSV files with timestamp
 
@@ -61,7 +61,7 @@ my-node-client-util-app/
 **CSV Format:**
 ```csv
 SQL,result_filepath
-"select * from users;",results/csv_queries/users_${DATA:yyyyMMddHHmmss}.csv
+"select * from users;",results/csv_queries/users_${DATE:yyyyMMddHHmmss}.csv
 "exec sp_helptext 'dbo.MyProc';",results/csv_queries/proc_definition.txt
 ```
 

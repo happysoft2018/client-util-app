@@ -153,8 +153,8 @@ class CSVQueryExecutor {
   substituteDateVariables(filepath) {
     const now = new Date();
     
-    // Pattern: ${DATA:format} or ${DATE:format}
-    const datePattern = /\$\{(?:DATA|DATE):([^}]+)\}/g;
+    // Pattern: ${DATE:format}
+    const datePattern = /\$\{DATE:([^}]+)\}/g;
     
     let result = filepath;
     let match;
