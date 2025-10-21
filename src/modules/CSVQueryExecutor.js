@@ -175,6 +175,92 @@ class CSVQueryExecutor {
     return result;
   }
 
+  /**
+   * Validate query for safety - only allow SELECT statements and safe system procedures
+   * @param {string} query - SQL query to validate
+   * @returns {Object} { valid: boolean, error: string }
+   */
+  validateQuery(query) {
+    const msg = this.msg;
+    
+    // Remove comments and normalize whitespace
+    const normalizedQuery = query
+      .replace(/--.*$/gm, '')  // Remove single-line comments
+      .replace(/\/\*[\s\S]*?\*\//g, '')  // Remove multi-line comments
+      .trim()
+      .toUpperCase();
+
+    if (!normalizedQuery) {
+      return { 
+        valid: false, 
+        error: msg.language === 'en' 
+          ? 'Query is empty after removing comments' 
+          : '쿼리가 비어있습니다 (주석 제거 후)'
+      };
+    }
+
+    // Allow SELECT statements and safe EXEC/SP_ commands
+    const isSelect = normalizedQuery.startsWith('SELECT');
+    const isExec = normalizedQuery.startsWith('EXEC') || normalizedQuery.startsWith('EXECUTE');
+    
+    // Safe system stored procedures (read-only)
+    const safeSystemProcs = [
+      'SP_HELP', 'SP_HELPTEXT', 'SP_HELPDB', 'SP_HELPINDEX', 'SP_HELPCONSTRAINT',
+      'SP_COLUMNS', 'SP_TABLES', 'SP_STORED_PROCEDURES', 'SP_DATABASES',
+      'SP_WHO', 'SP_WHO2', 'SP_SPACEUSED', 'SP_DEPENDS',
+      'SP_HELPFILE', 'SP_HELPFILEGROUP', 'SP_HELPTRIGGER', 'SP_HELPSTATS',
+    ];
+
+    // Check if it's a safe EXEC command
+    if (isExec) {
+      const isSafeProc = safeSystemProcs.some(proc => 
+        normalizedQuery.includes(`EXEC ${proc}`) || 
+        normalizedQuery.includes(`EXEC ${proc.replace('SP_', 'SP_')}`) ||
+        normalizedQuery.includes(`EXECUTE ${proc}`) ||
+        normalizedQuery.includes(`EXECUTE ${proc.replace('SP_', 'SP_')}`)
+      );
+      
+      if (!isSafeProc) {
+        return { 
+          valid: false, 
+          error: msg.language === 'en' 
+            ? 'Only safe read-only system procedures are allowed (e.g., sp_helptext, sp_help, sp_who)' 
+            : '안전한 읽기 전용 시스템 프로시저만 허용됩니다 (예: sp_helptext, sp_help, sp_who)'
+        };
+      }
+    } else if (!isSelect) {
+      return { 
+        valid: false, 
+        error: msg.language === 'en' 
+          ? 'Only SELECT queries and safe system procedures are allowed' 
+          : 'SELECT 쿼리와 안전한 시스템 프로시저만 허용됩니다'
+      };
+    }
+
+    // Dangerous keywords that should not appear in queries
+    const dangerousKeywords = [
+      'INSERT', 'UPDATE', 'DELETE', 'MERGE',  // DML
+      'DROP', 'TRUNCATE', 'ALTER', 'CREATE',  // DDL
+      'XP_CMDSHELL', 'XP_REGREAD', 'XP_REGWRITE',  // Dangerous extended procedures
+      'OPENROWSET', 'OPENQUERY',              // External data access
+      'INTO\\s+(?!#)',                        // SELECT INTO (except temp tables)
+    ];
+
+    for (const keyword of dangerousKeywords) {
+      const pattern = new RegExp(`\\b${keyword}\\b`, 'i');
+      if (pattern.test(normalizedQuery)) {
+        return { 
+          valid: false, 
+          error: msg.language === 'en' 
+            ? `Dangerous keyword detected: ${keyword}` 
+            : `위험한 명령어가 감지되었습니다: ${keyword}`
+        };
+      }
+    }
+
+    return { valid: true, error: null };
+  }
+
   async askQuestion(question, defaultValue = '') {
     return new Promise((resolve) => {
       const prompt = defaultValue ? `${question} (default: ${defaultValue}): ` : `${question} `;
@@ -253,6 +339,12 @@ class CSVQueryExecutor {
 
   async executeQuery(connection, query, resultFilepath, resultsDir) {
     try {
+      // Validate query for safety
+      const validation = this.validateQuery(query);
+      if (!validation.valid) {
+        throw new Error(`${this.msg.language === 'en' ? 'Query validation failed' : '쿼리 검증 실패'}: ${validation.error}`);
+      }
+
       // Execute query
       const result = await connection.executeQuery(query, {});
       
