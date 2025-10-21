@@ -1,4 +1,4 @@
-# Node.js Integrated Utility Tool v1.3.5
+# Node.js Integrated Utility Tool v1.3.6
 
 A comprehensive utility tool for managing various local environment utilities in a unified application.
 
@@ -14,6 +14,7 @@ my-node-client-util-app/
 │       ├── ConfigManager.js        # Configuration management
 │       ├── DBConnectionChecker.js  # Universal DB connection and permission checker
 │       ├── DBExecutor.js           # Universal DB SQL executor
+│       ├── CSVQueryExecutor.js     # CSV-based batch query executor
 │       ├── TelnetChecker.js        # Server Telnet connection checker
 │       └── database/               # DB type-specific connection classes
 │           ├── DatabaseFactory.js  # DB connection factory
@@ -26,12 +27,14 @@ my-node-client-util-app/
 ├── request_resources/              # Resource files directory (v1.2.0+)
 │   ├── DB_sample.csv               # DB check CSV files (starts with DB_)
 │   ├── server_sample.csv           # Telnet check CSV files (starts with server_)
+│   ├── SQL_sample.csv              # CSV-based batch query file (starts with SQL_) (v1.3.6+)
 │   └── sql_files/                  # SQL files directory
 │       ├── SQL_001.sql             # SQL query template
 │       └── SQL_001.csv             # SQL parameter template
 ├── results/                        # Check results (auto-generated)
 │   ├── db_connection_check_*.csv   # DB check results
 │   ├── telnet_connection_check_*.csv # Telnet check results
+│   ├── csv_queries/                # CSV-based query results (v1.3.6+)
 │   └── README.md                   # Results format documentation
 ├── log/                            # Execution logs (auto-generated)
 ├── run.bat                         # 🎯 Launcher (English)
@@ -39,6 +42,28 @@ my-node-client-util-app/
 ```
 
 ## 🆕 Latest Updates
+
+### v1.3.6 - CSV-based Batch Query Execution (2025-10-21) 📊
+
+**New Module:**
+- **CSVQueryExecutor**: Execute multiple SQL queries from a CSV file in batch
+  - Define queries and output file paths in CSV format
+  - Supports date/time variables in file paths: `${DATA:yyyyMMddHHmmss}` or `${DATE:format}`
+  - Automatic directory creation for output files
+  - Results saved as CSV files with timestamp
+
+**Security Features:**
+- **Query Validation**: Only SELECT queries and safe system procedures allowed
+  - Blocked: INSERT, UPDATE, DELETE, DROP, TRUNCATE, ALTER, CREATE
+  - Allowed: sp_helptext, sp_help, sp_who, sp_columns, sp_tables, etc.
+- **Protection**: Prevents accidental data modification or deletion
+
+**CSV Format:**
+```csv
+SQL,result_filepath
+"select * from users;",results/csv_queries/users_${DATA:yyyyMMddHHmmss}.csv
+"exec sp_helptext 'dbo.MyProc';",results/csv_queries/proc_definition.txt
+```
 
 ### v1.3.5 - Extended Multi-language Support (2025-10-20) 🌏
 
@@ -144,11 +169,11 @@ Double-click **`run.bat`** to launch the integrated menu:
 1. Database Connection and Permission Check
 2. Server Telnet Connection Check  
 3. Database SQL Execution
-4. Configuration Management
-5. Run All Checks (Batch Processing)
-6. Exit
+4. CSV-based Batch Query Execution  ⭐ NEW
+5. Configuration Management
+0. Exit
 
-Select function to execute (1-6):
+Select function to execute:
 ```
 
 ### 🔧 **Node.js Command Execution**

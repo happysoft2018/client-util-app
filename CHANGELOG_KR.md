@@ -1,5 +1,85 @@
 # 변경 이력 (Changelog)
 
+## [1.3.6] - 2025-10-21
+
+### ✨ 새로운 기능
+
+#### CSV 기반 일괄 쿼리 실행
+- **새로운 모듈: CSVQueryExecutor**: CSV 파일에서 여러 SQL 쿼리를 일괄 실행
+  - CSV 형식으로 쿼리와 출력 파일 경로 읽기
+  - 선택한 데이터베이스에 대해 순차적으로 쿼리 실행
+  - 지정된 파일 경로에 결과 자동 저장
+
+- **파일 경로에 날짜/시간 변수 지원**:
+  - 형식: `${DATA:format}` 또는 `${DATE:format}`
+  - 대소문자 날짜 토큰 모두 지원
+  - 예시: `results/users_${DATA:yyyyMMddHHmmss}.csv`
+  - 토큰: `yyyy/YYYY`, `yy/YY`, `MM`, `M`, `dd/DD`, `d/D`, `HH`, `H`, `mm`, `m`, `ss`, `s`, `SSS`
+
+- **자동 디렉토리 생성**:
+  - 출력 디렉토리가 없으면 자동 생성
+  - 절대 경로와 상대 경로 모두 지원
+  - `fs.mkdirSync(..., { recursive: true })`로 재귀적 디렉토리 생성
+
+### 🔒 보안 기능
+
+#### 쿼리 검증 시스템
+- **SELECT 쿼리만 허용**: 기본적으로 읽기 전용 SELECT 문만 허용
+- **안전한 시스템 프로시저**: 안전한 읽기 전용 시스템 저장 프로시저 화이트리스트
+  - 허용: `sp_help`, `sp_helptext`, `sp_helpdb`, `sp_helpindex`, `sp_helpconstraint`
+  - 허용: `sp_columns`, `sp_tables`, `sp_stored_procedures`, `sp_databases`
+  - 허용: `sp_who`, `sp_who2`, `sp_spaceused`, `sp_depends`
+  - 허용: `sp_helpfile`, `sp_helpfilegroup`, `sp_helptrigger`, `sp_helpstats`
+
+- **차단되는 작업**:
+  - DML: `INSERT`, `UPDATE`, `DELETE`, `MERGE`
+  - DDL: `DROP`, `TRUNCATE`, `ALTER`, `CREATE`
+  - 위험한 확장 프로시저: `xp_cmdshell`, `xp_regread`, `xp_regwrite`
+  - 외부 데이터 접근: `OPENROWSET`, `OPENQUERY`
+  - 데이터 저장: `SELECT INTO` (임시 테이블 제외)
+
+- **주석 처리**: 검증 전 단일 라인(`--`) 및 다중 라인(`/* */`) 주석 제거
+
+### 📊 CSV 형식
+
+**필수 컬럼:**
+- `SQL`: 실행할 SQL 쿼리 (SELECT 또는 안전한 시스템 프로시저)
+- `result_filepath`: 출력 파일 경로 (날짜 변수 및 절대/상대 경로 지원)
+
+**CSV 예시:**
+```csv
+SQL,result_filepath
+"select * from users;",c:\Temp\csv_result\users_${DATA:yyyyMMddHHmmss}.csv
+"select * from products;",results/products_${DATA:yyyyMMdd}.txt
+"exec sp_helptext 'dbo.MyProcedure';",results/procedure_definition.txt
+```
+
+### 🔧 기술적 세부사항
+
+#### 모듈 구현
+- **파일**: `src/modules/CSVQueryExecutor.js`
+- **의존성**: `csv-parser`, `fs`, `path`
+- **통합**: 메인 메뉴 옵션 4로 추가
+
+#### 날짜 포맷팅
+- 날짜 변수 치환에 로컬 시스템 시간 사용
+- 다양한 토큰을 지원하는 사용자 정의 날짜 포맷터
+- 대소문자 구분 없는 토큰 매칭 (예: `yyyy` = `YYYY`)
+
+#### 오류 처리
+- 검증 오류는 오류 메시지와 함께 결과 파일에 저장
+- 데이터베이스 실행 오류 캡처 및 로깅
+- 파일 I/O 오류 우아하게 처리
+
+### 📝 사용법
+
+1. `request_resources/`에 `SQL_` 접두사로 시작하는 CSV 파일 생성
+2. CSV 형식으로 쿼리와 출력 경로 정의
+3. 애플리케이션 실행 및 옵션 4 (CSV 기반 일괄 쿼리 실행) 선택
+4. 목록에서 CSV 파일 선택
+5. 대상 데이터베이스 선택
+6. 결과가 지정된 경로에 자동 저장
+
 ## [1.3.5] - 2025-10-20
 
 ### 🔧 개선 사항

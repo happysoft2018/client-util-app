@@ -1,4 +1,4 @@
-# 사용자 매뉴얼 v1.3.4
+# 사용자 매뉴얼 v1.3.6
 
 ## 📖 목차
 
@@ -9,14 +9,24 @@
 5. [실행 방법](#실행-방법)
 6. [결과 확인](#결과-확인)
 7. [데이터베이스 SQL 실행 기능](#데이터베이스-sql-실행-기능)
-8. [문제 해결](#문제-해결)
-9. [모범 사례](#모범-사례)
+8. [CSV 기반 일괄 쿼리 실행](#csv-기반-일괄-쿼리-실행) ⭐ 신규
+9. [문제 해결](#문제-해결)
+10. [모범 사례](#모범-사례)
 
 ---
 
 ## 소개
 
-이 매뉴얼은 Node.js 통합 유틸리티 도구 v1.3.4의 데이터베이스 연결, 권한 체크 및 SQL 실행 기능 사용법을 안내합니다.
+이 매뉴얼은 Node.js 통합 유틸리티 도구 v1.3.6의 데이터베이스 연결, 권한 체크 및 SQL 실행 기능 사용법을 안내합니다.
+
+### v1.3.6의 주요 특징
+
+#### CSV 기반 일괄 쿼리 실행 📊
+- ✅ **일괄 SQL 실행**: 하나의 CSV 파일에서 여러 SQL 쿼리를 실행
+- ✅ **날짜/시간 변수**: `${DATA:format}` 또는 `${DATE:format}`로 동적 파일 경로 지원
+- ✅ **보안 기능**: SELECT 쿼리와 안전한 시스템 프로시저만 허용
+- ✅ **자동 디렉토리 생성**: 출력 디렉토리가 없으면 자동 생성
+- ✅ **유연한 출력 경로**: 절대 경로와 상대 경로 모두 지원
 
 ### v1.3.4의 주요 특징
 
@@ -1088,6 +1098,323 @@ log/
     ├── SQL_001_143025.log
     └── SQL_001_143026.log
 ```
+
+---
+
+## CSV 기반 일괄 쿼리 실행
+
+CSV 기반 일괄 쿼리 실행 기능은 하나의 CSV 파일에서 여러 SQL 쿼리를 실행할 수 있어, 일괄 데이터 추출 및 보고서 작업에 이상적입니다.
+
+### 개요
+
+**주요 이점:**
+- 수동 개입 없이 여러 쿼리를 한 번에 실행
+- 날짜/시간 변수로 동적 파일 경로 지원
+- 체계적인 출력을 위한 자동 디렉토리 생성
+- 데이터 수정을 방지하는 내장 보안 기능
+
+**일반적인 사용 사례:**
+- 일일/주간 보고서용 데이터 추출
+- 여러 테이블의 일괄 내보내기
+- 정기적인 데이터베이스 객체 정의 추출 (sp_helptext 등)
+- CSV 파일로 정기 데이터 백업
+
+### CSV 파일 형식
+
+`request_resources/` 디렉토리에 `SQL_` 접두사로 시작하는 파일명의 CSV 파일을 생성합니다.
+
+**필수 컬럼:**
+- `SQL`: 실행할 SQL 쿼리
+- `result_filepath`: 출력 파일 경로 (날짜 변수 지원)
+
+**CSV 예시 (SQL_daily_export.csv):**
+```csv
+SQL,result_filepath
+"select * from users;","c:\Temp\csv_result\users_${DATA:yyyyMMddHHmmss}.csv"
+"select * from products;","c:\Temp\csv_result\products_${DATA:yyyyMMdd}.csv"
+"select * from orders where order_date >= dateadd(day, -7, getdate());","c:\Temp\csv_result\orders_last7days_${DATA:yyyyMMdd}.txt"
+"exec sp_helptext 'dbo.GetCustomerOrders';","c:\Temp\csv_result\proc_definition.txt"
+```
+
+### 날짜/시간 변수
+
+`result_filepath`에 날짜/시간 변수를 사용하여 타임스탬프가 포함된 출력 파일을 생성할 수 있습니다.
+
+**구문:**
+- `${DATA:format}` 또는 `${DATE:format}`
+- 대문자와 소문자 토큰 모두 지원
+
+**지원 토큰:**
+
+| 토큰 | 설명 | 예시 |
+|-----|------|------|
+| `yyyy` 또는 `YYYY` | 4자리 연도 | 2025 |
+| `yy` 또는 `YY` | 2자리 연도 | 25 |
+| `MM` | 2자리 월 | 01, 12 |
+| `M` | 월 (1-2자리) | 1, 12 |
+| `dd` 또는 `DD` | 2자리 일 | 01, 31 |
+| `d` 또는 `D` | 일 (1-2자리) | 1, 31 |
+| `HH` | 2자리 시간 (24시간) | 00, 23 |
+| `H` | 시간 (1-2자리) | 0, 23 |
+| `mm` | 2자리 분 | 00, 59 |
+| `m` | 분 (1-2자리) | 0, 59 |
+| `ss` | 2자리 초 | 00, 59 |
+| `s` | 초 (1-2자리) | 0, 59 |
+| `SSS` | 밀리초 | 000, 999 |
+
+**예시:**
+```csv
+result_filepath
+"results/export_${DATA:yyyyMMdd}.csv"
+"c:\Temp\backup_${DATA:yyyy-MM-dd_HHmmss}.txt"
+"reports/monthly_${DATA:yyyyMM}.csv"
+```
+
+**출력 예시:**
+- `export_20251021.csv`
+- `backup_2025-10-21_143052.txt`
+- `monthly_202510.csv`
+
+### 보안 기능
+
+실수로 인한 데이터 수정을 방지하기 위한 내장 보안 검증 기능이 있습니다.
+
+#### 허용되는 작업
+
+✅ **SELECT 쿼리:**
+```sql
+select * from users;
+select id, name from products where price > 10000;
+```
+
+✅ **안전한 시스템 프로시저:**
+- 정보 조회: `sp_help`, `sp_helptext`, `sp_helpdb`, `sp_helpindex`
+- 컬럼/테이블 정보: `sp_columns`, `sp_tables`, `sp_stored_procedures`
+- 데이터베이스 정보: `sp_databases`, `sp_helpfile`, `sp_helpfilegroup`
+- 세션 정보: `sp_who`, `sp_who2`, `sp_spaceused`, `sp_depends`
+
+```sql
+exec sp_helptext 'dbo.MyStoredProcedure';
+exec sp_help 'dbo.MyTable';
+exec sp_who2;
+```
+
+#### 차단되는 작업
+
+❌ **데이터 수정 (DML):**
+- `INSERT`, `UPDATE`, `DELETE`, `MERGE`
+
+❌ **스키마 변경 (DDL):**
+- `DROP`, `TRUNCATE`, `ALTER`, `CREATE`
+
+❌ **위험한 프로시저:**
+- `xp_cmdshell`, `xp_regread`, `xp_regwrite`
+- `OPENROWSET`, `OPENQUERY`
+
+❌ **데이터 저장:**
+- `SELECT INTO` (임시 테이블 `#` 접두사 제외)
+
+**오류 예시:**
+```
+❌ 쿼리 검증 실패: 위험한 명령어가 감지되었습니다: DELETE
+```
+
+### 사용 단계
+
+**1. CSV 파일 생성**
+
+`request_resources/SQL_daily_export.csv` 같은 파일을 생성합니다:
+```csv
+SQL,result_filepath
+"select * from customers;","c:\Temp\csv_result\customers_${DATA:yyyyMMddHHmmss}.csv"
+"select * from orders;","c:\Temp\csv_result\orders_${DATA:yyyyMMddHHmmss}.csv"
+```
+
+**2. 애플리케이션 실행**
+
+```bash
+# 애플리케이션 실행
+node app.js
+
+# 또는 배치 파일 사용
+실행하기.bat
+```
+
+**3. 메뉴 옵션 선택**
+
+```
+📋 메인 메뉴
+1. 데이터베이스 연결 및 권한 체크
+2. 서버 Telnet 연결 체크  
+3. 데이터베이스 SQL 실행
+4. CSV 기반 일괄 쿼리 실행  ⭐
+5. 설정 관리
+0. 종료
+
+실행할 기능을 선택하세요: 4
+```
+
+**4. CSV 파일 선택**
+
+애플리케이션이 자동으로 `SQL_`로 시작하는 모든 CSV 파일을 나열합니다:
+```
+📊 CSV 기반 일괄 쿼리 실행
+========================================
+
+사용 가능한 CSV 파일:
+1. SQL_daily_export.csv
+2. SQL_table_definitions.csv
+
+CSV 파일 선택 (1-2): 1
+```
+
+**5. 데이터베이스 선택**
+
+설정된 데이터베이스 중에서 대상 데이터베이스를 선택합니다:
+```
+사용 가능한 데이터베이스:
+1. sampleDB (mssql)
+2. mysqlDB (mysql)
+3. postgresDB (postgresql)
+
+데이터베이스 선택 (1-3): 1
+```
+
+**6. 실행 및 결과**
+
+애플리케이션은:
+- 각 쿼리의 보안을 검증
+- 쿼리를 순차적으로 실행
+- 파일 경로의 날짜/시간 변수를 치환
+- 필요시 디렉토리를 자동으로 생성
+- 지정된 위치에 결과를 저장
+
+**예시 출력:**
+```
+📄 CSV 파일: SQL_daily_export.csv
+✅ 쿼리 2개 발견
+
+연결됨: sampleDB (mssql)
+
+쿼리 1/2
+  쿼리: select * from customers;
+  📄 파일: c:\Temp\csv_result\customers_20251021143052.csv
+  📁 디렉토리 생성: c:\Temp\csv_result
+  💾 결과 저장: customers_20251021143052.csv
+  ✅ 결과 저장됨: customers_20251021143052.csv (150 행)
+
+쿼리 2/2
+  쿼리: select * from orders;
+  📄 파일: c:\Temp\csv_result\orders_20251021143052.csv
+  💾 결과 저장: orders_20251021143052.csv
+  ✅ 결과 저장됨: orders_20251021143052.csv (523 행)
+
+✅ CSV 쿼리 실행이 성공적으로 완료되었습니다!
+```
+
+### 사용 사례 예시
+
+#### 예시 1: 일일 데이터 내보내기
+
+**목적:** 백업 또는 보고서를 위한 여러 테이블 일일 내보내기
+
+**SQL_daily_backup.csv:**
+```csv
+SQL,result_filepath
+"select * from users;","c:\Backups\daily\users_${DATA:yyyyMMdd}.csv"
+"select * from products;","c:\Backups\daily\products_${DATA:yyyyMMdd}.csv"
+"select * from orders;","c:\Backups\daily\orders_${DATA:yyyyMMdd}.csv"
+"select * from customers;","c:\Backups\daily\customers_${DATA:yyyyMMdd}.csv"
+```
+
+**스케줄 실행:**
+- Windows 작업 스케줄러로 매일 오전 2시에 실행하도록 설정
+- 자동 타임스탬프 백업
+- `c:\Backups\daily\` 디렉토리에 체계적으로 정리
+
+#### 예시 2: 데이터베이스 객체 정의
+
+**목적:** 저장 프로시저 및 테이블 정의 추출
+
+**SQL_object_definitions.csv:**
+```csv
+SQL,result_filepath
+"exec sp_helptext 'dbo.GetCustomerOrders';","c:\Definitions\GetCustomerOrders_${DATA:yyyyMMdd}.sql"
+"exec sp_helptext 'dbo.UpdateInventory';","c:\Definitions\UpdateInventory_${DATA:yyyyMMdd}.sql"
+"exec sp_help 'dbo.Orders';","c:\Definitions\Orders_table_${DATA:yyyyMMdd}.txt"
+"exec sp_help 'dbo.Customers';","c:\Definitions\Customers_table_${DATA:yyyyMMdd}.txt"
+```
+
+#### 예시 3: 주간 보고서
+
+**목적:** 주간 요약 보고서 생성
+
+**SQL_weekly_reports.csv:**
+```csv
+SQL,result_filepath
+"select datepart(week, order_date) as week_num, count(*) as total_orders, sum(total_amount) as total_sales from orders where order_date >= dateadd(week, -4, getdate()) group by datepart(week, order_date) order by week_num;","c:\Reports\weekly_sales_${DATA:yyyyMMdd}.csv"
+"select top 10 product_name, sum(quantity) as total_sold from order_items oi join products p on oi.product_id = p.product_id where order_date >= dateadd(week, -1, getdate()) group by product_name order by total_sold desc;","c:\Reports\top_products_${DATA:yyyyMMdd}.csv"
+```
+
+### 파일 경로 옵션
+
+**절대 경로:**
+```csv
+result_filepath
+"c:\Temp\export.csv"
+"d:\Backups\data_${DATA:yyyyMMdd}.txt"
+```
+
+**상대 경로 (애플리케이션 디렉토리 기준):**
+```csv
+result_filepath
+"results/csv_queries/users.csv"
+"results/export_${DATA:yyyyMMdd}.csv"
+```
+
+### 문제 해결
+
+**문제: "CSV 파일이 비어있습니다"**
+- **원인:** CSV 파일 형식이 잘못되었거나 컬럼이 누락됨
+- **해결:** CSV에 `SQL` 및 `result_filepath` 헤더가 있는지 확인
+
+**문제: "쿼리 검증 실패: SELECT 쿼리만 허용됩니다"**
+- **원인:** 쿼리에 차단된 키워드(INSERT, UPDATE, DELETE 등)가 포함됨
+- **해결:** SELECT 쿼리 또는 안전한 시스템 프로시저만 사용
+
+**문제: "디렉토리 생성 실패"**
+- **원인:** 권한이 부족하거나 잘못된 경로
+- **해결:** 디렉토리 권한을 확인하거나 다른 경로 사용
+
+**문제: 날짜 변수가 치환되지 않음**
+- **원인:** 잘못된 변수 형식 또는 지원되지 않는 토큰
+- **해결:** 올바른 형식 사용: `${DATA:yyyyMMddHHmmss}` 또는 `${DATE:format}`
+
+### 모범 사례
+
+1. **파일명 규칙:**
+   - CSV 파일은 `SQL_` 접두사로 시작하여 쉽게 식별
+   - 설명적인 이름 사용: `SQL_daily_export.csv`, `SQL_table_definitions.csv`
+
+2. **출력 정리:**
+   - 관련 출력을 같은 디렉토리에 그룹화
+   - 자동 타임스탬프를 위한 날짜 변수 사용
+   - 설명적인 파일명 포함
+
+3. **쿼리 최적화:**
+   - WHERE 절을 사용하여 결과 크기 제한
+   - 대형 테이블의 경우 TOP/LIMIT 추가
+   - 쿼리 성능 영향 고려
+
+4. **보안:**
+   - 안전한 쿼리만 CSV 파일에 저장
+   - 쿼리 정의를 정기적으로 검토 및 감사
+   - 가능한 경우 읽기 전용 데이터베이스 계정 사용
+
+5. **자동화:**
+   - 정기 실행을 위한 스케줄 작업 설정
+   - 성공적인 완료를 위한 출력 디렉토리 모니터링
+   - 필요시 오류 알림 구현
 
 ---
 

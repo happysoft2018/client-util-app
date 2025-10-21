@@ -1,4 +1,4 @@
-# User Manual v1.3.4
+# User Manual v1.3.6
 
 ## 📖 Table of Contents
 
@@ -9,14 +9,24 @@
 5. [Execution Method](#execution-method)
 6. [Checking Results](#checking-results)
 7. [Database SQL Execution Feature](#database-sql-execution-feature)
-8. [Troubleshooting](#troubleshooting)
-9. [Best Practices](#best-practices)
+8. [CSV-based Batch Query Execution](#csv-based-batch-query-execution) ⭐ NEW
+9. [Troubleshooting](#troubleshooting)
+10. [Best Practices](#best-practices)
 
 ---
 
 ## Introduction
 
-This manual guides you through using the database connection, permission check, and SQL execution features of the Node.js Integrated Utility Tool v1.3.4.
+This manual guides you through using the database connection, permission check, and SQL execution features of the Node.js Integrated Utility Tool v1.3.6.
+
+### Key Features of v1.3.6
+
+#### CSV-based Batch Query Execution 📊
+- ✅ **Batch SQL Execution**: Execute multiple SQL queries from a single CSV file
+- ✅ **Date/Time Variables**: Support dynamic file paths with `${DATA:format}` or `${DATE:format}`
+- ✅ **Security Features**: Only SELECT queries and safe system procedures allowed
+- ✅ **Auto Directory Creation**: Automatically creates output directories if they don't exist
+- ✅ **Flexible Output Paths**: Support both absolute and relative file paths
 
 ### Key Features of v1.3.4
 
@@ -976,6 +986,323 @@ log/
     ├── SQL_001_143025.log
     └── SQL_001_143026.log
 ```
+
+---
+
+## CSV-based Batch Query Execution
+
+The CSV-based Batch Query Execution feature allows you to execute multiple SQL queries from a single CSV file, making it ideal for batch data extraction and reporting tasks.
+
+### Overview
+
+**Key Benefits:**
+- Execute multiple queries at once without manual intervention
+- Dynamic file paths with date/time variables
+- Automatic directory creation for organized output
+- Built-in security to prevent data modification
+
+**Typical Use Cases:**
+- Daily/weekly data extraction for reporting
+- Batch export of multiple tables
+- Regular database object definition extraction (sp_helptext, etc.)
+- Scheduled data backups to CSV files
+
+### CSV File Format
+
+Create a CSV file in `request_resources/` directory with filename starting with `SQL_` prefix.
+
+**Required Columns:**
+- `SQL`: SQL query to execute
+- `result_filepath`: Output file path (supports date variables)
+
+**Example CSV (SQL_daily_export.csv):**
+```csv
+SQL,result_filepath
+"select * from users;","c:\Temp\csv_result\users_${DATA:yyyyMMddHHmmss}.csv"
+"select * from products;","c:\Temp\csv_result\products_${DATA:yyyyMMdd}.csv"
+"select * from orders where order_date >= dateadd(day, -7, getdate());","c:\Temp\csv_result\orders_last7days_${DATA:yyyyMMdd}.txt"
+"exec sp_helptext 'dbo.GetCustomerOrders';","c:\Temp\csv_result\proc_definition.txt"
+```
+
+### Date/Time Variables
+
+You can use date/time variables in `result_filepath` to create timestamped output files.
+
+**Syntax:**
+- `${DATA:format}` or `${DATE:format}`
+- Both uppercase and lowercase tokens are supported
+
+**Supported Tokens:**
+
+| Token | Description | Example |
+|-------|-------------|---------|
+| `yyyy` or `YYYY` | 4-digit year | 2025 |
+| `yy` or `YY` | 2-digit year | 25 |
+| `MM` | 2-digit month | 01, 12 |
+| `M` | Month (1-2 digits) | 1, 12 |
+| `dd` or `DD` | 2-digit day | 01, 31 |
+| `d` or `D` | Day (1-2 digits) | 1, 31 |
+| `HH` | 2-digit hour (24h) | 00, 23 |
+| `H` | Hour (1-2 digits) | 0, 23 |
+| `mm` | 2-digit minute | 00, 59 |
+| `m` | Minute (1-2 digits) | 0, 59 |
+| `ss` | 2-digit second | 00, 59 |
+| `s` | Second (1-2 digits) | 0, 59 |
+| `SSS` | Milliseconds | 000, 999 |
+
+**Examples:**
+```csv
+result_filepath
+"results/export_${DATA:yyyyMMdd}.csv"
+"c:\Temp\backup_${DATA:yyyy-MM-dd_HHmmss}.txt"
+"reports/monthly_${DATA:yyyyMM}.csv"
+```
+
+**Output Examples:**
+- `export_20251021.csv`
+- `backup_2025-10-21_143052.txt`
+- `monthly_202510.csv`
+
+### Security Features
+
+The feature includes built-in security validation to prevent accidental data modification.
+
+#### Allowed Operations
+
+✅ **SELECT Queries:**
+```sql
+select * from users;
+select id, name from products where price > 10000;
+```
+
+✅ **Safe System Procedures:**
+- Information retrieval: `sp_help`, `sp_helptext`, `sp_helpdb`, `sp_helpindex`
+- Column/table info: `sp_columns`, `sp_tables`, `sp_stored_procedures`
+- Database info: `sp_databases`, `sp_helpfile`, `sp_helpfilegroup`
+- Session info: `sp_who`, `sp_who2`, `sp_spaceused`, `sp_depends`
+
+```sql
+exec sp_helptext 'dbo.MyStoredProcedure';
+exec sp_help 'dbo.MyTable';
+exec sp_who2;
+```
+
+#### Blocked Operations
+
+❌ **Data Modification (DML):**
+- `INSERT`, `UPDATE`, `DELETE`, `MERGE`
+
+❌ **Schema Changes (DDL):**
+- `DROP`, `TRUNCATE`, `ALTER`, `CREATE`
+
+❌ **Dangerous Procedures:**
+- `xp_cmdshell`, `xp_regread`, `xp_regwrite`
+- `OPENROWSET`, `OPENQUERY`
+
+❌ **Data Persistence:**
+- `SELECT INTO` (except temp tables with `#` prefix)
+
+**Error Example:**
+```
+❌ Query validation failed: Dangerous keyword detected: DELETE
+```
+
+### Usage Steps
+
+**1. Create CSV File**
+
+Create a file like `request_resources/SQL_daily_export.csv`:
+```csv
+SQL,result_filepath
+"select * from customers;","c:\Temp\csv_result\customers_${DATA:yyyyMMddHHmmss}.csv"
+"select * from orders;","c:\Temp\csv_result\orders_${DATA:yyyyMMddHHmmss}.csv"
+```
+
+**2. Run Application**
+
+```bash
+# Launch application
+node app.js
+
+# Or use batch file
+run.bat
+```
+
+**3. Select Menu Option**
+
+```
+📋 Main Menu
+1. Database Connection and Permission Check
+2. Server Telnet Connection Check  
+3. Database SQL Execution
+4. CSV-based Batch Query Execution  ⭐
+5. Configuration Management
+0. Exit
+
+Select function to execute: 4
+```
+
+**4. Select CSV File**
+
+The application will automatically list all CSV files starting with `SQL_`:
+```
+📊 CSV-based Batch Query Execution
+========================================
+
+Available CSV files:
+1. SQL_daily_export.csv
+2. SQL_table_definitions.csv
+
+Select CSV file (1-2): 1
+```
+
+**5. Select Database**
+
+Choose the target database from configured databases:
+```
+Available databases:
+1. sampleDB (mssql)
+2. mysqlDB (mysql)
+3. postgresDB (postgresql)
+
+Select database (1-3): 1
+```
+
+**6. Execution and Results**
+
+The application will:
+- Validate each query for security
+- Execute queries sequentially
+- Substitute date/time variables in file paths
+- Create directories automatically if needed
+- Save results to specified locations
+
+**Example Output:**
+```
+📄 CSV file: SQL_daily_export.csv
+✅ Found 2 queries
+
+Connected to: sampleDB (mssql)
+
+Query 1/2
+  Query: select * from customers;
+  📄 File: c:\Temp\csv_result\customers_20251021143052.csv
+  📁 Creating directory: c:\Temp\csv_result
+  💾 Saving results: customers_20251021143052.csv
+  ✅ Results saved: customers_20251021143052.csv (150 rows)
+
+Query 2/2
+  Query: select * from orders;
+  📄 File: c:\Temp\csv_result\orders_20251021143052.csv
+  💾 Saving results: orders_20251021143052.csv
+  ✅ Results saved: orders_20251021143052.csv (523 rows)
+
+✅ CSV query execution completed successfully!
+```
+
+### Use Case Examples
+
+#### Example 1: Daily Data Export
+
+**Purpose:** Export multiple tables daily for backup or reporting
+
+**SQL_daily_backup.csv:**
+```csv
+SQL,result_filepath
+"select * from users;","c:\Backups\daily\users_${DATA:yyyyMMdd}.csv"
+"select * from products;","c:\Backups\daily\products_${DATA:yyyyMMdd}.csv"
+"select * from orders;","c:\Backups\daily\orders_${DATA:yyyyMMdd}.csv"
+"select * from customers;","c:\Backups\daily\customers_${DATA:yyyyMMdd}.csv"
+```
+
+**Scheduled Execution:**
+- Set up Windows Task Scheduler to run daily at 2 AM
+- Automatic timestamped backups
+- Organized in `c:\Backups\daily\` directory
+
+#### Example 2: Database Object Definitions
+
+**Purpose:** Extract stored procedure and table definitions
+
+**SQL_object_definitions.csv:**
+```csv
+SQL,result_filepath
+"exec sp_helptext 'dbo.GetCustomerOrders';","c:\Definitions\GetCustomerOrders_${DATA:yyyyMMdd}.sql"
+"exec sp_helptext 'dbo.UpdateInventory';","c:\Definitions\UpdateInventory_${DATA:yyyyMMdd}.sql"
+"exec sp_help 'dbo.Orders';","c:\Definitions\Orders_table_${DATA:yyyyMMdd}.txt"
+"exec sp_help 'dbo.Customers';","c:\Definitions\Customers_table_${DATA:yyyyMMdd}.txt"
+```
+
+#### Example 3: Weekly Reports
+
+**Purpose:** Generate weekly summary reports
+
+**SQL_weekly_reports.csv:**
+```csv
+SQL,result_filepath
+"select datepart(week, order_date) as week_num, count(*) as total_orders, sum(total_amount) as total_sales from orders where order_date >= dateadd(week, -4, getdate()) group by datepart(week, order_date) order by week_num;","c:\Reports\weekly_sales_${DATA:yyyyMMdd}.csv"
+"select top 10 product_name, sum(quantity) as total_sold from order_items oi join products p on oi.product_id = p.product_id where order_date >= dateadd(week, -1, getdate()) group by product_name order by total_sold desc;","c:\Reports\top_products_${DATA:yyyyMMdd}.csv"
+```
+
+### File Path Options
+
+**Absolute Path:**
+```csv
+result_filepath
+"c:\Temp\export.csv"
+"d:\Backups\data_${DATA:yyyyMMdd}.txt"
+```
+
+**Relative Path (from application directory):**
+```csv
+result_filepath
+"results/csv_queries/users.csv"
+"results/export_${DATA:yyyyMMdd}.csv"
+```
+
+### Troubleshooting
+
+**Problem: "CSV file is empty"**
+- **Cause:** CSV file format is incorrect or columns are missing
+- **Solution:** Ensure CSV has headers `SQL` and `result_filepath`
+
+**Problem: "Query validation failed: Only SELECT queries are allowed"**
+- **Cause:** Query contains blocked keywords (INSERT, UPDATE, DELETE, etc.)
+- **Solution:** Use only SELECT queries or safe system procedures
+
+**Problem: "Failed to create directory"**
+- **Cause:** Insufficient permissions or invalid path
+- **Solution:** Check directory permissions or use a different path
+
+**Problem: Date variable not substituted**
+- **Cause:** Incorrect variable format or unsupported token
+- **Solution:** Use correct format: `${DATA:yyyyMMddHHmmss}` or `${DATE:format}`
+
+### Best Practices
+
+1. **Filename Convention:**
+   - Start CSV files with `SQL_` prefix for easy identification
+   - Use descriptive names: `SQL_daily_export.csv`, `SQL_table_definitions.csv`
+
+2. **Output Organization:**
+   - Group related outputs in same directory
+   - Use date variables for automatic timestamping
+   - Include descriptive filenames
+
+3. **Query Optimization:**
+   - Use WHERE clauses to limit result size
+   - Add TOP/LIMIT for large tables
+   - Consider query performance impact
+
+4. **Security:**
+   - Only store CSV files with safe queries
+   - Regularly review and audit query definitions
+   - Use read-only database accounts when possible
+
+5. **Automation:**
+   - Set up scheduled tasks for regular execution
+   - Monitor output directories for successful completion
+   - Implement error notification if needed
 
 ---
 

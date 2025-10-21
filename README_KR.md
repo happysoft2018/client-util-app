@@ -1,4 +1,4 @@
-# Node.js 통합 유틸리티 도구 v1.3.5
+# Node.js 통합 유틸리티 도구 v1.3.6
 
 로컬환경에서 사용하는 각종 유틸리티를 통합 관리하는 도구입니다.
 
@@ -14,6 +14,7 @@ my-node-client-util-app/
 │       ├── ConfigManager.js        # 설정 관리
 │       ├── DBConnectionChecker.js  # 범용 DB 연결 및 권한 체크
 │       ├── DBExecutor.js           # 범용 DB SQL 실행
+│       ├── CSVQueryExecutor.js     # CSV 기반 일괄 쿼리 실행
 │       ├── TelnetChecker.js        # 서버 Telnet 연결 체크
 │       └── database/               # DB 타입별 연결 클래스들
 │           ├── DatabaseFactory.js  # DB 연결 팩토리
@@ -26,6 +27,7 @@ my-node-client-util-app/
 ├── request_resources/              # 리소스 파일 디렉토리 (v1.2.0+)
 │   ├── DB_sample.csv               # DB 체크 CSV 파일들 (DB_로 시작)
 │   ├── server_sample.csv           # 텔넷 체크 CSV 파일들 (server_로 시작)
+│   ├── SQL_sample.csv              # CSV 기반 일괄 쿼리 파일 (SQL_로 시작) (v1.3.6+)
 │   └── sql_files/                  # SQL 파일 디렉토리
 │       ├── SQL_001.sql             # SQL 쿼리 템플릿
 │       └── SQL_001.csv             # SQL 파라미터 템플릿
@@ -35,6 +37,28 @@ my-node-client-util-app/
 ```
 
 ## 🆕 최신 업데이트
+
+### v1.3.6 - CSV 기반 일괄 쿼리 실행 (2025-10-21) 📊
+
+**새로운 모듈:**
+- **CSVQueryExecutor**: CSV 파일에서 여러 SQL 쿼리를 일괄 실행
+  - CSV 형식으로 쿼리와 출력 파일 경로 정의
+  - 파일 경로에 날짜/시간 변수 지원: `${DATA:yyyyMMddHHmmss}` 또는 `${DATE:format}`
+  - 출력 파일 디렉토리 자동 생성
+  - 결과를 타임스탬프와 함께 CSV 파일로 저장
+
+**보안 기능:**
+- **쿼리 검증**: SELECT 쿼리와 안전한 시스템 프로시저만 허용
+  - 차단: INSERT, UPDATE, DELETE, DROP, TRUNCATE, ALTER, CREATE
+  - 허용: sp_helptext, sp_help, sp_who, sp_columns, sp_tables 등
+- **보호**: 실수로 인한 데이터 수정 또는 삭제 방지
+
+**CSV 형식:**
+```csv
+SQL,result_filepath
+"select * from users;",results/csv_queries/users_${DATA:yyyyMMddHHmmss}.csv
+"exec sp_helptext 'dbo.MyProc';",results/csv_queries/proc_definition.txt
+```
 
 ### v1.3.5 - 다국어 처리 확장 (2025-10-20) 🌏
 
@@ -135,11 +159,11 @@ my-node-client-util-app/
 1. 데이터베이스 연결 및 권한 체크
 2. 서버 Telnet 연결 체크  
 3. 데이터베이스 SQL 실행
-4. 설정 관리
-5. 모든 체크 실행 (일괄 처리)
-6. 종료
+4. CSV 기반 일괄 쿼리 실행  ⭐ 신규
+5. 설정 관리
+0. 종료
 
-실행할 기능을 선택하세요 (1-6):
+실행할 기능을 선택하세요:
 ```
 
 ### 🔧 **Node.js 명령어 실행**

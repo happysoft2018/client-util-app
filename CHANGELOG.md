@@ -1,5 +1,85 @@
 # Changelog
 
+## [1.3.6] - 2025-10-21
+
+### ✨ New Features
+
+#### CSV-based Batch Query Execution
+- **New Module: CSVQueryExecutor**: Execute multiple SQL queries from a CSV file
+  - Read queries and output file paths from CSV format
+  - Execute queries sequentially against selected database
+  - Save results to specified file paths automatically
+
+- **Date/Time Variable Support in File Paths**:
+  - Format: `${DATA:format}` or `${DATE:format}`
+  - Supports both uppercase and lowercase date tokens
+  - Example: `results/users_${DATA:yyyyMMddHHmmss}.csv`
+  - Tokens: `yyyy/YYYY`, `yy/YY`, `MM`, `M`, `dd/DD`, `d/D`, `HH`, `H`, `mm`, `m`, `ss`, `s`, `SSS`
+
+- **Automatic Directory Creation**:
+  - Creates output directories if they don't exist
+  - Supports both absolute and relative paths
+  - Recursive directory creation with `fs.mkdirSync(..., { recursive: true })`
+
+### 🔒 Security Features
+
+#### Query Validation System
+- **SELECT Queries Only**: Only read-only SELECT statements allowed by default
+- **Safe System Procedures**: Whitelist of safe read-only system stored procedures
+  - Allowed: `sp_help`, `sp_helptext`, `sp_helpdb`, `sp_helpindex`, `sp_helpconstraint`
+  - Allowed: `sp_columns`, `sp_tables`, `sp_stored_procedures`, `sp_databases`
+  - Allowed: `sp_who`, `sp_who2`, `sp_spaceused`, `sp_depends`
+  - Allowed: `sp_helpfile`, `sp_helpfilegroup`, `sp_helptrigger`, `sp_helpstats`
+
+- **Blocked Operations**:
+  - DML: `INSERT`, `UPDATE`, `DELETE`, `MERGE`
+  - DDL: `DROP`, `TRUNCATE`, `ALTER`, `CREATE`
+  - Dangerous extended procedures: `xp_cmdshell`, `xp_regread`, `xp_regwrite`
+  - External data access: `OPENROWSET`, `OPENQUERY`
+  - Data persistence: `SELECT INTO` (except temp tables)
+
+- **Comment Handling**: Removes single-line (`--`) and multi-line (`/* */`) comments before validation
+
+### 📊 CSV Format
+
+**Required Columns:**
+- `SQL`: SQL query to execute (SELECT or safe system procedure)
+- `result_filepath`: Output file path (supports date variables and absolute/relative paths)
+
+**Example CSV:**
+```csv
+SQL,result_filepath
+"select * from users;",c:\Temp\csv_result\users_${DATA:yyyyMMddHHmmss}.csv
+"select * from products;",results/products_${DATA:yyyyMMdd}.txt
+"exec sp_helptext 'dbo.MyProcedure';",results/procedure_definition.txt
+```
+
+### 🔧 Technical Details
+
+#### Module Implementation
+- **File**: `src/modules/CSVQueryExecutor.js`
+- **Dependencies**: `csv-parser`, `fs`, `path`
+- **Integration**: Added to main menu as option 4
+
+#### Date Formatting
+- Uses local system time for date variable substitution
+- Custom date formatter supporting multiple tokens
+- Case-insensitive token matching (e.g., `yyyy` = `YYYY`)
+
+#### Error Handling
+- Validation errors saved to result file with error message
+- Database execution errors captured and logged
+- File I/O errors handled gracefully
+
+### 📝 Usage
+
+1. Create a CSV file in `request_resources/` starting with `SQL_` prefix
+2. Define queries and output paths in CSV format
+3. Run application and select option 4 (CSV-based Batch Query Execution)
+4. Select CSV file from list
+5. Select target database
+6. Results saved automatically to specified paths
+
 ## [1.3.5] - 2025-10-20
 
 ### 🔧 Improvements
