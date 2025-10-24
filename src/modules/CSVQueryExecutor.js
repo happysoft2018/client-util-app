@@ -365,6 +365,10 @@ class CSVQueryExecutor {
       
       console.log(`  💾 ${this.msg.savingResults} ${resultFilepath}`);
       
+      // Check file extension
+      const fileExtension = path.extname(fullResultPath).toLowerCase();
+      const isCsvFile = fileExtension === '.csv';
+      
       // Save results to text file
       let content = '';
       
@@ -372,16 +376,24 @@ class CSVQueryExecutor {
         // Get column names
         const columns = Object.keys(result.rows[0]);
         
-        // Create CSV-like format
+        // CSV format: comma-separated with quotes for special characters
         content += columns.join(',') + '\n';
         
         result.rows.forEach(row => {
           const values = columns.map(col => {
             const value = row[col];
             if (value === null || value === undefined) return '';
-            const stringValue = String(value);
-            if (stringValue.includes(',') || stringValue.includes('"') || stringValue.includes('\n')) {
+            let stringValue = String(value);
+            
+            // Replace newlines with space to prevent CSV line breaks
+            stringValue = stringValue.replace(/\r\n/g, ' ').replace(/\n/g, ' ').replace(/\r/g, ' ');
+            
+            // if csv file, quote the value if it contains comma or double quote
+            if (isCsvFile && (stringValue.includes(',') || stringValue.includes('"'))) {
               return `"${stringValue.replace(/"/g, '""')}"`;
+            }
+            else {
+              return stringValue;
             }
             return stringValue;
           });
