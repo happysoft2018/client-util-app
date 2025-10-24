@@ -1,4 +1,4 @@
-# Node.js Integrated Utility Tool v1.3.6
+# Node.js Integrated Utility Tool v1.3.7
 
 A comprehensive utility tool for managing various local environment utilities in a unified application.
 
@@ -42,6 +42,14 @@ my-node-client-util-app/
 ```
 
 ## 🆕 Latest Updates
+
+### v1.3.7 - CSV Query Result Output Improvements (2025-10-24) 🐛
+
+**Bug Fixes:**
+- **Enhanced Newline Handling**: Procedure definitions and multi-line text now display cleanly in CSV format
+  - Replaces all newlines with spaces for single-line storage
+  - Quotes values only when they contain commas/quotes in CSV files
+  - Easy to read in Excel or text editors
 
 ### v1.3.6 - CSV-based Batch Query Execution (2025-10-21) 📊
 

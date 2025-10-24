@@ -1,5 +1,25 @@
 # Changelog
 
+## [1.3.7] - 2025-10-24
+
+### 🐛 Bug Fixes
+
+#### CSV Query Result Output Improvements
+- **Enhanced Newline Handling**: Improved display of multi-line text (e.g., procedure definitions) in CSV format
+  - Replaces all newline characters (`\r\n`, `\n`, `\r`) with spaces for single-line storage
+  - Eliminates unexpected line breaks and blank lines in CSV files
+  
+- **CSV Format Optimization**: Smart formatting based on file extension
+  - CSV files (`.csv`): Quote values only when they contain commas or quotes
+  - Other files: Save as plain text without quote wrapping
+  
+- **Improvement Benefits**:
+  - Procedure query results saved cleanly in a single line
+  - Easy to read in Excel or text editors
+  - Better compatibility with other tools through CSV standard compliance
+
+---
+
 ## [1.3.6] - 2025-10-21
 
 ### ✨ New Features
