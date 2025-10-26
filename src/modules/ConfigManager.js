@@ -35,11 +35,15 @@ class ConfigManager {
   }
 
   getSupportedDbTypes() {
-    const dbTypes = new Set();
+    const typesMap = new Map();
     Object.values(this.dbConfig || {}).forEach(db => {
-      dbTypes.add({ name: db.type.toUpperCase(), type: db.type });
+      const t = (db.type || '').toString();
+      const key = t.toLowerCase();
+      if (key && !typesMap.has(key)) {
+        typesMap.set(key, { name: t.toUpperCase(), type: t });
+      }
     });
-    return Array.from(dbTypes);
+    return Array.from(typesMap.values());
   }
 
   getDbType(dbName) {
