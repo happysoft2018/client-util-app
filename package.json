@@ -18,7 +18,7 @@
     ],
     "assets": [
       "config/**/*.json",
-      "request_resources/**/*",
+      "request/**/*",
       "README.md",
       "README_KR.md",
       "USER_MANUAL.md",

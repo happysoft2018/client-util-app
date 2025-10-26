@@ -24,7 +24,7 @@ my-node-client-util-app/
 │           └── OracleConnection.js # Oracle connection class
 ├── config/
 │   └── dbinfo.json                 # DB connection information settings
-├── request_resources/              # Resource files directory (v1.2.0+)
+├── request/              # Resource files directory (v1.2.0+)
 │   ├── DB_sample.csv               # DB check CSV files (starts with DB_)
 │   ├── server_sample.csv           # Telnet check CSV files (starts with server_)
 │   ├── SQL_sample.csv              # CSV-based batch query file (starts with SQL_) (v1.3.6+)
@@ -112,7 +112,7 @@ SQL,result_filepath
 - Fixed path resolution in pkg executable: Changed from `process.cwd()` to `path.dirname(process.execPath)`
 - **Root cause**: `process.cwd()` returns the directory where the command was executed, not where the executable is located
 - **Impact**: Release package now correctly reads resources from the executable's directory regardless of where it's run from
-- Affected: `request_resources/`, `config/dbinfo.json`, `results/`, `log/` directories
+- Affected: `request/`, `config/dbinfo.json`, `results/`, `log/` directories
 
 ### v1.3.0 - Database SQL Executor Major Improvements ⭐
 - **CSV Result File Generation**: Automatically save SQL execution results to structured CSV
@@ -152,7 +152,7 @@ SQL,result_filepath
 - **Better troubleshooting**: Specific error details for problem diagnosis
 
 #### Streamlined File Management
-- **Unified CSV location**: All CSV files now in `request_resources/` directly
+- **Unified CSV location**: All CSV files now in `request/` directly
 - **Smart filtering**: Automatic file filtering based on naming convention
   - DB checks: Files starting with `DB_`
   - Telnet checks: Files starting with `server_`
@@ -377,7 +377,7 @@ release.bat
 3. Create release/my-node-client-util-app-v1.3.0/ folder
 4. Copy executable
 5. Copy configuration files (config/)
-6. Copy sample files (request_resources/)
+6. Copy sample files (request/)
 7. Create output folders (results/, log/)
 8. Copy documentation (README, manuals, changelog - 8 files)
 9. Create launcher script (run.bat)
@@ -422,7 +422,7 @@ my-node-client-util-app-v1.3.0/
 ├── RELEASE_NOTES.txt               # Release notes
 ├── config/
 │   └── dbinfo.json                 # DB configuration (user customizable)
-├── request_resources/
+├── request/
 │   ├── DB_sample.csv               # DB check sample
 │   ├── server_sample.csv           # Telnet check sample
 │   └── sql_files/

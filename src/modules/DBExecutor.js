@@ -134,7 +134,7 @@ class DBExecutor {
     this.msg = msg;
     
     // Set sqlFilesDir based on environment (pkg or development)
-    this.sqlFilesDir = path.join(APP_ROOT, 'request_resources', 'sql_files');
+    this.sqlFilesDir = path.join(APP_ROOT, 'request', 'sql_files');
     
     this.rl = readlineInterface || require('readline').createInterface({
       input: process.stdin,

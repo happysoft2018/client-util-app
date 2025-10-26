@@ -24,7 +24,7 @@ my-node-client-util-app/
 │           └── OracleConnection.js # Oracle 연결 클래스
 ├── config/
 │   └── dbinfo.json                 # DB 연결 정보 설정
-├── request_resources/              # 리소스 파일 디렉토리 (v1.2.0+)
+├── request/              # 리소스 파일 디렉토리 (v1.2.0+)
 │   ├── DB_sample.csv               # DB 체크 CSV 파일들 (DB_로 시작)
 │   ├── server_sample.csv           # 텔넷 체크 CSV 파일들 (server_로 시작)
 │   ├── SQL_sample.csv              # CSV 기반 일괄 쿼리 파일 (SQL_로 시작) (v1.3.6+)
@@ -107,7 +107,7 @@ SQL,result_filepath
 - pkg 실행파일 경로 해석 수정: `process.cwd()`에서 `path.dirname(process.execPath)`로 변경
 - **근본 원인**: `process.cwd()`는 명령이 실행된 디렉토리를 반환하며, 실행 파일이 위치한 디렉토리가 아님
 - **영향**: 배포판이 이제 어디서 실행되든 실행 파일 디렉토리의 리소스를 올바르게 읽음
-- 영향 받는 디렉토리: `request_resources/`, `config/dbinfo.json`, `results/`, `log/`
+- 영향 받는 디렉토리: `request/`, `config/dbinfo.json`, `results/`, `log/`
 
 ### v1.3.0 - Database SQL Executor 대폭 개선 ⭐
 - **CSV 결과 파일 생성**: SQL 실행 결과를 구조화된 CSV로 자동 저장
@@ -147,7 +147,7 @@ SQL,result_filepath
 - **문제 해결 개선**: 문제 진단을 위한 구체적인 에러 세부사항
 
 #### 간소화된 파일 관리
-- **통합 CSV 위치**: 모든 CSV 파일이 이제 `request_resources/` 바로 아래에 위치
+- **통합 CSV 위치**: 모든 CSV 파일이 이제 `request/` 바로 아래에 위치
 - **스마트 필터링**: 명명 규칙 기반 자동 파일 필터링
   - DB 체크: `DB_`로 시작하는 파일
   - Telnet 체크: `server_`로 시작하는 파일
@@ -372,7 +372,7 @@ release.bat
 3. release/my-node-client-util-app-v1.3.0/ 폴더 생성
 4. 실행 파일 복사
 5. 설정 파일 복사 (config/)
-6. 샘플 파일 복사 (request_resources/)
+6. 샘플 파일 복사 (request/)
 7. 결과/로그 폴더 생성 (results/, log/)
 8. 문서 복사 (README, 매뉴얼, 변경이력 등 8개 파일)
 9. 런처 스크립트 생성 (run.bat)
@@ -417,7 +417,7 @@ my-node-client-util-app-v1.3.0/
 ├── RELEASE_NOTES.txt               # 릴리즈 노트
 ├── config/
 │   └── dbinfo.json                 # DB 설정 (사용자 수정 필요)
-├── request_resources/
+├── request/
 │   ├── DB_sample.csv               # DB 체크 샘플
 │   ├── server_sample.csv           # 텔넷 체크 샘플
 │   └── sql_files/

@@ -26,10 +26,10 @@ const messages = {
   en: {
     title: 'Node.js Integrated Utility Tool',
     mainMenuTitle: 'Main Menu',
-    menu1: '1. Database Connection and Permission Check',
-    menu2: '2. Server Telnet Connection Check',
-    menu3: '3. Database SQL Execution',
-    menu4: '4. CSV-based Batch Query Execution',
+    menu1: '1. Database Connection and Permission Check (request/DB*)',
+    menu2: '2. Server Telnet Connection Check (request/SERVER*)',
+    menu3: '3. Database SQL Execution (request/sql_files/SQL*)',
+    menu4: '4. CSV-based Batch Query Execution (request/CSV*)',
     menu5: '5. Configuration Management',
     menu0: '0. Exit',
     selectPrompt: 'Select function to execute (0-5): ',
@@ -37,10 +37,10 @@ const messages = {
     
     // Database Connection Check
     dbCheckTitle: 'Database Connection and Permission Check',
-    dbCheckDirNotFound: 'DB check CSV directory not found: request_resources/',
+    dbCheckDirNotFound: 'DB check CSV directory not found: request/',
     dbCheckCreateDir: 'Please create the directory and add CSV files.',
-    dbCheckNoFiles: 'No DB CSV files found in request_resources/ directory.',
-    dbCheckAddFiles: 'Please add .csv files starting with "DB" to the request_resources/ directory.',
+    dbCheckNoFiles: 'No DB CSV files found in request/ directory.',
+    dbCheckAddFiles: 'Please add .csv files starting with "DB" to the request/ directory.',
     dbCheckAvailableFiles: 'Available DB Check CSV Files:',
     dbCheckSelectFile: 'Select CSV file number to use',
     dbCheckInvalidFile: 'Invalid file selection.',
@@ -56,10 +56,10 @@ const messages = {
     
     // Telnet Check
     telnetTitle: 'Server Telnet Connection Check',
-    telnetDirNotFound: 'Telnet check CSV directory not found: request_resources/',
+    telnetDirNotFound: 'Telnet check CSV directory not found: request/',
     telnetCreateDir: 'Please create the directory and add CSV files.',
-    telnetNoFiles: 'No Server CSV files found in request_resources/ directory.',
-    telnetAddFiles: 'Please add .csv files starting with "server" to the request_resources/ directory.',
+    telnetNoFiles: 'No Server CSV files found in request/ directory.',
+    telnetAddFiles: 'Please add .csv files starting with "server" to the request/ directory.',
     telnetAvailableFiles: 'Available Telnet Check CSV Files:',
     telnetSelectFile: 'Select CSV file number to use',
     telnetInvalidFile: 'Invalid file selection.',
@@ -72,10 +72,10 @@ const messages = {
     
     // SQL Execution
     sqlTitle: 'Database SQL Execution',
-    sqlDirNotFound: 'SQL files directory not found: request_resources/sql_files/',
+    sqlDirNotFound: 'SQL files directory not found: request/sql_files/',
     sqlCreateDir: 'Please create the directory and add SQL files.',
-    sqlNoFiles: 'No SQL files found in request_resources/sql_files/ directory.',
-    sqlAddFiles: 'Please add .sql files to the request_resources/sql_files/ directory.',
+    sqlNoFiles: 'No SQL files found in request/sql_files/ directory.',
+    sqlAddFiles: 'Please add .sql files to the request/sql_files/ directory.',
     sqlAvailableFiles: 'Available SQL Files:',
     sqlSelectFile: 'Select SQL file number to execute',
     sqlInvalidFile: 'Invalid file selection.',
@@ -86,10 +86,10 @@ const messages = {
     
     // CSV Query Execution
     csvQueryTitle: 'CSV-based Batch Query Execution',
-    csvQueryDirNotFound: 'CSV query directory not found: request_resources/',
+    csvQueryDirNotFound: 'CSV query directory not found: request/',
     csvQueryCreateDir: 'Please create the directory and add CSV files.',
-    csvQueryNoFiles: 'No CSV query files found in request_resources/ directory.',
-    csvQueryAddFiles: 'Please add .csv files starting with "SQL" to the request_resources/ directory.',
+    csvQueryNoFiles: 'No CSV query files found in request/ directory.',
+    csvQueryAddFiles: 'Please add .csv files starting with "SQL" to the request/ directory.',
     csvQueryAvailableFiles: 'Available CSV Query Files:',
     csvQuerySelectFile: 'Select CSV file number to execute',
     csvQueryInvalidFile: 'Invalid file selection.',
@@ -118,10 +118,10 @@ const messages = {
   kr: {
     title: 'Node.js 통합 유틸리티 도구',
     mainMenuTitle: '메인 메뉴',
-    menu1: '1. 데이터베이스 접속 및 권한 확인',
-    menu2: '2. 서버 텔넷 접속 확인',
-    menu3: '3. 데이터베이스 SQL 실행',
-    menu4: '4. CSV 기반 일괄 쿼리 실행',
+    menu1: '1. 데이터베이스 접속 및 권한 확인 (request/DB*)',
+    menu2: '2. 서버 텔넷 접속 확인 (request/SERVER*)',
+    menu3: '3. 데이터베이스 SQL 실행 (request/sql_files/SQL*)',
+    menu4: '4. CSV 기반 일괄 쿼리 실행 (request/CSV*)',
     menu5: '5. 설정 관리',
     menu0: '0. 종료',
     selectPrompt: '실행할 기능을 선택하세요 (0-5): ',
@@ -129,10 +129,10 @@ const messages = {
     
     // Database Connection Check
     dbCheckTitle: '데이터베이스 접속 및 권한 확인',
-    dbCheckDirNotFound: 'DB 확인용 CSV 디렉토리를 찾을 수 없습니다: request_resources/',
+    dbCheckDirNotFound: 'DB 확인용 CSV 디렉토리를 찾을 수 없습니다: request/',
     dbCheckCreateDir: '디렉토리를 생성하고 CSV 파일을 추가해주세요.',
-    dbCheckNoFiles: 'request_resources/ 디렉토리에 DB CSV 파일이 없습니다.',
-    dbCheckAddFiles: 'request_resources/ 디렉토리에 "DB"로 시작하는 .csv 파일을 추가해주세요.',
+    dbCheckNoFiles: 'request/ 디렉토리에 DB CSV 파일이 없습니다.',
+    dbCheckAddFiles: 'request/ 디렉토리에 "DB"로 시작하는 .csv 파일을 추가해주세요.',
     dbCheckAvailableFiles: '사용 가능한 DB 확인 CSV 파일:',
     dbCheckSelectFile: '사용할 CSV 파일 번호를 선택하세요',
     dbCheckInvalidFile: '잘못된 파일 선택입니다.',
@@ -148,10 +148,10 @@ const messages = {
     
     // Telnet Check
     telnetTitle: '서버 텔넷 접속 확인',
-    telnetDirNotFound: '텔넷 확인용 CSV 디렉토리를 찾을 수 없습니다: request_resources/',
+    telnetDirNotFound: '텔넷 확인용 CSV 디렉토리를 찾을 수 없습니다: request/',
     telnetCreateDir: '디렉토리를 생성하고 CSV 파일을 추가해주세요.',
-    telnetNoFiles: 'request_resources/ 디렉토리에 Server CSV 파일이 없습니다.',
-    telnetAddFiles: 'request_resources/ 디렉토리에 "server"로 시작하는 .csv 파일을 추가해주세요.',
+    telnetNoFiles: 'request/ 디렉토리에 Server CSV 파일이 없습니다.',
+    telnetAddFiles: 'request/ 디렉토리에 "server"로 시작하는 .csv 파일을 추가해주세요.',
     telnetAvailableFiles: '사용 가능한 텔넷 확인 CSV 파일:',
     telnetSelectFile: '사용할 CSV 파일 번호를 선택하세요',
     telnetInvalidFile: '잘못된 파일 선택입니다.',
@@ -164,10 +164,10 @@ const messages = {
     
     // SQL Execution
     sqlTitle: '데이터베이스 SQL 실행',
-    sqlDirNotFound: 'SQL 파일 디렉토리를 찾을 수 없습니다: request_resources/sql_files/',
+    sqlDirNotFound: 'SQL 파일 디렉토리를 찾을 수 없습니다: request/sql_files/',
     sqlCreateDir: '디렉토리를 생성하고 SQL 파일을 추가해주세요.',
-    sqlNoFiles: 'request_resources/sql_files/ 디렉토리에 SQL 파일이 없습니다.',
-    sqlAddFiles: 'request_resources/sql_files/ 디렉토리에 .sql 파일을 추가해주세요.',
+    sqlNoFiles: 'request/sql_files/ 디렉토리에 SQL 파일이 없습니다.',
+    sqlAddFiles: 'request/sql_files/ 디렉토리에 .sql 파일을 추가해주세요.',
     sqlAvailableFiles: '사용 가능한 SQL 파일:',
     sqlSelectFile: '실행할 SQL 파일 번호를 선택하세요',
     sqlInvalidFile: '잘못된 파일 선택입니다.',
@@ -178,10 +178,10 @@ const messages = {
     
     // CSV Query Execution
     csvQueryTitle: 'CSV 기반 일괄 쿼리 실행',
-    csvQueryDirNotFound: 'CSV 쿼리 디렉토리를 찾을 수 없습니다: request_resources/',
+    csvQueryDirNotFound: 'CSV 쿼리 디렉토리를 찾을 수 없습니다: request/',
     csvQueryCreateDir: '디렉토리를 생성하고 CSV 파일을 추가해주세요.',
-    csvQueryNoFiles: 'request_resources/ 디렉토리에 CSV 쿼리 파일이 없습니다.',
-    csvQueryAddFiles: 'request_resources/ 디렉토리에 "SQL"로 시작하는 .csv 파일을 추가해주세요.',
+    csvQueryNoFiles: 'request/ 디렉토리에 CSV 쿼리 파일이 없습니다.',
+    csvQueryAddFiles: 'request/ 디렉토리에 "SQL"로 시작하는 .csv 파일을 추가해주세요.',
     csvQueryAvailableFiles: '사용 가능한 CSV 쿼리 파일:',
     csvQuerySelectFile: '실행할 CSV 파일 번호를 선택하세요',
     csvQueryInvalidFile: '잘못된 파일 선택입니다.',
@@ -305,8 +305,8 @@ class NodeUtilApp {
     console.log('='.repeat(40));
     
     try {
-      // Get CSV file list from request_resources folder
-      const dbCheckDir = path.join(APP_ROOT, 'request_resources');
+      // Get CSV file list from request folder
+      const dbCheckDir = path.join(APP_ROOT, 'request');
       
       if (!fs.existsSync(dbCheckDir)) {
         console.log(`❌ ${msg.dbCheckDirNotFound}`);
@@ -383,8 +383,8 @@ class NodeUtilApp {
     console.log('='.repeat(40));
     
     try {
-      // Get CSV file list from request_resources folder
-      const telnetCheckDir = path.join(APP_ROOT, 'request_resources');
+      // Get CSV file list from request folder
+      const telnetCheckDir = path.join(APP_ROOT, 'request');
       
       if (!fs.existsSync(telnetCheckDir)) {
         console.log(`❌ ${msg.telnetDirNotFound}`);
@@ -457,8 +457,8 @@ class NodeUtilApp {
     console.log('='.repeat(40));
     
     try {
-      // Get SQL file list from request_resources/sql_files folder
-      const sqlFilesDir = path.join(APP_ROOT, 'request_resources', 'sql_files');
+      // Get SQL file list from request/sql_files folder
+      const sqlFilesDir = path.join(APP_ROOT, 'request', 'sql_files');
       
       if (!fs.existsSync(sqlFilesDir)) {
         console.log(`❌ ${msg.sqlDirNotFound}`);
@@ -521,8 +521,8 @@ class NodeUtilApp {
     console.log('='.repeat(40));
     
     try {
-      // Get CSV file list from request_resources folder
-      const csvQueryDir = path.join(APP_ROOT, 'request_resources');
+      // Get CSV file list from request folder
+      const csvQueryDir = path.join(APP_ROOT, 'request');
       
       if (!fs.existsSync(csvQueryDir)) {
         console.log(`❌ ${msg.csvQueryDirNotFound}`);

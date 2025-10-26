@@ -96,7 +96,7 @@
 - 문제 진단 및 해결에 필요한 상세 정보 제공
 
 **파일 구조 개선:**
-- CSV 파일 위치를 `request_resources/` 바로 아래로 통합
+- CSV 파일 위치를 `request/` 바로 아래로 통합
 - 파일명 기반 자동 필터링 (DB 체크: `DB_`로 시작, Telnet 체크: `server_`로 시작)
 
 ### 왜 변경되었나요?
@@ -120,10 +120,10 @@
 
 ### 파일 위치 및 명명 규칙
 
-**v1.2.0부터 모든 CSV 파일은 `request_resources/` 바로 아래에 위치합니다:**
+**v1.2.0부터 모든 CSV 파일은 `request/` 바로 아래에 위치합니다:**
 
 ```
-request_resources/
+request/
 ├── DB_sample.csv          ← DB 체크용 (DB_로 시작)
 ├── DB_production.csv      ← DB 체크용 (DB_로 시작)
 ├── server_sample.csv      ← Telnet 체크용 (server_로 시작)
@@ -522,7 +522,7 @@ timestamp,pc_ip,server_ip,port,db_name,db_type,db_userid,result_code,error_code,
 
 **해결:**
 ```
-✅ 올바른 경로: request_resources/db_check/DB_sample.csv
+✅ 올바른 경로: request/db_check/DB_sample.csv
 ❌ 잘못된 경로: DB_sample.csv
 ```
 
@@ -725,7 +725,7 @@ Database SQL Execution 기능을 사용하면 파라미터화된 SQL 쿼리를 �
 ### 파일 구조
 
 ```
-request_resources/
+request/
 └── sql_files/
     ├── SQL_001.sql      ← SQL 쿼리 파일
     ├── SQL_001.csv      ← 파라미터 파일 (CSV)
@@ -1121,7 +1121,7 @@ CSV 기반 일괄 쿼리 실행 기능은 하나의 CSV 파일에서 여러 SQL 
 
 ### CSV 파일 형식
 
-`request_resources/` 디렉토리에 `SQL_` 접두사로 시작하는 파일명의 CSV 파일을 생성합니다.
+`request/` 디렉토리에 `SQL_` 접두사로 시작하는 파일명의 CSV 파일을 생성합니다.
 
 **필수 컬럼:**
 - `SQL`: 실행할 SQL 쿼리
@@ -1223,7 +1223,7 @@ exec sp_who2;
 
 **1. CSV 파일 생성**
 
-`request_resources/SQL_daily_export.csv` 같은 파일을 생성합니다:
+`request/SQL_daily_export.csv` 같은 파일을 생성합니다:
 ```csv
 SQL,result_filepath
 "select * from customers;","c:\Temp\csv_result\customers_${DATE:yyyyMMddHHmmss}.csv"

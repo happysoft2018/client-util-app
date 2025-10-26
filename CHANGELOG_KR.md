@@ -93,7 +93,7 @@ SQL,result_filepath
 
 ### 📝 사용법
 
-1. `request_resources/`에 `SQL_` 접두사로 시작하는 CSV 파일 생성
+1. `request/`에 `SQL_` 접두사로 시작하는 CSV 파일 생성
 2. CSV 형식으로 쿼리와 출력 경로 정의
 3. 애플리케이션 실행 및 옵션 4 (CSV 기반 일괄 쿼리 실행) 선택
 4. 목록에서 CSV 파일 선택
@@ -160,7 +160,7 @@ SQL,result_filepath
 - **pkg 실행파일 경로 해석 수정**: `process.cwd()`에서 `path.dirname(process.execPath)`로 변경
   - **근본 원인**: `process.cwd()`는 명령이 실행된 디렉토리를 반환하며, 실행 파일이 위치한 디렉토리가 아님
   - **해결 방법**: `path.dirname(process.execPath)`를 사용하여 실행 파일의 올바른 디렉토리 경로 획득
-  - 배포판이 이제 실행 파일 디렉토리의 `request_resources/`를 올바르게 읽음
+  - 배포판이 이제 실행 파일 디렉토리의 `request/`를 올바르게 읽음
   - 설정 파일 (`config/dbinfo.json`)이 올바른 위치에서 로드됨
   - 결과 및 로그가 실행 파일 기준 올바른 디렉토리에 저장됨
 
@@ -181,7 +181,7 @@ SQL,result_filepath
 
 #### 실행파일 경로 문제 해결
 - **현재 작업 디렉토리 사용**: pkg 실행파일에서 `process.execPath` 대신 `process.cwd()` 사용
-  - 실행파일이 현재 디렉토리의 `request_resources/` 폴더를 올바르게 인식
+  - 실행파일이 현재 디렉토리의 `request/` 폴더를 올바르게 인식
   - 실행파일이 현재 디렉토리의 `config/` 폴더를 올바르게 인식
   - 실행파일이 현재 디렉토리의 `results/` 폴더에 결과 저장
   - 실행파일이 현재 디렉토리의 `log/` 폴더에 로그 저장
@@ -215,7 +215,7 @@ SQL,result_filepath
 - **app.js 스크립트 추가**: pkg 빌드 시 app.js 포함
 
 ### 🐛 버그 수정
-- **exe 파일에서 request_resources 접근 오류**: pkg 환경에서 __dirname 대신 APP_ROOT 사용으로 해결
+- **exe 파일에서 request 접근 오류**: pkg 환경에서 __dirname 대신 APP_ROOT 사용으로 해결
 - **exe 파일에서 config 파일 접근 오류**: pkg 환경에서 올바른 경로 사용
 
 ## [1.3.0] - 2025-10-08
@@ -293,7 +293,7 @@ SQL,result_filepath
 - **문제 진단 개선**: 구체적인 에러 세부사항으로 문제 해결 지원
 
 #### 파일 구조 개선
-- **통합 CSV 위치**: 모든 CSV 파일을 `request_resources/` 바로 아래로 통합
+- **통합 CSV 위치**: 모든 CSV 파일을 `request/` 바로 아래로 통합
 - **스마트 필터링**: 파일명 기반 자동 필터링
   - DB 체크: `DB_`로 시작하는 파일만 표시
   - Telnet 체크: `server_`로 시작하는 파일만 표시

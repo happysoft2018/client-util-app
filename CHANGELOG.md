@@ -93,7 +93,7 @@ SQL,result_filepath
 
 ### 📝 Usage
 
-1. Create a CSV file in `request_resources/` starting with `SQL_` prefix
+1. Create a CSV file in `request/` starting with `SQL_` prefix
 2. Define queries and output paths in CSV format
 3. Run application and select option 4 (CSV-based Batch Query Execution)
 4. Select CSV file from list
@@ -160,7 +160,7 @@ SQL,result_filepath
 - **Fixed path resolution in pkg executable**: Changed from `process.cwd()` to `path.dirname(process.execPath)`
   - **Root cause**: `process.cwd()` returns the directory where the command was executed, not where the executable is located
   - **Solution**: Use `path.dirname(process.execPath)` to get the correct executable directory
-  - Release package now correctly reads `request_resources/` from the executable's directory
+  - Release package now correctly reads `request/` from the executable's directory
   - Configuration files (`config/dbinfo.json`) now loaded from the correct location
   - Results and logs now saved to the correct directories relative to the executable
 
@@ -181,7 +181,7 @@ SQL,result_filepath
 
 #### Fixed Executable Path Issue
 - **Use Current Working Directory**: Use `process.cwd()` instead of `process.execPath` in pkg executable
-  - Executable now correctly recognizes `request_resources/` folder in current directory
+  - Executable now correctly recognizes `request/` folder in current directory
   - Executable now correctly recognizes `config/` folder in current directory
   - Executable now saves results to `results/` folder in current directory
   - Executable now saves logs to `log/` folder in current directory
@@ -215,7 +215,7 @@ SQL,result_filepath
 - **Added app.js script**: Include app.js in pkg build
 
 ### 🐛 Bug Fixes
-- **Fixed request_resources access error in exe**: Resolved by using APP_ROOT instead of __dirname in pkg environment
+- **Fixed request access error in exe**: Resolved by using APP_ROOT instead of __dirname in pkg environment
 - **Fixed config file access error in exe**: Use correct path in pkg environment
 
 ## [1.3.0] - 2025-10-08
@@ -293,7 +293,7 @@ SQL,result_filepath
 - **Better troubleshooting**: Specific error details for problem diagnosis
 
 #### Streamlined File Management
-- **Unified CSV location**: All CSV files now in `request_resources/` directly
+- **Unified CSV location**: All CSV files now in `request/` directly
 - **Smart filtering**: Automatic file filtering based on naming convention
   - DB checks: Files starting with `DB_`
   - Telnet checks: Files starting with `server_`

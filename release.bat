@@ -74,9 +74,9 @@ if exist "config" (
     echo ✅ Config folder copied
 )
 
-REM Copy request_resources folder
-if exist "request_resources" (
-    xcopy "request_resources" "%RELEASE_DIR%\request_resources\" /e /i /h /y >nul
+REM Copy request folder
+if exist "request" (
+    xcopy "request" "%RELEASE_DIR%\request\" /e /i /h /y >nul
     echo ✅ Request resources folder copied (with sample SQL files)
 )
 
@@ -126,7 +126,7 @@ echo 📄 Creating version info...
     echo Package Contents:
     echo - client-util-app.exe : Main executable
     echo - config/dbinfo.json : Database configuration
-    echo - request_resources/ : Sample CSV and SQL files
+    echo - request/ : Sample CSV and SQL files
     echo - results/ : Output directory for results
     echo - log/ : Log directory
     echo - run.bat : Launcher script ^(English^)
@@ -194,7 +194,7 @@ echo 📝 Step 5: Creating release notes...
     echo [Installation]
     echo 1. Extract the package to your desired location
     echo 2. Edit config/dbinfo.json with your database settings
-    echo 3. Add your SQL files to request_resources/sql_files/
+    echo 3. Add your SQL files to request/sql_files/
     echo 4. Run run.bat ^(English^) or 실행하기.bat ^(Korean^)
     echo.
     echo [Quick Start]

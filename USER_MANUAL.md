@@ -96,7 +96,7 @@ This manual guides you through using the database connection, permission check, 
 - Provides detailed information for problem diagnosis and resolution
 
 **Improved File Structure:**
-- Unified CSV file location under `request_resources/` directly
+- Unified CSV file location under `request/` directly
 - Automatic filtering based on filename (DB check: starts with `DB_`, Telnet check: starts with `server_`)
 
 ### Why Changed?
@@ -120,10 +120,10 @@ This manual guides you through using the database connection, permission check, 
 
 ### File Location and Naming Rules
 
-**Starting from v1.2.0, all CSV files are located directly under `request_resources/`:**
+**Starting from v1.2.0, all CSV files are located directly under `request/`:**
 
 ```
-request_resources/
+request/
 ├── DB_sample.csv          ← For DB check (starts with DB_)
 ├── DB_production.csv      ← For DB check (starts with DB_)
 ├── server_sample.csv      ← For Telnet check (starts with server_)
@@ -512,7 +512,7 @@ timestamp,pc_ip,server_ip,port,db_name,db_type,db_userid,result_code,error_code,
 
 **Solution:**
 ```
-✅ Correct path: request_resources/db_check/DB_sample.csv
+✅ Correct path: request/db_check/DB_sample.csv
 ❌ Wrong path: DB_sample.csv
 ```
 
@@ -613,7 +613,7 @@ The Database SQL Execution feature allows you to repeatedly execute parameterize
 ### File Structure
 
 ```
-request_resources/
+request/
 └── sql_files/
     ├── SQL_001.sql      ← SQL query file
     ├── SQL_001.csv      ← Parameter file (CSV)
@@ -1009,7 +1009,7 @@ The CSV-based Batch Query Execution feature allows you to execute multiple SQL q
 
 ### CSV File Format
 
-Create a CSV file in `request_resources/` directory with filename starting with `SQL_` prefix.
+Create a CSV file in `request/` directory with filename starting with `SQL_` prefix.
 
 **Required Columns:**
 - `SQL`: SQL query to execute
@@ -1111,7 +1111,7 @@ exec sp_who2;
 
 **1. Create CSV File**
 
-Create a file like `request_resources/SQL_daily_export.csv`:
+Create a file like `request/SQL_daily_export.csv`:
 ```csv
 SQL,result_filepath
 "select * from customers;","c:\Temp\csv_result\customers_${DATE:yyyyMMddHHmmss}.csv"
