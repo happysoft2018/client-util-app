@@ -31,7 +31,7 @@ class ConfigManager {
   }
 
   getAvailableDbs() {
-    return Object.keys(this.dbConfig || {});
+    return Object.keys(this.dbConfig || {}).sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
   }
 
   getSupportedDbTypes() {
