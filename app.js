@@ -102,10 +102,13 @@ const messages = {
     configTitle: 'Configuration Management',
     configMenu1: '1. Check System Information',
     configMenu2: '2. View Available Databases',
-    configMenu3: '3. Return to Main Menu',
-    configSelect: 'Select (1-3): ',
+    configMenu3: '3. View Supported DB Types',
+    configMenu4: '0. Return to Main Menu',
+    configSelect: 'Select (0-3): ',
     configAvailableDbs: 'Available Databases:',
     configNoDbs: 'No databases configured in config/dbinfo.json',
+    configSupportedDbTypes: 'Supported DB Types:',
+    configNoSupportedTypes: 'No DB types detected from config/dbinfo.json',
     
     // Common
     exit: 'Exiting program.',
@@ -191,10 +194,13 @@ const messages = {
     configTitle: '설정 관리',
     configMenu1: '1. 시스템 정보 확인',
     configMenu2: '2. 사용 가능한 데이터베이스 보기',
-    configMenu3: '3. 메인 메뉴로 돌아가기',
-    configSelect: '선택 (1-3): ',
+    configMenu3: '3. 지원 DB 타입 보기',
+    configMenu4: '0. 메인 메뉴로 돌아가기',
+    configSelect: '선택 (0-3): ',
     configAvailableDbs: '사용 가능한 데이터베이스:',
     configNoDbs: 'config/dbinfo.json에 설정된 데이터베이스가 없습니다',
+    configSupportedDbTypes: '지원 DB 타입:',
+    configNoSupportedTypes: 'config/dbinfo.json에서 감지된 DB 타입이 없습니다',
     
     // Common
     exit: '프로그램을 종료합니다.',
@@ -580,6 +586,7 @@ class NodeUtilApp {
     console.log(msg.configMenu1);
     console.log(msg.configMenu2);
     console.log(msg.configMenu3);
+    console.log(msg.configMenu4);
     console.log();
 
     const choice = await this.askQuestion(msg.configSelect);
@@ -602,6 +609,17 @@ class NodeUtilApp {
         }
         break;
       case '3':
+        const supportedTypes = this.configManager.getSupportedDbTypes();
+        console.log(`\n🧩 ${msg.configSupportedDbTypes}`);
+        if (supportedTypes.length > 0) {
+          supportedTypes.forEach((t, idx) => {
+            console.log(`  ${idx + 1}. ${t.name} (${t.type})`);
+          });
+        } else {
+          console.log(`  ${msg.configNoSupportedTypes}`);
+        }
+        break;
+      case '0':
         await this.showMainMenu();
         return;
       default:

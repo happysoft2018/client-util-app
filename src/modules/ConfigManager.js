@@ -43,7 +43,7 @@ class ConfigManager {
         typesMap.set(key, { name: t.toUpperCase(), type: t });
       }
     });
-    return Array.from(typesMap.values());
+    return Array.from(typesMap.values()).sort((a, b) => a.name.localeCompare(b.name));
   }
 
   getDbType(dbName) {
