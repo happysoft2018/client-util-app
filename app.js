@@ -75,9 +75,9 @@ function buildEnMessages() {
   const connectCheck = {
     Title: '${title}',
     DirNotFound: '${label} check CSV directory not found: request/',
-    CreateDir: 'Please create the directory and add CSV files.',
+    CreateDir: 'Please create the directory and add CSV files. (ex request/${prefix}_sample.csv)',
     NoFiles: 'No ${prefix} CSV files found in request/ directory.',
-    AddFiles: 'Please add .csv files starting with "${prefix}" to the request/ directory.',
+    AddFiles: 'Please add ${label} CSV files starting with "${prefix}" to the request/ directory. (ex ${prefix}_sample.csv)',
     AvailableFiles: 'Available ${label} Check CSV Files:',
     SelectFile: 'Select CSV file number to use',
     InvalidFile: 'Invalid file selection.',
@@ -92,9 +92,9 @@ function buildEnMessages() {
     const sqlExec = {
     Title: '${title}',
     DirNotFound: '${label} files directory not found: ${fileDir}',
-    CreateDir: 'Please create the directory and add SQL files.',
+    CreateDir: 'Please create the directory and add SQL files. (ex ${fileDir}${prefix}_sample.csv)',
     NoFiles: 'No ${label} files found in ${fileDir} directory.',
-    AddFiles: 'Please add .sql files to the ${fileDir} directory.',
+    AddFiles: 'Please add ${label} files starting with "${prefix}" to the ${fileDir} directory. (ex ${prefix}_sample.csv)',
     AvailableFiles: 'Available ${label} Files:',
     SelectFile: 'Select ${label} file number to execute',
     InvalidFile: 'Invalid file selection.',
@@ -105,7 +105,7 @@ function buildEnMessages() {
   };
 
   const db = {
-    ...section('dbCheck', applyTemplate(connectCheck, { title: 'Database Connection and Permission Check', label: 'Database', lowerLabel: 'database', prefix: 'DB' })),
+    ...section('dbCheck', applyTemplate(connectCheck, { title: 'Database Connection and Permission Check', label: 'DB', lowerLabel: 'database', prefix: 'DB' })),
     ...section('dbCheck', {
       AuthNote: 'Note: Authentication information will be read from CSV file (username, password columns)',
       TypeNote: 'Note: Each server in CSV can have different database types (mssql, mysql, postgresql, oracle)',
@@ -116,9 +116,10 @@ function buildEnMessages() {
   const telnet = section('telnet', applyTemplate(connectCheck, { title: 'Server Telnet Connection Check', label: 'Telnet', lowerLabel: 'telnet', prefix: 'server' }));
 
   const sql = {
-    ...section('sql', applyTemplate(sqlExec, { title: 'Database SQL Execution', label: 'SQL', fileDir: 'request/sql_files/' })),
+    ...section('sql', applyTemplate(sqlExec, { title: 'Database SQL Execution', label: 'SQL', fileDir: 'request/sql_files/', prefix: 'SQL' })),
     ...section('sql', {
-      AddFiles: 'Please add .sql files to the request/sql_files/ directory.',
+    CreateDir: 'Please create the directory and add SQL files. (ex request/sql_files/sample.sql)',
+    AddFiles: 'Please add .sql files to the request/sql_files/ directory. (ex sample.sql)',
     })
   };
 
@@ -158,9 +159,9 @@ function buildKrMessages() {
   const connectCheck = {
     Title: '${title}',
     DirNotFound: '${label} 확인용 CSV 디렉토리를 찾을 수 없습니다: request/',
-    CreateDir: '디렉토리를 생성하고 CSV 파일을 추가해주세요.',
+    CreateDir: '디렉토리를 생성하고 CSV 파일을 추가해주세요. (ex request/${prefix}_sample.csv)',
     NoFiles: 'request/ 디렉토리에 ${prefix} CSV 파일이 없습니다.',
-    AddFiles: 'request/ 디렉토리에 "${prefix}"로 시작하는 .csv 파일을 추가해주세요.',
+    AddFiles: 'request/ 디렉토리에 "${prefix}"로 시작하는 .csv 파일을 추가해주세요. (ex ${prefix}_sample.csv)',
     AvailableFiles: '사용 가능한 ${label} 확인 CSV 파일:',
     SelectFile: '사용할 CSV 파일 번호를 선택하세요',
     InvalidFile: '잘못된 파일 선택입니다.',
@@ -175,9 +176,9 @@ function buildKrMessages() {
   const sqlexec = {
     Title: '${title}',
     DirNotFound: '${label} 파일 디렉토리를 찾을 수 없습니다: ${fileDir}',
-    CreateDir: '디렉토리를 생성하고 ${label} 파일을 추가해주세요.',
+    CreateDir: '디렉토리를 생성하고 ${label} 파일을 추가해주세요. (ex request/${prefix}_sample.sql)',
     NoFiles: '${fileDir} 디렉토리에 ${label} 파일이 없습니다.',
-    AddFiles: 'request/ 디렉토리에 "${prefix}"로 시작하는 .csv 파일을 추가해주세요.',
+    AddFiles: 'request/ 디렉토리에 "${prefix}"로 시작하는 ${label} 파일을 추가해주세요. (ex ${prefix}_sample.csv)',
     AvailableFiles: '사용 가능한 ${label} 파일:',
     SelectFile: '실행할 ${label} 파일 번호를 선택하세요',
     InvalidFile: '잘못된 파일 선택입니다.',
@@ -197,12 +198,13 @@ function buildKrMessages() {
     })
   };
 
-  const telnet = section('telnet', applyTemplate(connectCheck, { title: '서버 텔넷 접속 확인', label: '텔넷', prefix: 'server' }));
+  const telnet = section('telnet', applyTemplate(connectCheck, { title: '서버 텔넷 접속 확인', label: '텔넷', prefix: 'SERVER' }));
 
   const sql = {
     ...section('sql', applyTemplate(sqlexec, { title: '데이터베이스 SQL 실행', label: 'SQL', fileDir: 'request/sql_files/' })),
     ...section('sql', {
-      AddFiles: 'request/sql_files/ 디렉토리에 .sql 파일을 추가해주세요.',
+    CreateDir: '디렉토리를 생성하고 SQL 파일을 추가해주세요. (ex request/sql_files/sample.sql)',
+      AddFiles: 'request/sql_files/ 디렉토리에 SQL 파일을 추가해주세요. (ex sample.sql)'
     })
   };
 
