@@ -116,7 +116,7 @@ function buildEnMessages() {
   const telnet = section('telnet', applyTemplate(connectCheck, { title: 'Server Telnet Connection Check', label: 'Telnet', lowerLabel: 'telnet', prefix: 'server' }));
 
   const sql = {
-    ...section('sql', applyTemplate(sqlExec, { title: 'Database SQL Execution', label: 'SQL'})),
+    ...section('sql', applyTemplate(sqlExec, { title: 'Database SQL Execution', label: 'SQL', fileDir: 'request/sql_files/' })),
     ...section('sql', {
       AddFiles: 'Please add .sql files to the request/sql_files/ directory.',
     })
@@ -200,7 +200,7 @@ function buildKrMessages() {
   const telnet = section('telnet', applyTemplate(connectCheck, { title: '서버 텔넷 접속 확인', label: '텔넷', prefix: 'server' }));
 
   const sql = {
-    ...section('sql', applyTemplate(sqlexec, { title: '데이터베이스 SQL 실행', label: 'SQL'})),
+    ...section('sql', applyTemplate(sqlexec, { title: '데이터베이스 SQL 실행', label: 'SQL', fileDir: 'request/sql_files/' })),
     ...section('sql', {
       AddFiles: 'request/sql_files/ 디렉토리에 .sql 파일을 추가해주세요.',
     })
