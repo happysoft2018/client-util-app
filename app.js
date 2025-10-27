@@ -21,9 +21,31 @@ const args = process.argv.slice(2);
 const langArg = args.find(arg => arg.startsWith('--lang='));
 const LANGUAGE = langArg ? langArg.split('=')[1] : 'en';
 
-// 다국어 메시지
-const messages = {
-  en: {
+// 다국어 메시지 (중복 제거 빌더)
+function section(prefix, entries) {
+  const obj = {};
+  for (const [k, v] of Object.entries(entries)) {
+    obj[`${prefix}${k}`] = v;
+  }
+  return obj;
+}
+
+// Apply ${var} replacements within string values of a flat entries object
+function applyTemplate(entries, params) {
+  const out = {};
+  const re = /\$\{(\w+)\}/g;
+  for (const [k, v] of Object.entries(entries)) {
+    if (typeof v === 'string') {
+      out[k] = v.replace(re, (_, p1) => (p1 in params ? String(params[p1]) : ''));
+    } else {
+      out[k] = v;
+    }
+  }
+  return out;
+}
+
+function buildEnMessages() {
+  const base = {
     title: 'Node.js Integrated Utility Tool',
     mainMenuTitle: 'Main Menu',
     menu1: '1. Database Connection and Permission Check (request/DB*.csv)',
@@ -34,71 +56,6 @@ const messages = {
     menu0: '0. Exit',
     selectPrompt: 'Select function to execute (0-5): ',
     invalidSelection: 'Invalid selection. Please select again.',
-    
-    // Database Connection Check
-    dbCheckTitle: 'Database Connection and Permission Check',
-    dbCheckDirNotFound: 'DB check CSV directory not found: request/',
-    dbCheckCreateDir: 'Please create the directory and add CSV files.',
-    dbCheckNoFiles: 'No DB CSV files found in request/ directory.',
-    dbCheckAddFiles: 'Please add .csv files starting with "DB" to the request/ directory.',
-    dbCheckAvailableFiles: 'Available DB Check CSV Files:',
-    dbCheckSelectFile: 'Select CSV file number to use',
-    dbCheckInvalidFile: 'Invalid file selection.',
-    dbCheckSelectedFile: 'Selected CSV file:',
-    dbCheckAuthNote: 'Note: Authentication information will be read from CSV file (username, password columns)',
-    dbCheckTimeoutSettings: 'Timeout Settings:',
-    dbCheckTimeout: 'Timeout (seconds)',
-    dbCheckStarting: 'Starting database connection check...',
-    dbCheckTypeNote: 'Note: Each server in CSV can have different database types (mssql, mysql, postgresql, oracle)',
-    dbCheckAuthNote2: 'Note: Authentication credentials will be read from CSV file',
-    dbCheckCompleted: 'Database connection check completed.',
-    dbCheckError: 'Error occurred during database connection check:',
-    
-    // Telnet Check
-    telnetTitle: 'Server Telnet Connection Check',
-    telnetDirNotFound: 'Telnet check CSV directory not found: request/',
-    telnetCreateDir: 'Please create the directory and add CSV files.',
-    telnetNoFiles: 'No Server CSV files found in request/ directory.',
-    telnetAddFiles: 'Please add .csv files starting with "server" to the request/ directory.',
-    telnetAvailableFiles: 'Available Telnet Check CSV Files:',
-    telnetSelectFile: 'Select CSV file number to use',
-    telnetInvalidFile: 'Invalid file selection.',
-    telnetSelectedFile: 'Selected CSV file:',
-    telnetTimeoutSettings: 'Timeout Settings:',
-    telnetTimeout: 'Timeout (seconds)',
-    telnetStarting: 'Starting Telnet connection check...',
-    telnetCompleted: 'Telnet connection check completed.',
-    telnetError: 'Error occurred during Telnet connection check:',
-    
-    // SQL Execution
-    sqlTitle: 'Database SQL Execution',
-    sqlDirNotFound: 'SQL files directory not found: request/sql_files/',
-    sqlCreateDir: 'Please create the directory and add SQL files.',
-    sqlNoFiles: 'No SQL files found in request/sql_files/ directory.',
-    sqlAddFiles: 'Please add .sql files to the request/sql_files/ directory.',
-    sqlAvailableFiles: 'Available SQL Files:',
-    sqlSelectFile: 'Select SQL file number to execute',
-    sqlInvalidFile: 'Invalid file selection.',
-    sqlSelectedFile: 'Selected SQL file:',
-    sqlStarting: 'Starting SQL execution...',
-    sqlCompleted: 'SQL execution completed.',
-    sqlError: 'Error occurred during SQL execution:',
-    
-    // CSV Query Execution
-    csvQueryTitle: 'CSV-based Batch Query Execution',
-    csvQueryDirNotFound: 'CSV query directory not found: request/',
-    csvQueryCreateDir: 'Please create the directory and add CSV files.',
-    csvQueryNoFiles: 'No CSV query files found in request/ directory.',
-    csvQueryAddFiles: 'Please add .csv files starting with "SQL2CSV" to the request/ directory.',
-    csvQueryAvailableFiles: 'Available CSV Query Files:',
-    csvQuerySelectFile: 'Select CSV file number to execute',
-    csvQueryInvalidFile: 'Invalid file selection.',
-    csvQuerySelectedFile: 'Selected CSV file:',
-    csvQueryStarting: 'Starting CSV query execution...',
-    csvQueryCompleted: 'CSV query execution completed.',
-    csvQueryError: 'Error occurred during CSV query execution:',
-    
-    // Configuration
     configTitle: 'Configuration Management',
     configMenu1: '1. Check System Information',
     configMenu2: '2. View Available Databases',
@@ -109,13 +66,69 @@ const messages = {
     configNoDbs: 'No databases configured in config/dbinfo.json',
     configSupportedDbTypes: 'Supported DB Types:',
     configNoSupportedTypes: 'No DB types detected from config/dbinfo.json',
-    
-    // Common
     exit: 'Exiting program.',
     pressEnter: 'Press Enter to continue...',
     createdResultsDir: 'Created results directory:'
-  },
-  kr: {
+  };
+
+  // Common template for connection-check style sections (DB, Telnet)
+  const connectCheck = {
+    Title: '${title}',
+    DirNotFound: '${label} check CSV directory not found: request/',
+    CreateDir: 'Please create the directory and add CSV files.',
+    NoFiles: 'No ${prefix} CSV files found in request/ directory.',
+    AddFiles: 'Please add .csv files starting with "${prefix}" to the request/ directory.',
+    AvailableFiles: 'Available ${label} Check CSV Files:',
+    SelectFile: 'Select CSV file number to use',
+    InvalidFile: 'Invalid file selection.',
+    SelectedFile: 'Selected CSV file:',
+    TimeoutSettings: 'Timeout Settings:',
+    Timeout: 'Timeout (seconds)',
+    Starting: 'Starting ${lowerLabel} connection check...',
+    Completed: '${label} connection check completed.',
+    Error: 'Error occurred during ${label} connection check:'
+  };
+
+    const sqlExec = {
+    Title: '${title}',
+    DirNotFound: '${label} files directory not found: ${fileDir}',
+    CreateDir: 'Please create the directory and add SQL files.',
+    NoFiles: 'No ${label} files found in ${fileDir} directory.',
+    AddFiles: 'Please add .sql files to the ${fileDir} directory.',
+    AvailableFiles: 'Available ${label} Files:',
+    SelectFile: 'Select ${label} file number to execute',
+    InvalidFile: 'Invalid file selection.',
+    SelectedFile: 'Selected ${label} file:',
+    Starting: 'Starting ${label} query execution...',
+    Completed: '${label} query execution completed.',
+    Error: 'Error occurred during ${label} query execution:'
+  };
+
+  const db = {
+    ...section('dbCheck', applyTemplate(connectCheck, { title: 'Database Connection and Permission Check', label: 'Database', lowerLabel: 'database', prefix: 'DB' })),
+    ...section('dbCheck', {
+      AuthNote: 'Note: Authentication information will be read from CSV file (username, password columns)',
+      TypeNote: 'Note: Each server in CSV can have different database types (mssql, mysql, postgresql, oracle)',
+      AuthNote2: 'Note: Authentication credentials will be read from CSV file'
+    })
+  };
+
+  const telnet = section('telnet', applyTemplate(connectCheck, { title: 'Server Telnet Connection Check', label: 'Telnet', lowerLabel: 'telnet', prefix: 'server' }));
+
+  const sql = {
+    ...section('sql', applyTemplate(sqlExec, { title: 'Database SQL Execution', label: 'SQL'})),
+    ...section('sql', {
+      AddFiles: 'Please add .sql files to the request/sql_files/ directory.',
+    })
+  };
+
+  const sql2csv = section('csvQuery', applyTemplate(sqlExec, { title: 'CSV based batch query execution', label: 'CSV', prefix: 'SQL2CSV', fileDir: 'request/' }));
+
+  return { ...base, ...db, ...telnet, ...sql, ...sql2csv };
+}
+
+function buildKrMessages() {
+  const base = {
     title: 'Node.js 통합 유틸리티 도구',
     mainMenuTitle: '메인 메뉴',
     menu1: '1. 데이터베이스 접속 및 권한 확인 (request/DB*.csv)',
@@ -126,71 +139,6 @@ const messages = {
     menu0: '0. 종료',
     selectPrompt: '실행할 기능을 선택하세요 (0-5): ',
     invalidSelection: '잘못된 선택입니다. 다시 선택해주세요.',
-    
-    // Database Connection Check
-    dbCheckTitle: '데이터베이스 접속 및 권한 확인',
-    dbCheckDirNotFound: 'DB 확인용 CSV 디렉토리를 찾을 수 없습니다: request/',
-    dbCheckCreateDir: '디렉토리를 생성하고 CSV 파일을 추가해주세요.',
-    dbCheckNoFiles: 'request/ 디렉토리에 DB CSV 파일이 없습니다.',
-    dbCheckAddFiles: 'request/ 디렉토리에 "DB"로 시작하는 .csv 파일을 추가해주세요.',
-    dbCheckAvailableFiles: '사용 가능한 DB 확인 CSV 파일:',
-    dbCheckSelectFile: '사용할 CSV 파일 번호를 선택하세요',
-    dbCheckInvalidFile: '잘못된 파일 선택입니다.',
-    dbCheckSelectedFile: '선택된 CSV 파일:',
-    dbCheckAuthNote: '참고: 인증 정보는 CSV 파일에서 읽어옵니다 (username, password 컬럼)',
-    dbCheckTimeoutSettings: '타임아웃 설정:',
-    dbCheckTimeout: '타임아웃 (초)',
-    dbCheckStarting: '데이터베이스 접속 확인을 시작합니다...',
-    dbCheckTypeNote: '참고: CSV의 각 서버는 서로 다른 데이터베이스 타입을 가질 수 있습니다 (mssql, mysql, postgresql, oracle)',
-    dbCheckAuthNote2: '참고: 인증 정보는 CSV 파일에서 읽어옵니다',
-    dbCheckCompleted: '데이터베이스 접속 확인이 완료되었습니다.',
-    dbCheckError: '데이터베이스 접속 확인 중 오류가 발생했습니다:',
-    
-    // Telnet Check
-    telnetTitle: '서버 텔넷 접속 확인',
-    telnetDirNotFound: '텔넷 확인용 CSV 디렉토리를 찾을 수 없습니다: request/',
-    telnetCreateDir: '디렉토리를 생성하고 CSV 파일을 추가해주세요.',
-    telnetNoFiles: 'request/ 디렉토리에 Server CSV 파일이 없습니다.',
-    telnetAddFiles: 'request/ 디렉토리에 "server"로 시작하는 .csv 파일을 추가해주세요.',
-    telnetAvailableFiles: '사용 가능한 텔넷 확인 CSV 파일:',
-    telnetSelectFile: '사용할 CSV 파일 번호를 선택하세요',
-    telnetInvalidFile: '잘못된 파일 선택입니다.',
-    telnetSelectedFile: '선택된 CSV 파일:',
-    telnetTimeoutSettings: '타임아웃 설정:',
-    telnetTimeout: '타임아웃 (초)',
-    telnetStarting: '텔넷 접속 확인을 시작합니다...',
-    telnetCompleted: '텔넷 접속 확인이 완료되었습니다.',
-    telnetError: '텔넷 접속 확인 중 오류가 발생했습니다:',
-    
-    // SQL Execution
-    sqlTitle: '데이터베이스 SQL 실행',
-    sqlDirNotFound: 'SQL 파일 디렉토리를 찾을 수 없습니다: request/sql_files/',
-    sqlCreateDir: '디렉토리를 생성하고 SQL 파일을 추가해주세요.',
-    sqlNoFiles: 'request/sql_files/ 디렉토리에 SQL 파일이 없습니다.',
-    sqlAddFiles: 'request/sql_files/ 디렉토리에 .sql 파일을 추가해주세요.',
-    sqlAvailableFiles: '사용 가능한 SQL 파일:',
-    sqlSelectFile: '실행할 SQL 파일 번호를 선택하세요',
-    sqlInvalidFile: '잘못된 파일 선택입니다.',
-    sqlSelectedFile: '선택된 SQL 파일:',
-    sqlStarting: 'SQL 실행을 시작합니다...',
-    sqlCompleted: 'SQL 실행이 완료되었습니다.',
-    sqlError: 'SQL 실행 중 오류가 발생했습니다:',
-    
-    // CSV Query Execution
-    csvQueryTitle: 'CSV 기반 일괄 쿼리 실행',
-    csvQueryDirNotFound: 'CSV 쿼리 디렉토리를 찾을 수 없습니다: request/',
-    csvQueryCreateDir: '디렉토리를 생성하고 CSV 파일을 추가해주세요.',
-    csvQueryNoFiles: 'request/ 디렉토리에 CSV 쿼리 파일이 없습니다.',
-    csvQueryAddFiles: 'request/ 디렉토리에 "SQL2CSV"로 시작하는 .csv 파일을 추가해주세요.',
-    csvQueryAvailableFiles: '사용 가능한 CSV 쿼리 파일:',
-    csvQuerySelectFile: '실행할 CSV 파일 번호를 선택하세요',
-    csvQueryInvalidFile: '잘못된 파일 선택입니다.',
-    csvQuerySelectedFile: '선택된 CSV 파일:',
-    csvQueryStarting: 'CSV 쿼리 실행을 시작합니다...',
-    csvQueryCompleted: 'CSV 쿼리 실행이 완료되었습니다.',
-    csvQueryError: 'CSV 쿼리 실행 중 오류가 발생했습니다:',
-    
-    // Configuration
     configTitle: '설정 관리',
     configMenu1: '1. 시스템 정보 확인',
     configMenu2: '2. 사용 가능한 데이터베이스 보기',
@@ -201,13 +149,69 @@ const messages = {
     configNoDbs: 'config/dbinfo.json에 설정된 데이터베이스가 없습니다',
     configSupportedDbTypes: '지원 DB 타입:',
     configNoSupportedTypes: 'config/dbinfo.json에서 감지된 DB 타입이 없습니다',
-    
-    // Common
     exit: '프로그램을 종료합니다.',
     pressEnter: 'Enter를 눌러 계속...',
     createdResultsDir: 'results 디렉토리를 생성했습니다:'
-  }
-};
+  };
+
+  // 공통 템플릿 (연결 확인형 섹션: DB, Telnet)
+  const connectCheck = {
+    Title: '${title}',
+    DirNotFound: '${label} 확인용 CSV 디렉토리를 찾을 수 없습니다: request/',
+    CreateDir: '디렉토리를 생성하고 CSV 파일을 추가해주세요.',
+    NoFiles: 'request/ 디렉토리에 ${prefix} CSV 파일이 없습니다.',
+    AddFiles: 'request/ 디렉토리에 "${prefix}"로 시작하는 .csv 파일을 추가해주세요.',
+    AvailableFiles: '사용 가능한 ${label} 확인 CSV 파일:',
+    SelectFile: '사용할 CSV 파일 번호를 선택하세요',
+    InvalidFile: '잘못된 파일 선택입니다.',
+    SelectedFile: '선택된 CSV 파일:',
+    TimeoutSettings: '타임아웃 설정:',
+    Timeout: '타임아웃 (초)',
+    Starting: '${label} 접속 확인을 시작합니다...',
+    Completed: '${label} 접속 확인이 완료되었습니다.',
+    Error: '${label} 접속 확인 중 오류가 발생했습니다:'
+  };
+
+  const sqlexec = {
+    Title: '${title}',
+    DirNotFound: '${label} 파일 디렉토리를 찾을 수 없습니다: ${fileDir}',
+    CreateDir: '디렉토리를 생성하고 ${label} 파일을 추가해주세요.',
+    NoFiles: '${fileDir} 디렉토리에 ${label} 파일이 없습니다.',
+    AddFiles: 'request/ 디렉토리에 "${prefix}"로 시작하는 .csv 파일을 추가해주세요.',
+    AvailableFiles: '사용 가능한 ${label} 파일:',
+    SelectFile: '실행할 ${label} 파일 번호를 선택하세요',
+    InvalidFile: '잘못된 파일 선택입니다.',
+    SelectedFile: '선택된 ${label} 파일:',
+    Starting: '${label} 쿼리 실행을 시작합니다...',
+    Completed: '${label} 쿼리 실행이 완료되었습니다.',
+    Error: '${label} 쿼리 실행 중 오류가 발생했습니다:'
+  };
+
+
+  const db = {
+    ...section('dbCheck', applyTemplate(connectCheck, { title: '데이터베이스 접속 및 권한 확인', label: '데이터베이스', prefix: 'DB' })),
+    ...section('dbCheck', {
+      AuthNote: '참고: 인증 정보는 CSV 파일에서 읽어옵니다 (username, password 컬럼)',
+      TypeNote: '참고: CSV의 각 서버는 서로 다른 데이터베이스 타입을 가질 수 있습니다 (mssql, mysql, postgresql, oracle)',
+      AuthNote2: '참고: 인증 정보는 CSV 파일에서 읽어옵니다'
+    })
+  };
+
+  const telnet = section('telnet', applyTemplate(connectCheck, { title: '서버 텔넷 접속 확인', label: '텔넷', prefix: 'server' }));
+
+  const sql = {
+    ...section('sql', applyTemplate(sqlexec, { title: '데이터베이스 SQL 실행', label: 'SQL'})),
+    ...section('sql', {
+      AddFiles: 'request/sql_files/ 디렉토리에 .sql 파일을 추가해주세요.',
+    })
+  };
+
+  const sql2csv = section('csvQuery', applyTemplate(sqlexec, { title: 'CSV 기반 일괄 쿼리 실행', label: 'CSV', prefix: 'SQL2CSV', fileDir: 'request/' }));
+
+  return { ...base, ...db, ...telnet, ...sql, ...sql2csv };
+}
+
+const messages = { en: buildEnMessages(), kr: buildKrMessages() };
 
 // 현재 언어의 메시지 가져오기
 const msg = messages[LANGUAGE] || messages.en;
