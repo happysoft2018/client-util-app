@@ -1,4 +1,4 @@
-# Node.js Integrated Utility Tool v1.3.7
+# Node.js Integrated Utility Tool v1.3.8
 
 A comprehensive utility tool for managing various local environment utilities in a unified application.
 
@@ -27,7 +27,7 @@ my-node-client-util-app/
 ├── request/              # Resource files directory (v1.2.0+)
 │   ├── DB_sample.csv               # DB check CSV files (starts with DB_)
 │   ├── server_sample.csv           # Telnet check CSV files (starts with server_)
-│   ├── SQL_sample.csv              # CSV-based batch query file (starts with SQL_) (v1.3.6+)
+│   ├── SQL2CSV_sample.csv          # CSV-based batch query file (starts with SQL2CSV_) (v1.3.8+)
 │   └── sql_files/                  # SQL files directory
 │       ├── SQL_001.sql             # SQL query template
 │       └── SQL_001.csv             # SQL parameter template
@@ -42,6 +42,24 @@ my-node-client-util-app/
 ```
 
 ## 🆕 Latest Updates
+
+### v1.3.8 - CSV Batch & Directory Update (2025-10-27) 🔧
+
+**CSV-based Batch Query Execution Updates:**
+- File naming convention updated: `SQL_` → `SQL2CSV_` prefix in `request/`
+- Result path variables: Added support for `${DB_NAME}` (selected DB key)
+- Menu labels and file discovery updated to list `SQL2CSV_*.csv` only
+
+**Directory Rename:**
+- Directory name unified: `request_resources` → `request`
+  - Migration: Move existing files from `request_resources/` to `request/`
+
+**Message Refactoring:**
+- Parameterized, builder-based message generation for DB/Telnet/SQL/CSV
+- Preserved existing message keys and full i18n support (en/kr)
+
+**Documentation Updates:**
+- Updated README and user manuals to reflect `SQL2CSV_` prefix and `${DB_NAME}` usage
 
 ### v1.3.7 - CSV Query Result Output Improvements (2025-10-24) 🐛
 

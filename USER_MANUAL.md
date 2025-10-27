@@ -1,4 +1,4 @@
-# User Manual v1.3.6
+# User Manual v1.3.8
 
 ## 📖 Table of Contents
 
@@ -17,7 +17,7 @@
 
 ## Introduction
 
-This manual guides you through using the database connection, permission check, and SQL execution features of the Node.js Integrated Utility Tool v1.3.6.
+This manual guides you through using the database connection, permission check, and SQL execution features of the Node.js Integrated Utility Tool v1.3.8.
 
 ### Key Features of v1.3.6
 
@@ -1009,13 +1009,15 @@ The CSV-based Batch Query Execution feature allows you to execute multiple SQL q
 
 ### CSV File Format
 
-Create a CSV file in `request/` directory with filename starting with `SQL_` prefix.
+Create a CSV file in `request/` directory with filename starting with `SQL2CSV_` prefix.
+
+> Note (v1.3.8): The previous `request_resources` directory has been unified into `request`. Please move your existing files to `request/`.
 
 **Required Columns:**
 - `SQL`: SQL query to execute
 - `result_filepath`: Output file path (supports date variables)
 
-**Example CSV (SQL_daily_export.csv):**
+**Example CSV (SQL2CSV_daily_export.csv):**
 ```csv
 SQL,result_filepath
 "select * from users;","c:\Temp\csv_result\users_${DATE:yyyyMMddHHmmss}.csv"
@@ -1031,6 +1033,11 @@ You can use date/time variables in `result_filepath` to create timestamped outpu
 **Syntax:**
 - `${DATE:format}`
 - Both uppercase and lowercase tokens are supported
+
+### Additional Variables (v1.3.8)
+
+- `${DB_NAME}`: Include the selected database key name in the result path/filename.
+  - Example: `results/${DB_NAME}/users_${DATE:yyyyMMdd}_${DB_NAME}.csv`
 
 **Supported Tokens:**
 
@@ -1111,7 +1118,7 @@ exec sp_who2;
 
 **1. Create CSV File**
 
-Create a file like `request/SQL_daily_export.csv`:
+Create a file like `request/SQL2CSV_daily_export.csv`:
 ```csv
 SQL,result_filepath
 "select * from customers;","c:\Temp\csv_result\customers_${DATE:yyyyMMddHHmmss}.csv"
@@ -1144,14 +1151,14 @@ Select function to execute: 4
 
 **4. Select CSV File**
 
-The application will automatically list all CSV files starting with `SQL_`:
+The application will automatically list all CSV files starting with `SQL2CSV_`:
 ```
 📊 CSV-based Batch Query Execution
 ========================================
 
 Available CSV files:
-1. SQL_daily_export.csv
-2. SQL_table_definitions.csv
+1. SQL2CSV_daily_export.csv
+2. SQL2CSV_table_definitions.csv
 
 Select CSV file (1-2): 1
 ```
@@ -1179,7 +1186,7 @@ The application will:
 
 **Example Output:**
 ```
-📄 CSV file: SQL_daily_export.csv
+📄 CSV file: SQL2CSV_daily_export.csv
 ✅ Found 2 queries
 
 Connected to: sampleDB (mssql)
@@ -1206,7 +1213,7 @@ Query 2/2
 
 **Purpose:** Export multiple tables daily for backup or reporting
 
-**SQL_daily_backup.csv:**
+**SQL2CSV_daily_backup.csv:**
 ```csv
 SQL,result_filepath
 "select * from users;","c:\Backups\daily\users_${DATE:yyyyMMdd}.csv"
@@ -1224,7 +1231,7 @@ SQL,result_filepath
 
 **Purpose:** Extract stored procedure and table definitions
 
-**SQL_object_definitions.csv:**
+**SQL2CSV_object_definitions.csv:**
 ```csv
 SQL,result_filepath
 "exec sp_helptext 'dbo.GetCustomerOrders';","c:\Definitions\GetCustomerOrders_${DATE:yyyyMMdd}.sql"
@@ -1237,7 +1244,7 @@ SQL,result_filepath
 
 **Purpose:** Generate weekly summary reports
 
-**SQL_weekly_reports.csv:**
+**SQL2CSV_weekly_reports.csv:**
 ```csv
 SQL,result_filepath
 "select datepart(week, order_date) as week_num, count(*) as total_orders, sum(total_amount) as total_sales from orders where order_date >= dateadd(week, -4, getdate()) group by datepart(week, order_date) order by week_num;","c:\Reports\weekly_sales_${DATE:yyyyMMdd}.csv"
@@ -1282,7 +1289,7 @@ result_filepath
 
 1. **Filename Convention:**
    - Start CSV files with `SQL_` prefix for easy identification
-   - Use descriptive names: `SQL_daily_export.csv`, `SQL_table_definitions.csv`
+   - Use descriptive names: `SQL2CSV_daily_export.csv`, `SQL_table_definitions.csv`
 
 2. **Output Organization:**
    - Group related outputs in same directory

@@ -1121,13 +1121,16 @@ CSV 기반 일괄 쿼리 실행 기능은 하나의 CSV 파일에서 여러 SQL 
 
 ### CSV 파일 형식
 
-`request/` 디렉토리에 `SQL_` 접두사로 시작하는 파일명의 CSV 파일을 생성합니다.
+`request/` 디렉토리에 `SQL2CSV` 접두사로 시작하는 파일명의 CSV 파일을 생성합니다.
+
+> 참고 (v1.3.8): 기존 `request_resources` 디렉토리는 `request`로 통합되었습니다. 기존 파일은 `request/`로 이동하세요.
+> 참고 (v1.3.8): CSV 일괄 실행 파일의 접두사가 `SQL_`에서 `SQL2CSV_`로 변경되었습니다.
 
 **필수 컬럼:**
 - `SQL`: 실행할 SQL 쿼리
 - `result_filepath`: 출력 파일 경로 (날짜 변수 지원)
 
-**CSV 예시 (SQL_daily_export.csv):**
+**CSV 예시 (SQL2CSV_daily_export.csv):**
 ```csv
 SQL,result_filepath
 "select * from users;","c:\Temp\csv_result\users_${DATE:yyyyMMddHHmmss}.csv"
@@ -1143,6 +1146,11 @@ SQL,result_filepath
 **구문:**
 - `${DATE:format}`
 - 대문자와 소문자 토큰 모두 지원
+
+### 추가 변수 (v1.3.8)
+
+- `${DB_NAME}`: 선택한 데이터베이스의 키 이름을 결과 경로/파일명에 포함할 수 있습니다.
+  - 예: `results/${DB_NAME}/users_${DATE:yyyyMMdd}_${DB_NAME}.csv`
 
 **지원 토큰:**
 
@@ -1223,7 +1231,7 @@ exec sp_who2;
 
 **1. CSV 파일 생성**
 
-`request/SQL_daily_export.csv` 같은 파일을 생성합니다:
+`request/SQL2CSV_daily_export.csv` 같은 파일을 생성합니다:
 ```csv
 SQL,result_filepath
 "select * from customers;","c:\Temp\csv_result\customers_${DATE:yyyyMMddHHmmss}.csv"
@@ -1256,14 +1264,14 @@ node app.js
 
 **4. CSV 파일 선택**
 
-애플리케이션이 자동으로 `SQL_`로 시작하는 모든 CSV 파일을 나열합니다:
+애플리케이션이 자동으로 `SQL2CSV_`로 시작하는 모든 CSV 파일을 나열합니다:
 ```
 📊 CSV 기반 일괄 쿼리 실행
 ========================================
 
 사용 가능한 CSV 파일:
-1. SQL_daily_export.csv
-2. SQL_table_definitions.csv
+1. SQL2CSV_daily_export.csv
+2. SQL2CSV_table_definitions.csv
 
 CSV 파일 선택 (1-2): 1
 ```
@@ -1291,7 +1299,7 @@ CSV 파일 선택 (1-2): 1
 
 **예시 출력:**
 ```
-📄 CSV 파일: SQL_daily_export.csv
+📄 CSV 파일: SQL2CSV_daily_export.csv
 ✅ 쿼리 2개 발견
 
 연결됨: sampleDB (mssql)
@@ -1318,7 +1326,7 @@ CSV 파일 선택 (1-2): 1
 
 **목적:** 백업 또는 보고서를 위한 여러 테이블 일일 내보내기
 
-**SQL_daily_backup.csv:**
+**SQL2CSV_daily_backup.csv:**
 ```csv
 SQL,result_filepath
 "select * from users;","c:\Backups\daily\users_${DATE:yyyyMMdd}.csv"
@@ -1349,7 +1357,7 @@ SQL,result_filepath
 
 **목적:** 주간 요약 보고서 생성
 
-**SQL_weekly_reports.csv:**
+**SQL2CSV_weekly_reports.csv:**
 ```csv
 SQL,result_filepath
 "select datepart(week, order_date) as week_num, count(*) as total_orders, sum(total_amount) as total_sales from orders where order_date >= dateadd(week, -4, getdate()) group by datepart(week, order_date) order by week_num;","c:\Reports\weekly_sales_${DATE:yyyyMMdd}.csv"
@@ -1393,8 +1401,8 @@ result_filepath
 ### 모범 사례
 
 1. **파일명 규칙:**
-   - CSV 파일은 `SQL_` 접두사로 시작하여 쉽게 식별
-   - 설명적인 이름 사용: `SQL_daily_export.csv`, `SQL_table_definitions.csv`
+   - CSV 파일은 `SQL2CSV_` 접두사로 시작하여 쉽게 식별
+   - 설명적인 이름 사용: `SQL2CSV_daily_export.csv`, `SQL2CSV_table_definitions.csv`
 
 2. **출력 정리:**
    - 관련 출력을 같은 디렉토리에 그룹화

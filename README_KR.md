@@ -1,4 +1,4 @@
-# Node.js 통합 유틸리티 도구 v1.3.7
+# Node.js 통합 유틸리티 도구 v1.3.8
 
 로컬환경에서 사용하는 각종 유틸리티를 통합 관리하는 도구입니다.
 
@@ -27,7 +27,7 @@ my-node-client-util-app/
 ├── request/              # 리소스 파일 디렉토리 (v1.2.0+)
 │   ├── DB_sample.csv               # DB 체크 CSV 파일들 (DB_로 시작)
 │   ├── server_sample.csv           # 텔넷 체크 CSV 파일들 (server_로 시작)
-│   ├── SQL_sample.csv              # CSV 기반 일괄 쿼리 파일 (SQL_로 시작) (v1.3.6+)
+│   ├── SQL2CSV_sample.csv          # CSV 기반 일괄 쿼리 파일 (SQL2CSV_로 시작) (v1.3.8+)
 │   └── sql_files/                  # SQL 파일 디렉토리
 │       ├── SQL_001.sql             # SQL 쿼리 템플릿
 │       └── SQL_001.csv             # SQL 파라미터 템플릿
@@ -38,6 +38,21 @@ my-node-client-util-app/
 
 ## 🆕 최신 업데이트
 
+### v1.3.8 - 파일명 규칙 변경 및 메시지 리팩터링 (2025-10-27) 🔧
+
+**변경 사항:**
+- CSV 기반 일괄 쿼리 실행 파일 접두사 `SQL_` → `SQL2CSV_`로 변경
+- 결과 파일 경로에서 `${DB_NAME}` 변수 지원 추가 (선택한 DB 키 이름)
+- 앱 메시지 정의를 파라미터화된 빌더로 리팩터링 (중복 제거, 다국어 유지)
+- 메뉴 문구 및 파일 필터 로직을 `SQL2CSV_` 기준으로 업데이트
+
+**디렉토리 변경:**
+- 디렉토리명 통일: `request_resources` → `request`
+  - 마이그레이션: 기존 `request_resources/` 내 파일을 `request/`로 이동
+
+**문서 반영:**
+- README/매뉴얼/변경이력에 `SQL2CSV_` 규칙 및 `${DB_NAME}` 사용법 업데이트
+
 ### v1.3.7 - CSV 쿼리 결과 출력 개선 (2025-10-24) 🐛
 
 **버그 수정:**
@@ -45,6 +60,12 @@ my-node-client-util-app/
   - 모든 줄바꿈을 공백으로 치환하여 한 줄로 저장
   - CSV 파일일 때만 쉼표/따옴표가 있을 때 따옴표로 감싸기
   - Excel이나 텍스트 편집기에서 읽기 쉬운 형태로 출력
+
+**개선 사항:**
+- CSV 일괄 쿼리 실행 파일 접두사를 `SQL_` → `SQL2CSV_` 로 변경
+  - 예: `request/SQL2CSV_daily_export.csv`
+- 결과 파일 경로에서 `${DB_NAME}` 변수 지원 추가
+  - 예: `.../${DATE:yyyyMMdd}/${DATE:yyyyMMdd_HHmmss}_${DB_NAME}/${DB_NAME}.users.csv`
 
 ### v1.3.6 - CSV 기반 일괄 쿼리 실행 (2025-10-21) 📊
 
@@ -151,6 +172,7 @@ SQL,result_filepath
 - **스마트 필터링**: 명명 규칙 기반 자동 파일 필터링
   - DB 체크: `DB_`로 시작하는 파일
   - Telnet 체크: `server_`로 시작하는 파일
+  - CSV 일괄 쿼리: `SQL2CSV_`로 시작하는 파일 (v1.3.7+)
 - **단순화된 구조**: CSV 파일용 하위 디렉토리 제거
 
 ## 🚀 사용법

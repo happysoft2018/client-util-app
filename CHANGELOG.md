@@ -1,5 +1,27 @@
 # Changelog
 
+## [1.3.8] - 2025-10-27
+
+### 🔧 Changes
+
+#### CSV-based Batch Query Execution Updates
+- File naming convention updated: `SQL_` → `SQL2CSV_` prefix in `request/`
+- Result path variables: Added support for `${DB_NAME}` (selected DB key)
+- Menu labels and file discovery updated to list `SQL2CSV_*.csv` only
+
+- Directory name unified: `request_resources` → `request`
+  - Migration: Move existing files from `request_resources/` to `request/`
+
+#### Message Refactoring
+- Parameterized, builder-based message generation for DB/Telnet/SQL/CSV
+- Preserved existing message keys and full i18n support (en/kr)
+
+### 📝 Documentation Updates
+- Updated README and user manuals to reflect `SQL2CSV_` prefix and `${DB_NAME}` usage
+- Adjusted examples and usage instructions accordingly
+
+---
+
 ## [1.3.7] - 2025-10-24
 
 ### 🐛 Bug Fixes
@@ -93,7 +115,7 @@ SQL,result_filepath
 
 ### 📝 Usage
 
-1. Create a CSV file in `request/` starting with `SQL_` prefix
+1. Create a CSV file in `request/` starting with `SQL2CSV_` prefix
 2. Define queries and output paths in CSV format
 3. Run application and select option 4 (CSV-based Batch Query Execution)
 4. Select CSV file from list
