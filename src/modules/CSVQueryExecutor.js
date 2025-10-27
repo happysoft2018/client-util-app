@@ -146,6 +146,22 @@ class CSVQueryExecutor {
   }
 
   /**
+   * Substitute database-related variables in filepath
+   * Currently supports: ${DB_NAME} (the key name selected from config)
+   * @param {string} filepath - Filepath possibly containing DB variables
+   * @param {string} selectedDbName - The selected DB key name (e.g., 'sampleDB')
+   * @param {object} dbConfig - The DB configuration object
+   * @returns {string} Filepath with substituted DB variables
+   */
+  substituteDbVariables(filepath, selectedDbName, dbConfig) {
+    if (!filepath) return filepath;
+    let result = filepath;
+    // Replace all occurrences of ${DB_NAME}
+    result = result.replace(/\$\{DB_NAME\}/g, selectedDbName);
+    return result;
+  }
+
+  /**
    * Substitute date/time variables in filepath
    * @param {string} filepath - Filepath with date variables
    * @returns {string} Filepath with substituted date values
@@ -494,15 +510,18 @@ class CSVQueryExecutor {
         console.log(`\n[${i + 1}${this.msg.of}${queries.length}] ${this.msg.executingQuery}`);
         console.log(`  📝 ${this.msg.query} ${sql.substring(0, 100)}${sql.length > 100 ? '...' : ''}`);
         
-        // Show date variable substitution if applicable
-        if (originalFilepath && originalFilepath !== resultFilepath) {
-          console.log(`  🕐 Original: ${originalFilepath}`);
-          console.log(`  📄 Result: ${resultFilepath}`);
+        // Apply DB variable substitution after date substitution
+        const finalFilepath = this.substituteDbVariables(resultFilepath, selectedDbName, dbConfig);
+
+        // Show variable substitution if applicable
+        if (originalFilepath && (originalFilepath !== resultFilepath || resultFilepath !== finalFilepath)) {
+          console.log(`  🕐 ${this.msg.original}: ${originalFilepath}`);
+          console.log(`  📄 ${this.msg.processed}: ${finalFilepath}`);
         } else {
-          console.log(`  📄 File: ${resultFilepath}`);
+          console.log(`  📄 File: ${finalFilepath}`);
         }
-        
-        const result = await this.executeQuery(connection, sql, resultFilepath, resultsDir);
+
+        const result = await this.executeQuery(connection, sql, finalFilepath, resultsDir);
         
         if (result.success) {
           successCount++;
