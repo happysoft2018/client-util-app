@@ -26,10 +26,10 @@ const messages = {
   en: {
     title: 'Node.js Integrated Utility Tool',
     mainMenuTitle: 'Main Menu',
-    menu1: '1. Database Connection and Permission Check (request/DB*)',
-    menu2: '2. Server Telnet Connection Check (request/SERVER*)',
-    menu3: '3. Database SQL Execution (request/sql_files/SQL*)',
-    menu4: '4. CSV-based Batch Query Execution (request/CSV*)',
+    menu1: '1. Database Connection and Permission Check (request/DB*.csv)',
+    menu2: '2. Server Telnet Connection Check (request/SERVER*.csv)',
+    menu3: '3. Single SQL Execution with parameters (request/sql_files/SQL*.sql)',
+    menu4: '4. Multiple SQL Execution based on CSV (request/SQL2CSV*.csv)',
     menu5: '5. Configuration Management',
     menu0: '0. Exit',
     selectPrompt: 'Select function to execute (0-5): ',
@@ -89,7 +89,7 @@ const messages = {
     csvQueryDirNotFound: 'CSV query directory not found: request/',
     csvQueryCreateDir: 'Please create the directory and add CSV files.',
     csvQueryNoFiles: 'No CSV query files found in request/ directory.',
-    csvQueryAddFiles: 'Please add .csv files starting with "SQL" to the request/ directory.',
+    csvQueryAddFiles: 'Please add .csv files starting with "SQL2CSV" to the request/ directory.',
     csvQueryAvailableFiles: 'Available CSV Query Files:',
     csvQuerySelectFile: 'Select CSV file number to execute',
     csvQueryInvalidFile: 'Invalid file selection.',
@@ -118,10 +118,10 @@ const messages = {
   kr: {
     title: 'Node.js 통합 유틸리티 도구',
     mainMenuTitle: '메인 메뉴',
-    menu1: '1. 데이터베이스 접속 및 권한 확인 (request/DB*)',
-    menu2: '2. 서버 텔넷 접속 확인 (request/SERVER*)',
-    menu3: '3. 데이터베이스 SQL 실행 (request/sql_files/SQL*)',
-    menu4: '4. CSV 기반 일괄 쿼리 실행 (request/CSV*)',
+    menu1: '1. 데이터베이스 접속 및 권한 확인 (request/DB*.csv)',
+    menu2: '2. 서버 텔넷 접속 확인 (request/SERVER*.csv)',
+    menu3: '3. 단일 SQL 실행 (파라미터 적용) (request/sql_files/SQL*.sql)',
+    menu4: '4. 복수 SQL 실행 (CSV 기반) (request/SQL2CSV*.csv)',
     menu5: '5. 설정 관리',
     menu0: '0. 종료',
     selectPrompt: '실행할 기능을 선택하세요 (0-5): ',
@@ -181,7 +181,7 @@ const messages = {
     csvQueryDirNotFound: 'CSV 쿼리 디렉토리를 찾을 수 없습니다: request/',
     csvQueryCreateDir: '디렉토리를 생성하고 CSV 파일을 추가해주세요.',
     csvQueryNoFiles: 'request/ 디렉토리에 CSV 쿼리 파일이 없습니다.',
-    csvQueryAddFiles: 'request/ 디렉토리에 "SQL"로 시작하는 .csv 파일을 추가해주세요.',
+    csvQueryAddFiles: 'request/ 디렉토리에 "SQL2CSV"로 시작하는 .csv 파일을 추가해주세요.',
     csvQueryAvailableFiles: '사용 가능한 CSV 쿼리 파일:',
     csvQuerySelectFile: '실행할 CSV 파일 번호를 선택하세요',
     csvQueryInvalidFile: '잘못된 파일 선택입니다.',
@@ -533,7 +533,7 @@ class NodeUtilApp {
       }
 
       const csvFiles = fs.readdirSync(csvQueryDir)
-        .filter(file => file.endsWith('.csv') && file.toLowerCase().startsWith('sql'));
+        .filter(file => file.endsWith('.csv') && file.toLowerCase().startsWith('sql2csv'));
 
       if (csvFiles.length === 0) {
         console.log(`❌ ${msg.csvQueryNoFiles}`);
