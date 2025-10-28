@@ -1,4 +1,4 @@
-# User Manual v1.3.8
+# User Manual v1.3.9
 
 ## 📖 Table of Contents
 
@@ -17,7 +17,7 @@
 
 ## Introduction
 
-This manual guides you through using the database connection, permission check, and SQL execution features of the Node.js Integrated Utility Tool v1.3.8.
+This manual guides you through using the database connection, permission check, and SQL execution features of the Node.js Integrated Utility Tool v1.3.9.
 
 ### Key Features of v1.3.6
 
@@ -402,6 +402,46 @@ npm start
 # Run Node.js directly with Korean UI
 node app.js --lang=kr
 ```
+
+### Non-interactive CLI (New in v1.3.9)
+
+Run specific functions directly without menu interaction using `--mode` and parameters.
+
+Supported modes:
+
+- `--mode=db` Database connection and permission check
+- `--mode=telnet` Server telnet connection check
+- `--mode=sql` Single SQL execution
+- `--mode=csv` CSV-based batch query execution
+- `--mode=config` Print configuration info
+
+Examples:
+
+```bash
+# DB check
+node app.js --lang=kr --mode=db --csv=request/DB_sample.csv --timeout=5 --dbType=auto
+
+# Telnet check
+node app.js --lang=kr --mode=telnet --csv=request/server_sample.csv --timeout=3
+
+# Single SQL (file name or path; .sql optional, base directory: request/sql_files)
+node app.js --lang=kr --mode=sql --sql=SQL_001
+node app.js --lang=kr --mode=sql --sql=request/sql_files/SQL_001.sql
+
+# CSV-based batch query execution
+node app.js --lang=kr --mode=csv --csv=request/SQL2CSV_daily_export.csv
+
+# Show config info and exit
+node app.js --lang=kr --mode=config
+
+# Help
+node app.js --help
+```
+
+Notes:
+
+- Relative paths are resolved against the executable folder (APP_ROOT) in release builds.
+- Same flags work with the packaged EXE, e.g. `client-util-app.exe --lang=kr --mode=db --csv=...`.
 
 **Default (without language parameter):**
 ```bash

@@ -1,4 +1,4 @@
-# 사용자 매뉴얼 v1.3.6
+# 사용자 매뉴얼 v1.3.9
 
 ## 📖 목차
 
@@ -17,7 +17,7 @@
 
 ## 소개
 
-이 매뉴얼은 Node.js 통합 유틸리티 도구 v1.3.6의 데이터베이스 연결, 권한 체크 및 SQL 실행 기능 사용법을 안내합니다.
+이 매뉴얼은 Node.js 통합 유틸리티 도구 v1.3.9의 데이터베이스 연결, 권한 체크 및 SQL 실행 기능 사용법을 안내합니다.
 
 ### v1.3.6의 주요 특징
 
@@ -402,6 +402,46 @@ npm start
 # Node.js 직접 실행 (한국어 UI)
 node app.js --lang=kr
 ```
+
+### 비대화형 CLI (v1.3.9 신규)
+
+메뉴 없이 바로 기능을 실행할 수 있습니다. `--mode`와 파라미터를 사용하세요.
+
+지원 모드:
+
+- `--mode=db` 데이터베이스 접속/권한 체크
+- `--mode=telnet` 서버 텔넷 접속 체크
+- `--mode=sql` 단일 SQL 실행
+- `--mode=csv` CSV 기반 일괄 쿼리 실행
+- `--mode=config` 설정 정보 출력
+
+예시:
+
+```bash
+# DB 체크
+node app.js --lang=kr --mode=db --csv=request/DB_sample.csv --timeout=5 --dbType=auto
+
+# Telnet 체크
+node app.js --lang=kr --mode=telnet --csv=request/server_sample.csv --timeout=3
+
+# 단일 SQL (파일명 또는 경로, .sql 생략 가능, 기본 경로: request/sql_files)
+node app.js --lang=kr --mode=sql --sql=SQL_001
+node app.js --lang=kr --mode=sql --sql=request/sql_files/SQL_001.sql
+
+# CSV 기반 일괄 실행
+node app.js --lang=kr --mode=csv --csv=request/SQL2CSV_daily_export.csv
+
+# 설정 정보 출력 후 종료
+node app.js --lang=kr --mode=config
+
+# 도움말
+node app.js --help
+```
+
+참고:
+
+- 배포 EXE에서도 동일한 플래그 사용 가능: `client-util-app.exe --lang=kr --mode=db --csv=...`
+- 상대 경로는 배포 실행 파일 폴더(APP_ROOT) 기준으로 해석됩니다.
 
 **기본값 (언어 파라미터 없음):**
 ```bash
