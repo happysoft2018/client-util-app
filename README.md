@@ -1,4 +1,4 @@
-# Node.js Integrated Utility Tool v1.3.8
+# Node.js Integrated Utility Tool v1.3.9
 
 A comprehensive utility tool for managing various local environment utilities in a unified application.
 
@@ -42,6 +42,17 @@ my-node-client-util-app/
 ```
 
 ## 🆕 Latest Updates
+
+### v1.3.9 - Non-interactive CLI (2025-10-29) ✨
+
+**New Features:**
+- Added direct execution with `--mode` flags (no menu interaction)
+  - Modes: `db`, `telnet`, `sql`, `csv`, `config`
+  - Works in both Node and packaged EXE
+
+**Documentation:**
+- Updated user manuals with non-interactive CLI usage and examples
+- Noted APP_ROOT-relative path behavior in packaged builds
 
 ### v1.3.8 - CSV Batch & Directory Update (2025-10-27) 🔧
 

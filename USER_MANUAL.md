@@ -19,6 +19,29 @@
 
 This manual guides you through using the database connection, permission check, and SQL execution features of the Node.js Integrated Utility Tool v1.3.9.
 
+### Key Features of v1.3.9
+
+#### Non-interactive CLI ✨
+- Run functions directly with `--mode` (no menu)
+  - Modes: `db`, `telnet`, `sql`, `csv`, `config`
+- Works in both Node and packaged EXE
+- Docs updated with usage and APP_ROOT path note
+
+### Key Features of v1.3.8
+
+#### CSV Batch & Directory Update 🔧
+- File prefix updated: `SQL_` → `SQL2CSV_` in `request/`
+- Result path variables: `${DB_NAME}` supported
+- Directory unified: `request_resources` → `request`
+- Message refactoring with parameterized builders (i18n preserved)
+
+### Key Features of v1.3.7
+
+#### CSV Query Result Output Improvements 🐛
+- Newline handling: replace newlines with spaces for clean single-line CSV
+- Smart quoting only for CSV (quote when contains commas/quotes)
+- Easier to read in Excel and text editors
+
 ### Key Features of v1.3.6
 
 #### CSV-based Batch Query Execution 📊
