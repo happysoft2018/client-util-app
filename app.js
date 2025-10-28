@@ -21,6 +21,24 @@ const args = process.argv.slice(2);
 const langArg = args.find(arg => arg.startsWith('--lang='));
 const LANGUAGE = langArg ? langArg.split('=')[1] : 'en';
 
+// 간단한 CLI 인수 파서
+function parseArgs(argv) {
+  const out = {};
+  for (const a of argv) {
+    if (!a.startsWith('--')) continue;
+    const eq = a.indexOf('=');
+    if (eq === -1) {
+      out[a.slice(2)] = true;
+    } else {
+      const k = a.slice(2, eq);
+      const v = a.slice(eq + 1);
+      out[k] = v;
+    }
+  }
+  return out;
+}
+const ARGS = parseArgs(args);
+
 // 다국어 메시지 (중복 제거 빌더)
 function section(prefix, entries) {
   const obj = {};
@@ -261,7 +279,9 @@ class NodeUtilApp {
     console.log(`    ${msg.title}`);
     console.log('='.repeat(50));
     console.log();
-    
+    // 비대화형 실행 경로 우선 처리
+    const handled = await this.maybeRunFromCliArgs();
+    if (handled) return;
     await this.showMainMenu();
   }
 
@@ -305,7 +325,7 @@ class NodeUtilApp {
     }
   }
 
-  async runDbConnectionCheck() {
+  async runDbConnectionCheck(options = undefined) {
     console.clear();
     console.log(`🔍 ${msg.dbCheckTitle}`);
     console.log('='.repeat(40));
@@ -314,53 +334,66 @@ class NodeUtilApp {
       // Get CSV file list from request folder
       const dbCheckDir = path.join(APP_ROOT, 'request');
       
-      if (!fs.existsSync(dbCheckDir)) {
+      if (!fs.existsSync(dbCheckDir) && !(options && options.csvPath)) {
         console.log(`❌ ${msg.dbCheckDirNotFound}`);
         console.log(msg.dbCheckCreateDir);
-        await this.waitAndContinue();
-        await this.showMainMenu();
+        if (!(options && options.nonInteractive)) {
+          await this.waitAndContinue();
+          await this.showMainMenu();
+        }
         return;
       }
 
-      const csvFiles = fs.readdirSync(dbCheckDir)
-        .filter(file => file.endsWith('.csv') && file.toLowerCase().startsWith('db'));
+      let csvPath;
+      let timeout;
+      if (options && options.csvPath) {
+        csvPath = path.isAbsolute(options.csvPath) ? options.csvPath : path.join(APP_ROOT, options.csvPath);
+        timeout = options.timeout ?? 5;
+      } else {
+        const csvFiles = fs.readdirSync(dbCheckDir)
+          .filter(file => file.endsWith('.csv') && file.toLowerCase().startsWith('db'));
 
-      if (csvFiles.length === 0) {
-        console.log(`❌ ${msg.dbCheckNoFiles}`);
-        console.log(msg.dbCheckAddFiles);
-        await this.waitAndContinue();
-        await this.showMainMenu();
-        return;
+        if (csvFiles.length === 0) {
+          console.log(`❌ ${msg.dbCheckNoFiles}`);
+          console.log(msg.dbCheckAddFiles);
+          if (!(options && options.nonInteractive)) {
+            await this.waitAndContinue();
+            await this.showMainMenu();
+          }
+          return;
+        }
+
+        console.log(`\n📄 ${msg.dbCheckAvailableFiles}`);
+        csvFiles.forEach((file, index) => {
+          console.log(`  ${index + 1}. ${file}`);
+        });
+        console.log();
+
+        const fileChoice = await this.askQuestion(
+          `${msg.dbCheckSelectFile} (1-${csvFiles.length}): `
+        );
+        
+        const selectedFileIndex = parseInt(fileChoice) - 1;
+        if (selectedFileIndex < 0 || selectedFileIndex >= csvFiles.length) {
+          console.log(`❌ ${msg.dbCheckInvalidFile}`);
+          if (!(options && options.nonInteractive)) {
+            await this.waitAndContinue();
+            await this.showMainMenu();
+          }
+          return;
+        }
+
+        const selectedFile = csvFiles[selectedFileIndex];
+        csvPath = path.join(dbCheckDir, selectedFile);
+        console.log(`✅ ${msg.dbCheckSelectedFile} ${selectedFile}`);
+        console.log(`ℹ️  ${msg.dbCheckAuthNote}`);
+        
+        console.log(`\n⏱️  ${msg.dbCheckTimeoutSettings}`);
+        timeout = await this.askQuestion(
+          msg.dbCheckTimeout,
+          5
+        );
       }
-
-      console.log(`\n📄 ${msg.dbCheckAvailableFiles}`);
-      csvFiles.forEach((file, index) => {
-        console.log(`  ${index + 1}. ${file}`);
-      });
-      console.log();
-
-      const fileChoice = await this.askQuestion(
-        `${msg.dbCheckSelectFile} (1-${csvFiles.length}): `
-      );
-      
-      const selectedFileIndex = parseInt(fileChoice) - 1;
-      if (selectedFileIndex < 0 || selectedFileIndex >= csvFiles.length) {
-        console.log(`❌ ${msg.dbCheckInvalidFile}`);
-        await this.waitAndContinue();
-        await this.showMainMenu();
-        return;
-      }
-
-      const selectedFile = csvFiles[selectedFileIndex];
-      const csvPath = path.join(dbCheckDir, selectedFile);
-      console.log(`✅ ${msg.dbCheckSelectedFile} ${selectedFile}`);
-      console.log(`ℹ️  ${msg.dbCheckAuthNote}`);
-      
-      console.log(`\n⏱️  ${msg.dbCheckTimeoutSettings}`);
-      const timeout = await this.askQuestion(
-        msg.dbCheckTimeout,
-        5
-      );
 
       console.log(`\n🚀 ${msg.dbCheckStarting}`);
       console.log('-'.repeat(40));
@@ -370,7 +403,7 @@ class NodeUtilApp {
       await this.dbConnectionChecker.run({
         csvPath: csvPath,
         timeout: parseInt(timeout) || 5,
-        dbType: 'auto' // CSV에서 각 행의 db_type을 사용
+        dbType: (options && options.dbType) ? options.dbType : 'auto' // CSV에서 각 행의 db_type을 사용
       });
       
       console.log(`\n✅ ${msg.dbCheckCompleted}`);
@@ -378,12 +411,13 @@ class NodeUtilApp {
     } catch (error) {
       console.error(`❌ ${msg.dbCheckError}`, error.message);
     }
-    
-    await this.waitAndContinue();
-    await this.showMainMenu();
+    if (!(options && options.nonInteractive)) {
+      await this.waitAndContinue();
+      await this.showMainMenu();
+    }
   }
 
-  async runTelnetCheck() {
+  async runTelnetCheck(options = undefined) {
     console.clear();
     console.log(`🌐 ${msg.telnetTitle}`);
     console.log('='.repeat(40));
@@ -392,52 +426,65 @@ class NodeUtilApp {
       // Get CSV file list from request folder
       const telnetCheckDir = path.join(APP_ROOT, 'request');
       
-      if (!fs.existsSync(telnetCheckDir)) {
+      if (!fs.existsSync(telnetCheckDir) && !(options && options.csvPath)) {
         console.log(`❌ ${msg.telnetDirNotFound}`);
         console.log(msg.telnetCreateDir);
-        await this.waitAndContinue();
-        await this.showMainMenu();
+        if (!(options && options.nonInteractive)) {
+          await this.waitAndContinue();
+          await this.showMainMenu();
+        }
         return;
       }
 
-      const csvFiles = fs.readdirSync(telnetCheckDir)
-        .filter(file => file.endsWith('.csv') && file.toLowerCase().startsWith('server'));
+      let csvPath;
+      let timeout;
+      if (options && options.csvPath) {
+        csvPath = path.isAbsolute(options.csvPath) ? options.csvPath : path.join(APP_ROOT, options.csvPath);
+        timeout = options.timeout ?? 3;
+      } else {
+        const csvFiles = fs.readdirSync(telnetCheckDir)
+          .filter(file => file.endsWith('.csv') && file.toLowerCase().startsWith('server'));
 
-      if (csvFiles.length === 0) {
-        console.log(`❌ ${msg.telnetNoFiles}`);
-        console.log(msg.telnetAddFiles);
-        await this.waitAndContinue();
-        await this.showMainMenu();
-        return;
+        if (csvFiles.length === 0) {
+          console.log(`❌ ${msg.telnetNoFiles}`);
+          console.log(msg.telnetAddFiles);
+          if (!(options && options.nonInteractive)) {
+            await this.waitAndContinue();
+            await this.showMainMenu();
+          }
+          return;
+        }
+
+        console.log(`\n📄 ${msg.telnetAvailableFiles}`);
+        csvFiles.forEach((file, index) => {
+          console.log(`  ${index + 1}. ${file}`);
+        });
+        console.log();
+
+        const fileChoice = await this.askQuestion(
+          `${msg.telnetSelectFile} (1-${csvFiles.length}): `
+        );
+        
+        const selectedFileIndex = parseInt(fileChoice) - 1;
+        if (selectedFileIndex < 0 || selectedFileIndex >= csvFiles.length) {
+          console.log(`❌ ${msg.telnetInvalidFile}`);
+          if (!(options && options.nonInteractive)) {
+            await this.waitAndContinue();
+            await this.showMainMenu();
+          }
+          return;
+        }
+
+        const selectedFile = csvFiles[selectedFileIndex];
+        csvPath = path.join(telnetCheckDir, selectedFile);
+        console.log(`✅ ${msg.telnetSelectedFile} ${selectedFile}`);
+        
+        console.log(`\n⏱️  ${msg.telnetTimeoutSettings}`);
+        timeout = await this.askQuestion(
+          msg.telnetTimeout,
+          3
+        );
       }
-
-      console.log(`\n📄 ${msg.telnetAvailableFiles}`);
-      csvFiles.forEach((file, index) => {
-        console.log(`  ${index + 1}. ${file}`);
-      });
-      console.log();
-
-      const fileChoice = await this.askQuestion(
-        `${msg.telnetSelectFile} (1-${csvFiles.length}): `
-      );
-      
-      const selectedFileIndex = parseInt(fileChoice) - 1;
-      if (selectedFileIndex < 0 || selectedFileIndex >= csvFiles.length) {
-        console.log(`❌ ${msg.telnetInvalidFile}`);
-        await this.waitAndContinue();
-        await this.showMainMenu();
-        return;
-      }
-
-      const selectedFile = csvFiles[selectedFileIndex];
-      const csvPath = path.join(telnetCheckDir, selectedFile);
-      console.log(`✅ ${msg.telnetSelectedFile} ${selectedFile}`);
-      
-      console.log(`\n⏱️  ${msg.telnetTimeoutSettings}`);
-      const timeout = await this.askQuestion(
-        msg.telnetTimeout,
-        3
-      );
 
       console.log(`\n🚀 ${msg.telnetStarting}`);
       console.log('-'.repeat(40));
@@ -452,12 +499,13 @@ class NodeUtilApp {
     } catch (error) {
       console.error(`❌ ${msg.telnetError}`, error.message);
     }
-    
-    await this.waitAndContinue();
-    await this.showMainMenu();
+    if (!(options && options.nonInteractive)) {
+      await this.waitAndContinue();
+      await this.showMainMenu();
+    }
   }
 
-  async runSqlExecution() {
+  async runSqlExecution(options = undefined) {
     console.clear();
     console.log(`⚙️  ${msg.sqlTitle}`);
     console.log('='.repeat(40));
@@ -466,62 +514,82 @@ class NodeUtilApp {
       // Get SQL file list from request/sql_files folder
       const sqlFilesDir = path.join(APP_ROOT, 'request', 'sql_files');
       
-      if (!fs.existsSync(sqlFilesDir)) {
+      if (!fs.existsSync(sqlFilesDir) && !(options && (options.sql || options.sqlPath))) {
         console.log(`❌ ${msg.sqlDirNotFound}`);
         console.log(msg.sqlCreateDir);
-        await this.waitAndContinue();
-        await this.showMainMenu();
+        if (!(options && options.nonInteractive)) {
+          await this.waitAndContinue();
+          await this.showMainMenu();
+        }
         return;
       }
 
-      const sqlFiles = fs.readdirSync(sqlFilesDir)
-        .filter(file => file.endsWith('.sql'))
-        .map(file => file.replace('.sql', ''));
+      let selectedFileBase;
+      if (options && (options.sql || options.sqlPath)) {
+        const provided = options.sqlPath || options.sql; // could be base name or path to .sql
+        const isPath = /[\\/]/.test(provided) || provided.endsWith('.sql');
+        if (isPath) {
+          const base = path.basename(provided).replace(/\.sql$/i, '');
+          selectedFileBase = base;
+        } else {
+          selectedFileBase = provided.replace(/\.sql$/i, '');
+        }
+      } else {
+        const sqlFiles = fs.readdirSync(sqlFilesDir)
+          .filter(file => file.endsWith('.sql'))
+          .map(file => file.replace('.sql', ''));
 
-      if (sqlFiles.length === 0) {
-        console.log(`❌ ${msg.sqlNoFiles}`);
-        console.log(msg.sqlAddFiles);
-        await this.waitAndContinue();
-        await this.showMainMenu();
-        return;
+        if (sqlFiles.length === 0) {
+          console.log(`❌ ${msg.sqlNoFiles}`);
+          console.log(msg.sqlAddFiles);
+          if (!(options && options.nonInteractive)) {
+            await this.waitAndContinue();
+            await this.showMainMenu();
+          }
+          return;
+        }
+
+        console.log(`\n📄 ${msg.sqlAvailableFiles}`);
+        sqlFiles.forEach((file, index) => {
+          console.log(`  ${index + 1}. ${file}.sql`);
+        });
+        console.log();
+
+        const fileChoice = await this.askQuestion(
+          `${msg.sqlSelectFile} (1-${sqlFiles.length}): `
+        );
+        
+        const selectedFileIndex = parseInt(fileChoice) - 1;
+        if (selectedFileIndex < 0 || selectedFileIndex >= sqlFiles.length) {
+          console.log(`❌ ${msg.sqlInvalidFile}`);
+          if (!(options && options.nonInteractive)) {
+            await this.waitAndContinue();
+            await this.showMainMenu();
+          }
+          return;
+        }
+
+        selectedFileBase = sqlFiles[selectedFileIndex];
       }
 
-      console.log(`\n📄 ${msg.sqlAvailableFiles}`);
-      sqlFiles.forEach((file, index) => {
-        console.log(`  ${index + 1}. ${file}.sql`);
-      });
-      console.log();
-
-      const fileChoice = await this.askQuestion(
-        `${msg.sqlSelectFile} (1-${sqlFiles.length}): `
-      );
-      
-      const selectedFileIndex = parseInt(fileChoice) - 1;
-      if (selectedFileIndex < 0 || selectedFileIndex >= sqlFiles.length) {
-        console.log(`❌ ${msg.sqlInvalidFile}`);
-        await this.waitAndContinue();
-        await this.showMainMenu();
-        return;
-      }
-
-      const selectedFile = sqlFiles[selectedFileIndex];
-      console.log(`✅ ${msg.sqlSelectedFile} ${selectedFile}.sql`);
+      console.log(`✅ ${msg.sqlSelectedFile} ${selectedFileBase}.sql`);
       console.log(`\n🚀 ${msg.sqlStarting}`);
       console.log('-'.repeat(40));
       
-      await this.dbExecutor.run(selectedFile);
+      await this.dbExecutor.run(selectedFileBase);
       
       console.log(`\n✅ ${msg.sqlCompleted}`);
       
     } catch (error) {
       console.error(`❌ ${msg.sqlError}`, error.message);
     }
-    
-    await this.waitAndContinue();
-    await this.showMainMenu();
+    if (!(options && options.nonInteractive)) {
+      await this.waitAndContinue();
+      await this.showMainMenu();
+    }
   }
 
-  async runCsvQueryExecution() {
+  async runCsvQueryExecution(options = undefined) {
     console.clear();
     console.log(`📊 ${msg.csvQueryTitle}`);
     console.log('='.repeat(40));
@@ -530,46 +598,57 @@ class NodeUtilApp {
       // Get CSV file list from request folder
       const csvQueryDir = path.join(APP_ROOT, 'request');
       
-      if (!fs.existsSync(csvQueryDir)) {
+      if (!fs.existsSync(csvQueryDir) && !(options && options.csvPath)) {
         console.log(`❌ ${msg.csvQueryDirNotFound}`);
         console.log(msg.csvQueryCreateDir);
-        await this.waitAndContinue();
-        await this.showMainMenu();
+        if (!(options && options.nonInteractive)) {
+          await this.waitAndContinue();
+          await this.showMainMenu();
+        }
         return;
       }
 
-      const csvFiles = fs.readdirSync(csvQueryDir)
-        .filter(file => file.endsWith('.csv') && file.toLowerCase().startsWith('sql2csv'));
+      let csvPath;
+      if (options && options.csvPath) {
+        csvPath = path.isAbsolute(options.csvPath) ? options.csvPath : path.join(APP_ROOT, options.csvPath);
+      } else {
+        const csvFiles = fs.readdirSync(csvQueryDir)
+          .filter(file => file.endsWith('.csv') && file.toLowerCase().startsWith('sql2csv'));
 
-      if (csvFiles.length === 0) {
-        console.log(`❌ ${msg.csvQueryNoFiles}`);
-        console.log(msg.csvQueryAddFiles);
-        await this.waitAndContinue();
-        await this.showMainMenu();
-        return;
+        if (csvFiles.length === 0) {
+          console.log(`❌ ${msg.csvQueryNoFiles}`);
+          console.log(msg.csvQueryAddFiles);
+          if (!(options && options.nonInteractive)) {
+            await this.waitAndContinue();
+            await this.showMainMenu();
+          }
+          return;
+        }
+
+        console.log(`\n📄 ${msg.csvQueryAvailableFiles}`);
+        csvFiles.forEach((file, index) => {
+          console.log(`  ${index + 1}. ${file}`);
+        });
+        console.log();
+
+        const fileChoice = await this.askQuestion(
+          `${msg.csvQuerySelectFile} (1-${csvFiles.length}): `
+        );
+        
+        const selectedFileIndex = parseInt(fileChoice) - 1;
+        if (selectedFileIndex < 0 || selectedFileIndex >= csvFiles.length) {
+          console.log(`❌ ${msg.csvQueryInvalidFile}`);
+          if (!(options && options.nonInteractive)) {
+            await this.waitAndContinue();
+            await this.showMainMenu();
+          }
+          return;
+        }
+
+        const selectedFile = csvFiles[selectedFileIndex];
+        csvPath = path.join(csvQueryDir, selectedFile);
+        console.log(`✅ ${msg.csvQuerySelectedFile} ${selectedFile}`);
       }
-
-      console.log(`\n📄 ${msg.csvQueryAvailableFiles}`);
-      csvFiles.forEach((file, index) => {
-        console.log(`  ${index + 1}. ${file}`);
-      });
-      console.log();
-
-      const fileChoice = await this.askQuestion(
-        `${msg.csvQuerySelectFile} (1-${csvFiles.length}): `
-      );
-      
-      const selectedFileIndex = parseInt(fileChoice) - 1;
-      if (selectedFileIndex < 0 || selectedFileIndex >= csvFiles.length) {
-        console.log(`❌ ${msg.csvQueryInvalidFile}`);
-        await this.waitAndContinue();
-        await this.showMainMenu();
-        return;
-      }
-
-      const selectedFile = csvFiles[selectedFileIndex];
-      const csvPath = path.join(csvQueryDir, selectedFile);
-      console.log(`✅ ${msg.csvQuerySelectedFile} ${selectedFile}`);
       console.log(`\n🚀 ${msg.csvQueryStarting}`);
       console.log('-'.repeat(40));
       
@@ -580,9 +659,10 @@ class NodeUtilApp {
     } catch (error) {
       console.error(`❌ ${msg.csvQueryError}`, error.message);
     }
-    
-    await this.waitAndContinue();
-    await this.showMainMenu();
+    if (!(options && options.nonInteractive)) {
+      await this.waitAndContinue();
+      await this.showMainMenu();
+    }
   }
 
   async showConfigMenu() {
@@ -656,6 +736,83 @@ class NodeUtilApp {
     return new Promise((resolve) => {
       this.rl.once('line', () => resolve());
     });
+  }
+
+  // 비대화형 CLI 실행기
+  async maybeRunFromCliArgs() {
+    // --help 처리
+    if (ARGS.help) {
+      this.printUsage();
+      await this.exitApp();
+      return true;
+    }
+    const mode = ARGS.mode; // db | telnet | sql | csv | config
+    if (!mode) return false;
+    switch (mode) {
+      case 'db':
+        await this.runDbConnectionCheck({
+          nonInteractive: true,
+          csvPath: ARGS.csv,
+          timeout: ARGS.timeout ? parseInt(ARGS.timeout) : undefined,
+          dbType: ARGS.dbType || 'auto'
+        });
+        await this.exitApp();
+        return true;
+      case 'telnet':
+        await this.runTelnetCheck({
+          nonInteractive: true,
+          csvPath: ARGS.csv,
+          timeout: ARGS.timeout ? parseInt(ARGS.timeout) : undefined
+        });
+        await this.exitApp();
+        return true;
+      case 'sql':
+        await this.runSqlExecution({
+          nonInteractive: true,
+          sql: ARGS.sql || ARGS.file || ARGS.name,
+        });
+        await this.exitApp();
+        return true;
+      case 'csv':
+      case 'sql2csv':
+        await this.runCsvQueryExecution({
+          nonInteractive: true,
+          csvPath: ARGS.csv
+        });
+        await this.exitApp();
+        return true;
+      case 'config':
+        // 간단한 정보 출력 후 종료
+        this.configManager.showEnvironmentVariables();
+        console.log();
+        const availableDbs = this.configManager.getAvailableDbs();
+        console.log(`\n🗄️  ${msg.configAvailableDbs}`);
+        if (availableDbs.length > 0) {
+          availableDbs.forEach((dbName, index) => {
+            const dbInfo = this.configManager.getDbConfig(dbName);
+            const dbType = this.configManager.getDbType(dbName);
+            console.log(`  ${index + 1}. ${dbName} (${dbType}) - ${dbInfo.server}:${dbInfo.port}/${dbInfo.database}`);
+          });
+        } else {
+          console.log(`  ${msg.configNoDbs}`);
+        }
+        await this.exitApp();
+        return true;
+      default:
+        console.error(`❌ Unknown mode: ${mode}`);
+        this.printUsage();
+        await this.exitApp();
+        return true;
+    }
+  }
+
+  printUsage() {
+    console.log('\nUsage:');
+    console.log('  node app.js --lang=kr --mode=db --csv=request/DB_sample.csv --timeout=5 --dbType=auto');
+    console.log('  node app.js --lang=kr --mode=telnet --csv=request/server_sample.csv --timeout=3');
+    console.log('  node app.js --lang=kr --mode=sql --sql=SQL_file_name');
+    console.log('  node app.js --lang=kr --mode=csv --csv=request/SQL2CSV_sample.csv');
+    console.log('  node app.js --help');
   }
 }
 
