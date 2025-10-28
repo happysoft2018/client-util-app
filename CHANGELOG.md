@@ -1,5 +1,20 @@
 # Changelog
 
+## [1.3.9] - 2025-10-29
+
+### ✨ New Features
+
+#### Non-interactive CLI
+- Added direct execution with `--mode` flags (no menu interaction)
+  - Modes: `db`, `telnet`, `sql`, `csv`, `config`
+  - Works in both Node and packaged EXE
+
+### 📝 Documentation
+- Updated USER_MANUAL.md / USER_MANUAL_KR.md with non-interactive CLI usage and examples
+- Noted APP_ROOT-relative path behavior in packaged builds
+
+---
+
 ## [1.3.8] - 2025-10-27
 
 ### 🔧 Changes
