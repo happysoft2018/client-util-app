@@ -36,7 +36,11 @@ class MSSQLConnection {
     
     // Parameter binding
     Object.entries(params).forEach(([key, value]) => {
-      request.input(key, value);
+      if (value instanceof Date) {
+        request.input(key, mssql.DateTime2, value);
+      } else {
+        request.input(key, value);
+      }
     });
 
     const result = await request.query(query);
@@ -45,6 +49,43 @@ class MSSQLConnection {
       rowCount: result.recordset ? result.recordset.length : 0,
       affectedRows: result.rowsAffected?.[0] || 0
     };
+  }
+
+  // Returns array of identity column names for a given table. Supports schema-qualified names (defaults to dbo).
+  async getIdentityColumns(tableName) {
+    if (!this.pool) {
+      throw new Error('Not connected');
+    }
+    const cleanName = String(tableName).replace(/[\[\]]/g, '');
+    const parts = cleanName.split('.');
+    const hasSchema = parts.length > 1;
+    const schema = hasSchema ? parts[0] : null;
+    const table = hasSchema ? parts[1] : parts[0];
+
+    const sql = hasSchema
+      ? `
+      SELECT c.name AS column_name
+      FROM sys.columns AS c
+      JOIN sys.objects AS o ON c.object_id = o.object_id
+      JOIN sys.schemas AS s ON o.schema_id = s.schema_id
+      WHERE o.type = 'U'
+        AND s.name = @schema
+        AND o.name = @table
+        AND c.is_identity = 1
+    `
+      : `
+      SELECT c.name AS column_name
+      FROM sys.columns AS c
+      JOIN sys.objects AS o ON c.object_id = o.object_id
+      JOIN sys.schemas AS s ON o.schema_id = s.schema_id
+      WHERE o.type = 'U'
+        AND o.name = @table
+        AND c.is_identity = 1
+    `;
+    const { rows } = hasSchema
+      ? await this.executeQuery(sql, { schema, table })
+      : await this.executeQuery(sql, { table });
+    return rows.map(r => r.column_name);
   }
 
   async testConnection() {

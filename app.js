@@ -70,9 +70,10 @@ function buildEnMessages() {
     menu2: '2. Server Telnet Connection Check (request/SERVER*.csv)',
     menu3: '3. Single SQL Execution with parameters (request/sql_files/SQL*.sql)',
     menu4: '4. Multiple SQL Execution based on CSV (request/SQL2CSV*.csv)',
-    menu5: '5. Configuration Management',
+    menu5: '5. CSV to DB Import (request/CSV2DB*.csv)',
+    menu6: '6. Configuration Management',
     menu0: '0. Exit',
-    selectPrompt: 'Select function to execute (0-5): ',
+    selectPrompt: 'Select function to execute (0-6): ',
     invalidSelection: 'Invalid selection. Please select again.',
     configTitle: 'Configuration Management',
     configMenu1: '1. Check System Information',
@@ -143,7 +144,10 @@ function buildEnMessages() {
 
   const sql2csv = section('csvQuery', applyTemplate(sqlExec, { title: 'CSV based batch query execution', label: 'CSV', prefix: 'SQL2CSV', fileDir: 'request/' }));
 
-  return { ...base, ...db, ...telnet, ...sql, ...sql2csv };
+  // CSV to DB import messages
+  const csv2db = section('csv2db', applyTemplate(sqlExec, { title: 'CSV to DB Import', label: 'CSV2DB', prefix: 'CSV2DB', fileDir: 'request/' }));
+
+  return { ...base, ...db, ...telnet, ...sql, ...sql2csv, ...csv2db };
 }
 
 function buildKrMessages() {
@@ -154,9 +158,10 @@ function buildKrMessages() {
     menu2: '2. 서버 텔넷 접속 확인 (request/SERVER*.csv)',
     menu3: '3. 단일 SQL 실행 (파라미터 적용) (request/sql_files/SQL*.sql)',
     menu4: '4. 복수 SQL 실행 (CSV 기반) (request/SQL2CSV*.csv)',
-    menu5: '5. 설정 관리',
+    menu5: '5. CSV를 DB에 입력 (request/CSV2DB*.csv)',
+    menu6: '6. 설정 관리',
     menu0: '0. 종료',
-    selectPrompt: '실행할 기능을 선택하세요 (0-5): ',
+    selectPrompt: '실행할 기능을 선택하세요 (0-6): ',
     invalidSelection: '잘못된 선택입니다. 다시 선택해주세요.',
     configTitle: '설정 관리',
     configMenu1: '1. 시스템 정보 확인',
@@ -228,7 +233,10 @@ function buildKrMessages() {
 
   const sql2csv = section('csvQuery', applyTemplate(sqlexec, { title: 'CSV 기반 일괄 쿼리 실행', label: 'CSV', prefix: 'SQL2CSV', fileDir: 'request/' }));
 
-  return { ...base, ...db, ...telnet, ...sql, ...sql2csv };
+  // CSV to DB import messages
+  const csv2db = section('csv2db', applyTemplate(sqlexec, { title: 'CSV 데이터 DB 입력', label: 'CSV2DB', prefix: 'CSV2DB', fileDir: 'request/' }));
+
+  return { ...base, ...db, ...telnet, ...sql, ...sql2csv, ...csv2db };
 }
 
 const messages = { en: buildEnMessages(), kr: buildKrMessages() };
@@ -241,6 +249,7 @@ const DBConnectionChecker = require('./src/modules/DBConnectionChecker');
 const TelnetChecker = require('./src/modules/TelnetChecker');
 const DBExecutor = require('./src/modules/DBExecutor');
 const CSVQueryExecutor = require('./src/modules/CSVQueryExecutor');
+const CSVToDBExecutor = require('./src/modules/CSVToDBExecutor');
 const ConfigManager = require('./src/modules/ConfigManager');
 
 class NodeUtilApp {
@@ -258,6 +267,7 @@ class NodeUtilApp {
     this.telnetChecker = new TelnetChecker();
     this.dbExecutor = new DBExecutor(this.configManager, this.rl);
     this.csvQueryExecutor = new CSVQueryExecutor(this.configManager, this.rl);
+    this.csvToDbExecutor = new CSVToDBExecutor(this.configManager, this.rl);
   }
 
   ensureResultsDirectory() {
@@ -293,6 +303,7 @@ class NodeUtilApp {
     console.log(msg.menu3);
     console.log(msg.menu4);
     console.log(msg.menu5);
+    console.log(msg.menu6);
     console.log(msg.menu0);
     console.log('------------------------------------------------');
     console.log();
@@ -313,6 +324,9 @@ class NodeUtilApp {
         await this.runCsvQueryExecution();
         break;
       case '5':
+        await this.runCsvToDbExecution();
+        break;
+      case '6':
         await this.showConfigMenu();
         break;
       case '0':
@@ -665,6 +679,79 @@ class NodeUtilApp {
     }
   }
 
+  async runCsvToDbExecution(options = undefined) {
+    console.clear();
+    console.log(`📥 ${msg.csv2dbTitle}`);
+    console.log('='.repeat(40));
+    
+    try {
+      const csvDir = path.join(APP_ROOT, 'request');
+      if (!fs.existsSync(csvDir) && !(options && options.csvPath)) {
+        console.log(`❌ ${msg.csv2dbDirNotFound}`);
+        console.log(msg.csv2dbCreateDir);
+        if (!(options && options.nonInteractive)) {
+          await this.waitAndContinue();
+          await this.showMainMenu();
+        }
+        return;
+      }
+
+      let csvPath;
+      if (options && options.csvPath) {
+        csvPath = path.isAbsolute(options.csvPath) ? options.csvPath : path.join(APP_ROOT, options.csvPath);
+      } else {
+        const csvFiles = fs.readdirSync(csvDir)
+          .filter(file => file.endsWith('.csv') && file.toLowerCase().startsWith('csv2db'));
+
+        if (csvFiles.length === 0) {
+          console.log(`❌ ${msg.csv2dbNoFiles}`);
+          console.log(msg.csv2dbAddFiles);
+          if (!(options && options.nonInteractive)) {
+            await this.waitAndContinue();
+            await this.showMainMenu();
+          }
+          return;
+        }
+
+        console.log(`\n📄 ${msg.csv2dbAvailableFiles}`);
+        csvFiles.forEach((file, index) => {
+          console.log(`  ${index + 1}. ${file}`);
+        });
+        console.log();
+
+        const fileChoice = await this.askQuestion(
+          `${msg.csv2dbSelectFile} (1-${csvFiles.length}): `
+        );
+        const selectedFileIndex = parseInt(fileChoice) - 1;
+        if (selectedFileIndex < 0 || selectedFileIndex >= csvFiles.length) {
+          console.log(`❌ ${msg.csv2dbInvalidFile}`);
+          if (!(options && options.nonInteractive)) {
+            await this.waitAndContinue();
+            await this.showMainMenu();
+          }
+          return;
+        }
+
+        const selectedFile = csvFiles[selectedFileIndex];
+        csvPath = path.join(csvDir, selectedFile);
+        console.log(`✅ ${msg.csv2dbSelectedFile} ${selectedFile}`);
+      }
+
+      console.log(`\n🚀 ${msg.csv2dbStarting}`);
+      console.log('-'.repeat(40));
+
+      await this.csvToDbExecutor.run(csvPath);
+
+      console.log(`\n✅ ${msg.csv2dbCompleted}`);
+    } catch (error) {
+      console.error(`❌ ${msg.csv2dbError}`, error.message);
+    }
+    if (!(options && options.nonInteractive)) {
+      await this.waitAndContinue();
+      await this.showMainMenu();
+    }
+  }
+
   async showConfigMenu() {
     console.clear();
     console.log(`⚙️  ${msg.configTitle}`);
@@ -781,6 +868,13 @@ class NodeUtilApp {
         });
         await this.exitApp();
         return true;
+      case 'csv2db':
+        await this.runCsvToDbExecution({
+          nonInteractive: true,
+          csvPath: ARGS.csv
+        });
+        await this.exitApp();
+        return true;
       case 'config':
         // 간단한 정보 출력 후 종료
         this.configManager.showEnvironmentVariables();
@@ -812,6 +906,7 @@ class NodeUtilApp {
     console.log('  node app.js --lang=kr --mode=telnet --csv=request/server_sample.csv --timeout=3');
     console.log('  node app.js --lang=kr --mode=sql --sql=SQL_file_name');
     console.log('  node app.js --lang=kr --mode=csv --csv=request/SQL2CSV_sample.csv');
+    console.log('  node app.js --lang=kr --mode=csv2db --csv=request/CSV2DB_sample.csv');
     console.log('  node app.js --help');
   }
 }
