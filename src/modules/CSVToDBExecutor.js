@@ -84,11 +84,12 @@ class CSVToDBExecutor {
       .join('.');
   }
 
-  // Create valid column list, quoted identifiers, and safe parameter keys
+  // Create valid column list, quoted identifiers, safe parameter keys, and preserve original header keys
   sanitizeColumns(columns) {
     const valid = [];
     const quoted = [];
     const paramKeys = [];
+    const rawOriginals = [];
 
     let idx = 0;
     for (const raw of columns) {
@@ -107,9 +108,10 @@ class CSVToDBExecutor {
       valid.push(col);
       quoted.push(this.quoteIdentifier(col));
       paramKeys.push(uniqueKey);
+      rawOriginals.push(raw);
     }
 
-    return { valid, quoted, paramKeys };
+    return { valid, quoted, paramKeys, rawOriginals };
   }
 
   // Coerce CSV string values to appropriate JS types for DB binding
@@ -249,13 +251,15 @@ class CSVToDBExecutor {
     return `INSERT INTO ${target} (${colList}) VALUES (${placeholders})`;
   }
 
-  buildParams(columns, row, paramKeys = null) {
+  buildParams(columns, row, paramKeys = null, rawOriginals = null) {
     const params = {};
     // Maintain insertion order same as columns, map to safe param keys if provided
     for (let i = 0; i < columns.length; i++) {
       const col = columns[i];
       const key = Array.isArray(paramKeys) && paramKeys[i] ? paramKeys[i] : col;
-      params[key] = this.coerceValue(row[col], col);
+      // Use original header key to access row value if provided, fallback to sanitized name
+      const rawKey = Array.isArray(rawOriginals) && rawOriginals[i] ? rawOriginals[i] : col;
+      params[key] = this.coerceValue(row[rawKey], col);
     }
     return params;
   }
@@ -325,21 +329,28 @@ class CSVToDBExecutor {
           }
 
           const columnsRaw = Object.keys(rows[0]);
-          let { valid: columns, quoted, paramKeys } = this.sanitizeColumns(columnsRaw);
+          let { valid: columns, quoted, paramKeys, rawOriginals } = this.sanitizeColumns(columnsRaw);
           if (columns.length === 0) {
             console.error(`  ❌ ${this.msg.error} No valid columns found in CSV header.`);
             errorCount++;
             continue;
           }
 
-          // MSSQL: exclude identity columns to avoid explicit insert into identity
+          // MSSQL: exclude identity and computed columns to avoid explicit insert into restricted columns
           try {
-            if (dbType && dbType.toLowerCase() === 'mssql' && typeof connection.getIdentityColumns === 'function') {
-              const identityCols = await connection.getIdentityColumns(item.tableName);
-              if (!identityCols || identityCols.length === 0) {
-                console.log(`  (identity) detected: none`);
-              } else {
-                console.log(`  (identity) detected: ${identityCols.join(', ')}`);
+            if (dbType && dbType.toLowerCase() === 'mssql') {
+              // Identity columns
+              const hasIdentityFn = typeof connection.getIdentityColumns === 'function';
+              const hasComputedFn = typeof connection.getComputedColumns === 'function';
+              let identityCols = [];
+              let computedCols = [];
+              if (hasIdentityFn) {
+                identityCols = await connection.getIdentityColumns(item.tableName);
+                if (!identityCols || identityCols.length === 0) {
+                  console.log(`  (identity) detected: none`);
+                } else {
+                  console.log(`  (identity) detected: ${identityCols.join(', ')}`);
+                }
               }
               if (Array.isArray(identityCols) && identityCols.length > 0) {
                 const identitySet = new Set(identityCols.map(c => c.toLowerCase()));
@@ -351,19 +362,39 @@ class CSVToDBExecutor {
                   columns = keptIndexes.map(i => columns[i]);
                   quoted = keptIndexes.map(i => quoted[i]);
                   paramKeys = keptIndexes.map(i => paramKeys[i]);
+                  rawOriginals = keptIndexes.map(i => rawOriginals[i]);
                 }
                 if (columns.length === 0) {
                   console.error(`  ❌ ${this.msg.error} All columns are identity; nothing to insert.`);
                   errorCount++;
                   continue;
                 }
-              } else {
-                // Conservative heuristic: if first column name looks like an ID, drop it
-                if (columns.length > 0 && /(^|_)id$/i.test(String(columns[0]))) {
-                  console.log(`  (identity-heuristic) Dropping first column '${columns[0]}' from insert list`);
-                  columns = columns.slice(1);
-                  quoted = quoted.slice(1);
-                  paramKeys = paramKeys.slice(1);
+              }
+              // Computed columns
+              if (hasComputedFn) {
+                computedCols = await connection.getComputedColumns(item.tableName);
+                if (!computedCols || computedCols.length === 0) {
+                  console.log(`  (computed) detected: none`);
+                } else {
+                  console.log(`  (computed) detected: ${computedCols.join(', ')}`);
+                }
+                if (Array.isArray(computedCols) && computedCols.length > 0) {
+                  const computedSet = new Set(computedCols.map(c => c.toLowerCase()));
+                  const keptIndexes2 = [];
+                  for (let i = 0; i < columns.length; i++) {
+                    if (!computedSet.has(String(columns[i]).toLowerCase())) keptIndexes2.push(i);
+                  }
+                  if (keptIndexes2.length !== columns.length) {
+                    columns = keptIndexes2.map(i => columns[i]);
+                    quoted = keptIndexes2.map(i => quoted[i]);
+                    paramKeys = keptIndexes2.map(i => paramKeys[i]);
+                    rawOriginals = keptIndexes2.map(i => rawOriginals[i]);
+                  }
+                  if (columns.length === 0) {
+                    console.error(`  ❌ ${this.msg.error} All columns are computed; nothing to insert.`);
+                    errorCount++;
+                    continue;
+                  }
                 }
               }
             }
@@ -374,9 +405,10 @@ class CSVToDBExecutor {
           console.log(`  SQL: ${insertSql}`);
 
           let inserted = 0;
+          let mappingHadError = false;
           for (let i = 0; i < rows.length; i++) {
             const row = rows[i];
-            const params = this.buildParams(columns, row, paramKeys);
+            const params = this.buildParams(columns, row, paramKeys, rawOriginals);
             if (i === 0) {
               try { console.log(`  Params(sample): ${JSON.stringify(params).slice(0, 500)}`); } catch {}
             }
@@ -384,12 +416,17 @@ class CSVToDBExecutor {
               await connection.executeQuery(insertSql, params);
               inserted++;
             } catch (err) {
+              mappingHadError = true;
               console.error(`  ❌ ${this.msg.error} ${err.message}`);
             }
           }
 
           console.log(`  ✅ ${this.msg.inserted} ${inserted}/${rows.length}`);
-          successCount++;
+          if (rows.length > 0 && inserted === rows.length && !mappingHadError) {
+            successCount++;
+          } else {
+            errorCount++;
+          }
         }
       } finally {
         await connection.disconnect();
