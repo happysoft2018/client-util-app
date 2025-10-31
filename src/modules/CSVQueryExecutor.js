@@ -492,7 +492,7 @@ class CSVQueryExecutor {
     
     try {
       // Create results directory
-      const resultsDir = path.join(APP_ROOT, 'results', 'csv_queries');
+      const resultsDir = path.join(APP_ROOT, 'results', 'sql2csv_result');
       if (!fs.existsSync(resultsDir)) {
         fs.mkdirSync(resultsDir, { recursive: true });
       }

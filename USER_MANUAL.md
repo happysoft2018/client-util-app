@@ -1345,7 +1345,7 @@ result_filepath
 **Relative Path (from application directory):**
 ```csv
 result_filepath
-"results/csv_queries/users.csv"
+"results/sql2csv_result/users.csv"
 "results/export_${DATE:yyyyMMdd}.csv"
 ```
 

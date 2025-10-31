@@ -1584,7 +1584,7 @@ result_filepath
 **상대 경로 (애플리케이션 디렉토리 기준):**
 ```csv
 result_filepath
-"results/csv_queries/users.csv"
+"results/sql2csv_result/users.csv"
 "results/export_${DATE:yyyyMMdd}.csv"
 ```
 

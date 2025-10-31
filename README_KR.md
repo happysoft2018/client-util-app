@@ -107,8 +107,8 @@ my-node-client-util-app/
 **CSV 형식:**
 ```csv
 SQL,result_filepath
-"select * from users;",results/csv_queries/users_${DATE:yyyyMMddHHmmss}.csv
-"exec sp_helptext 'dbo.MyProc';",results/csv_queries/proc_definition.txt
+"select * from users;",results/sql2csv_result/users_${DATE:yyyyMMddHHmmss}.csv
+"exec sp_helptext 'dbo.MyProc';",results/sql2csv_result/proc_definition.txt
 ```
 
 ### v1.3.5 - 다국어 처리 확장 (2025-10-20) 🌏

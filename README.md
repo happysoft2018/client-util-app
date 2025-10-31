@@ -34,7 +34,7 @@ my-node-client-util-app/
 ├── results/                        # Check results (auto-generated)
 │   ├── db_connection_check_*.csv   # DB check results
 │   ├── telnet_connection_check_*.csv # Telnet check results
-│   ├── csv_queries/                # CSV-based query results (v1.3.6+)
+│   ├── sql2csv_result/             # CSV-based query results (v1.3.6+)
 │   └── README.md                   # Results format documentation
 ├── log/                            # Execution logs (auto-generated)
 ├── run.bat                         # 🎯 Launcher (English)
@@ -98,8 +98,8 @@ my-node-client-util-app/
 **CSV Format:**
 ```csv
 SQL,result_filepath
-"select * from users;",results/csv_queries/users_${DATE:yyyyMMddHHmmss}.csv
-"exec sp_helptext 'dbo.MyProc';",results/csv_queries/proc_definition.txt
+"select * from users;",results/sql2csv_result/users_${DATE:yyyyMMddHHmmss}.csv
+"exec sp_helptext 'dbo.MyProc';",results/sql2csv_result/proc_definition.txt
 ```
 
 ### v1.3.5 - Extended Multi-language Support (2025-10-20) 🌏
