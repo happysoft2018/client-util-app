@@ -1,4 +1,4 @@
-# User Manual v1.3.9
+# User Manual v1.3.10
 
 ## 📖 Table of Contents
 
@@ -96,6 +96,17 @@ This manual guides you through using the database connection, permission check, 
 ---
 
 ## Major Changes
+
+### CSV-to-DB Improvements (v1.3.10)
+
+- Strict success counting per mapping
+  - A mapping is marked Successful only when all rows insert without errors; otherwise it is marked Failed
+- Identity heuristic removed
+  - Only identity columns actually reported by the DB are excluded from INSERT
+- MSSQL computed columns excluded automatically
+  - Computed columns are detected via metadata and removed from the INSERT column list
+- Robust header mapping
+  - Original CSV header keys are preserved for parameter binding to avoid nulls from BOM/whitespace or sanitization differences
 
 ### Permission Check Items
 
@@ -566,6 +577,14 @@ timestamp,pc_ip,server_ip,port,db_name,db_type,db_userid,result_code,error_code,
 ---
 
 ## Troubleshooting
+
+### INSERT fails with computed column error (e.g., "The column 'line_total' cannot be modified...")
+- Cause: Column is a computed column or comes from a view/UNION result; DB does not allow explicit values
+- Fix: The tool automatically excludes computed columns for MSSQL. If you still see this, ensure the source is a base table and the column is truly computed.
+
+### INSERT binds NULL for a column that has values in CSV
+- Cause: Header key mismatch due to BOM/whitespace or header sanitization
+- Fix: The tool preserves original CSV header keys during binding. Ensure headers are unique and consistent. If needed, re-save the CSV with UTF-8 and no extra spaces in headers.
 
 ### Common Issues
 

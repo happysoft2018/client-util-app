@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.3.10] - 2025-10-31
+
+### CSV-to-DB Improvements
+- Success counting is strict per mapping: counted as success only when all rows insert without errors; otherwise counted as failure
+- Removed conservative identity heuristic; now exclude only identity columns reported by the DB
+- MSSQL: Computed columns are detected and excluded from INSERT automatically
+- Robust header mapping: preserve original CSV header keys to avoid nulls due to BOM/whitespace or sanitization differences
+
 ## [1.3.9] - 2025-10-29
 
 ### ✨ New Features
